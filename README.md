@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/CallTheory/mission-control/master/call-theory-icon.png" width="50">
+<img src="https://raw.githubusercontent.com/CallTheory/mission-control/main/call-theory-icon.png" width="50">
 
 # Mission Control by NotifiUs, LLC
 
