@@ -1,8 +1,8 @@
-version: 0.0.1
+version: 0.0.2
 files:
-  - url: mission-control-Setup-0.0.1.exe
-    sha512: SafwHlgYoEjkqAHZKQXb+o9MWAQf+votkyiz9uIl1TIz9kc9vSsuvcL5o1CVrwuTBrgYMLXFK2ZRh2o2VTlzmA==
-    size: 55051413
-path: mission-control-Setup-0.0.1.exe
-sha512: SafwHlgYoEjkqAHZKQXb+o9MWAQf+votkyiz9uIl1TIz9kc9vSsuvcL5o1CVrwuTBrgYMLXFK2ZRh2o2VTlzmA==
-releaseDate: '2020-11-15T03:42:47.550Z'
+  - url: mission-control-Setup-0.0.2.exe
+    sha512: YuqtGiVCah5I+0f5WbBOdNZ3Irke803JuUeYYFVnyiITa0yMIC2WQP0S5pZnIEsEmR4a9mdrrnVX7AuLcz3Afg==
+    size: 55052760
+path: mission-control-Setup-0.0.2.exe
+sha512: YuqtGiVCah5I+0f5WbBOdNZ3Irke803JuUeYYFVnyiITa0yMIC2WQP0S5pZnIEsEmR4a9mdrrnVX7AuLcz3Afg==
+releaseDate: '2020-11-15T03:54:35.778Z'
