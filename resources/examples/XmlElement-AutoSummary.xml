@@ -1,0 +1,183 @@
+<message version="1" appId="41103" curRev="0">
+    <revision
+        rev="0"
+        timeStamp="7/11/2024 6:40:16 PM"
+        autoSummary="For: FRIESTHLER, MARJORIE DR&#xD;&#xA;From:| PATRICK LABBETT* |&#xD;&#xA;Phone:| §555-765-4321 |&#xD;&#xA;Ptn:| SELF |&#xD;&#xA;Msg:| EXTREME ANXIETY |&#xD;&#xA;Primary:| FRIESTHLER, MARJORIE DR |&#xD;&#xA;Source:9999 DR GREGORY FRIESTHLER&#xD;&#xA;Msg ID: 99988877&#xD;&#xA;IS Rec #: 77665544&#xD;&#xA;Clr ID: 5557654321 PATRICK LABBETT&#xD;&#xA;Taken: 7/11/2024 6:40:17 PM SAW" curScreen="Dispatch" curResponse="Dispatch0_btn">
+        <fields>
+            <_TESTDRIVE>False</_TESTDRIVE>
+            <TAKEN_TXT>Taken: 7/11/2024 6:40:17 PM SAW</TAKEN_TXT>
+            <ANI_TXT>5557654321 PATRICK LABBETT</ANI_TXT>
+            <CUSTOMSPECIALACCTNUM>9999</CUSTOMSPECIALACCTNUM>
+            <RESULTCOUNTVALUE>5</RESULTCOUNTVALUE>
+            <ACTIVESPECIALSSUMMARY></ACTIVESPECIALSSUMMARY>
+            <START>Start</START>
+            <REASON_LST>DRS/HOSP/URGENT</REASON_LST>
+            <PAGE_DR_FRIESTHLER_YN_LST>START OVER</PAGE_DR_FRIESTHLER_YN_LST>
+            <RECENTCALLERANI>5557654321</RECENTCALLERANI>
+            <RECENTCALLERAPIKEY>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</RECENTCALLERAPIKEY>
+            <RECENTCALLERSTATUS></RECENTCALLERSTATUS>
+            <RECENTCALLERRESULT></RECENTCALLERRESULT>
+            <RECENTCALLERBLANKFIELD></RECENTCALLERBLANKFIELD>
+            <NAMERESULT></NAMERESULT>
+            <PHONERESULT></PHONERESULT>
+            <DOBRESULT></DOBRESULT>
+            <PTNNAMERESULT></PTNNAMERESULT>
+            <DEPTRESULT></DEPTRESULT>
+            <FACILITYRESULT></FACILITYRESULT>
+            <TAKENRESULT></TAKENRESULT>
+            <FROM_TXT>PATRICK LABBETT*</FROM_TXT>
+            <PATIENT_TXT>SELF</PATIENT_TXT>
+            <DOB_TXT></DOB_TXT>
+            <FOR_TXT>FRIESTHLER, MARJORIE DR</FOR_TXT>
+            <OFC_HOLD>Start</OFC_HOLD>
+            <FACILITY_LST></FACILITY_LST>
+            <DEPT_LST></DEPT_LST>
+            <PHONE_TXT>555-765-4321</PHONE_TXT>
+            <EXTENSION_TXT></EXTENSION_TXT>
+            <MSG_TXT>EXTREME ANXIETY</MSG_TXT>
+            <PRIMARY_TXT>FRIESTHLER, MARJORIE DR</PRIMARY_TXT>
+            <URGENT></URGENT>
+            <DISPATCH></DISPATCH>
+        </fields>
+        <annotations />
+        <runtimeInfo>TRUNCATED</runtimeInfo>
+        <navHistory start="6:43:35 PM">
+            <BackHistory>
+                <screenNav screenName="Dispatch Screen" current="" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Urgent Messages" current="" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Start Screen" current="" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            </BackHistory>
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Urgent Messages" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Dispatch Screen" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Dispatch Screen" current="" id="Dispatch" time="Thursday, July 11, 2024" backNav="True" />
+        </navHistory>
+        <dbConnections />
+    </revision>
+    <revision
+        rev="1"
+        timeStamp="7/11/2024 6:43:35 PM"
+        autoSummary="For: FRIESTHLER, MARJORIE DR&#xD;&#xA;From:| PATRICK LABBETT* |&#xD;&#xA;Phone:| §555-765-4321 |&#xD;&#xA;Ptn:| SELF |&#xD;&#xA;Msg:| EXTREME ANXIETY |&#xD;&#xA;Primary:| FRIESTHLER, MARJORIE DR |&#xD;&#xA;Source:9999 DR GREGORY FRIESTHLER&#xD;&#xA;Msg ID: 99988877&#xD;&#xA;IS Rec #: 77665544&#xD;&#xA;Clr ID: 5557654321 PATRICK LABBETT&#xD;&#xA;Taken: 7/11/2024 6:40:17 PM SAW" curScreen="Dispatch" curResponse="Dispatch0_btn">
+        <fields>
+            <_TESTDRIVE>False</_TESTDRIVE>
+            <TAKEN_TXT>Taken: 7/11/2024 6:40:17 PM SAW</TAKEN_TXT>
+            <ANI_TXT>5557654321 PATRICK LABBETT</ANI_TXT>
+            <CUSTOMSPECIALACCTNUM>9999</CUSTOMSPECIALACCTNUM>
+            <RESULTCOUNTVALUE>5</RESULTCOUNTVALUE>
+            <ACTIVESPECIALSSUMMARY></ACTIVESPECIALSSUMMARY>
+            <START>Start</START>
+            <REASON_LST>DRS/HOSP/URGENT</REASON_LST>
+            <PAGE_DR_FRIESTHLER_YN_LST>START OVER</PAGE_DR_FRIESTHLER_YN_LST>
+            <RECENTCALLERANI>5557654321</RECENTCALLERANI>
+            <RECENTCALLERAPIKEY>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</RECENTCALLERAPIKEY>
+            <RECENTCALLERSTATUS></RECENTCALLERSTATUS>
+            <RECENTCALLERRESULT></RECENTCALLERRESULT>
+            <RECENTCALLERBLANKFIELD></RECENTCALLERBLANKFIELD>
+            <NAMERESULT></NAMERESULT>
+            <PHONERESULT></PHONERESULT>
+            <DOBRESULT></DOBRESULT>
+            <PTNNAMERESULT></PTNNAMERESULT>
+            <DEPTRESULT></DEPTRESULT>
+            <FACILITYRESULT></FACILITYRESULT>
+            <TAKENRESULT></TAKENRESULT>
+            <FROM_TXT>PATRICK LABBETT*</FROM_TXT>
+            <PATIENT_TXT>SELF</PATIENT_TXT>
+            <DOB_TXT></DOB_TXT>
+            <FOR_TXT>FRIESTHLER, MARJORIE DR</FOR_TXT>
+            <OFC_HOLD>Start</OFC_HOLD>
+            <FACILITY_LST></FACILITY_LST>
+            <DEPT_LST></DEPT_LST>
+            <PHONE_TXT>555-765-4321</PHONE_TXT>
+            <EXTENSION_TXT></EXTENSION_TXT>
+            <MSG_TXT>EXTREME ANXIETY</MSG_TXT>
+            <PRIMARY_TXT>FRIESTHLER, MARJORIE DR</PRIMARY_TXT>
+            <URGENT></URGENT>
+            <DISPATCH></DISPATCH>
+            <_DISPOSITION>7/11 6:43P  Cell-1(5551234567) - Left Word</_DISPOSITION>
+        </fields>
+        <annotations />
+        <runtimeInfo>TRUNCATED</runtimeInfo>
+        <navHistory start="6:40:16 PM">
+            <BackHistory>
+                <screenNav screenName="Dispatch Screen" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Urgent Messages" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            </BackHistory>
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Urgent Messages" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Dispatch Screen" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+        </navHistory>
+        <dbConnections />
+    </revision>
+    <revision
+        rev="2"
+        timeStamp="7/11/2024 6:44:30 PM"
+        autoSummary="For: FRIESTHLER, MARJORIE DR&#xD;&#xA;From:| PATRICK LABBETT* |&#xD;&#xA;Phone:| §555-765-4321 |&#xD;&#xA;Ptn:| SELF |&#xD;&#xA;Msg:| EXTREME ANXIETY |&#xD;&#xA;Primary:| FRIESTHLER, MARJORIE DR |&#xD;&#xA;Source:9999 DR GREGORY FRIESTHLER&#xD;&#xA;Msg ID: 99988877&#xD;&#xA;IS Rec #: 77665544&#xD;&#xA;Clr ID: 5557654321 PATRICK LABBETT&#xD;&#xA;Taken: 7/11/2024 6:40:17 PM SAW"
+        curScreen="Dispatch"
+        curResponse="Dispatch0_btn">
+        <fields>
+            <_TESTDRIVE>False</_TESTDRIVE>
+            <TAKEN_TXT>Taken: 7/11/2024 6:40:17 PM SAW</TAKEN_TXT>
+            <ANI_TXT>5557654321 PATRICK LABBETT</ANI_TXT>
+            <CUSTOMSPECIALACCTNUM>9999</CUSTOMSPECIALACCTNUM>
+            <RESULTCOUNTVALUE>5</RESULTCOUNTVALUE>
+            <ACTIVESPECIALSSUMMARY></ACTIVESPECIALSSUMMARY>
+            <START>Start</START>
+            <REASON_LST>DRS/HOSP/URGENT</REASON_LST>
+            <PAGE_DR_FRIESTHLER_YN_LST>START OVER</PAGE_DR_FRIESTHLER_YN_LST>
+            <RECENTCALLERANI>5557654321</RECENTCALLERANI>
+            <RECENTCALLERAPIKEY>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</RECENTCALLERAPIKEY>
+            <RECENTCALLERSTATUS></RECENTCALLERSTATUS>
+            <RECENTCALLERRESULT></RECENTCALLERRESULT>
+            <RECENTCALLERBLANKFIELD></RECENTCALLERBLANKFIELD>
+            <NAMERESULT></NAMERESULT>
+            <PHONERESULT></PHONERESULT>
+            <DOBRESULT></DOBRESULT>
+            <PTNNAMERESULT></PTNNAMERESULT>
+            <DEPTRESULT></DEPTRESULT>
+            <FACILITYRESULT></FACILITYRESULT>
+            <TAKENRESULT></TAKENRESULT>
+            <FROM_TXT>PATRICK LABBETT*</FROM_TXT>
+            <PATIENT_TXT>SELF</PATIENT_TXT>
+            <DOB_TXT></DOB_TXT>
+            <FOR_TXT>FRIESTHLER, MARJORIE DR</FOR_TXT>
+            <OFC_HOLD>Start</OFC_HOLD>
+            <FACILITY_LST></FACILITY_LST>
+            <DEPT_LST></DEPT_LST>
+            <PHONE_TXT>555-765-4321</PHONE_TXT>
+            <EXTENSION_TXT></EXTENSION_TXT>
+            <MSG_TXT>EXTREME ANXIETY</MSG_TXT>
+            <PRIMARY_TXT>FRIESTHLER, MARJORIE DR</PRIMARY_TXT>
+            <URGENT></URGENT>
+            <DISPATCH></DISPATCH>
+            <_DISPOSITION>7/11 6:43P  Cell-1(5551234567) - Left Word</_DISPOSITION>
+        </fields>
+        <annotations>
+            <annotation stamp="Thu 6:44 PM 7/11/24 NAM">FRIESTHLER CELL/ CCX'D TO CLR </annotation>
+        </annotations>
+        <runtimeInfo>TRUNCATED</runtimeInfo>
+        <navHistory start="6:40:16 PM">
+            <BackHistory>
+                <screenNav screenName="Dispatch Screen" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Urgent Messages" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+                <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            </BackHistory>
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Ofc Msgs --- HOLD" id="Ofc_HOLD" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Start Screen" id="Start" time="Thursday, July 11, 2024" backNav="True" />
+            <screenNav screenName="Urgent Messages" id="Urgent" time="Thursday, July 11, 2024" backNav="False" />
+            <screenNav screenName="Dispatch Screen" id="Dispatch" time="Thursday, July 11, 2024" backNav="False" />
+        </navHistory>
+        <dbConnections />
+    </revision>
+</message>

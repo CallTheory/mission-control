@@ -1,0 +1,9 @@
+[program:horizon]
+process_name=%(program_name)s
+command=php /home/username/code/artisan horizon
+autostart=true
+autorestart=true
+user=username
+redirect_stderr=true
+stdout_logfile=/home/username/code/storage/logs/horizon.log
+stopwaitsecs=3600

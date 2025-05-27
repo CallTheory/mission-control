@@ -1,0 +1,14 @@
+/node_modules
+/public/hot
+/public/storage
+/public/build
+/storage/*.key
+/vendor
+.env
+.env.backup
+.phpunit.result.cache
+docker-compose.override.yml
+npm-debug.log
+yarn-error.log
+/.vagrant
+/.idea

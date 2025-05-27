@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Jobs\PeoplePraiseApi;
+
+use App\Models\DataSource;
+use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use GuzzleHttp\Client;
+
+class CreatePrecisionJob implements ShouldQueue, ShouldBeEncrypted, ShouldBeUnique
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $timeout = 45;
+    public int $api_timeout = 30;
+
+    public int $tries = 3;
+    public int $retryAfter = 60;
+    public string $api_endpoint = 'https://peoplepraise.net/api/rest/precision/create/';
+
+    public string $initial, $client_id, $event_type, $event_datetime, $create_datetime, $notes, $reporter_initial, $call_id;
+
+    /**
+     * Create a new job instance.
+     */
+    public function __construct($initial, $client_id, $event_type, $event_datetime, $create_datetime, $notes, $reporter_initial, $call_id)
+    {
+        $this->initial = $initial;
+        $this->client_id = $client_id;
+        $this->event_type = $event_type;
+        $this->event_datetime = $event_datetime;
+        $this->create_datetime = $create_datetime;
+        $this->notes = $notes;
+        $this->reporter_initial = $reporter_initial;
+        $this->call_id = $call_id;
+        $this->queue = 'people-praise';
+    }
+
+    /**
+     * Execute the job.
+     * @return void
+     * @throws Exception|GuzzleException
+     */
+    public function handle(): void
+    {
+        $client = new Client();
+        try{
+            $datasource = DataSource::firstOrFail();
+            $username = decrypt($datasource->people_praise_basic_auth_user);
+            $password = decrypt($datasource->people_praise_basic_auth_pass);
+        }
+        catch(Exception $e){
+            return;
+        }
+
+        $response = $client->request('POST', $this->api_endpoint, [
+            'auth' => [$username, $password],
+            'timeout' => $this->api_timeout,
+            'json' => [
+                'initial' => $this->initial,
+                'client_id' => $this->client_id,
+                'event_type' => $this->event_type,
+                'event_datetime' => Carbon::parse($this->event_datetime, $datasource->timezone)->format('Y-m-d H:i:s'),
+                'create_datetime' =>  Carbon::parse($this->create_datetime, $datasource->timezone)->format('Y-m-d H:i:s'),
+                'notes' => $this->notes,
+                'reporter_initial' => $this->reporter_initial,
+                'object_id' => $this->call_id
+            ]
+        ]);
+
+        try{
+            if($response->getStatusCode() !== 200){
+                //forces retry
+                throw new Exception('Failed to create precision job');
+            }
+            else{
+                return;
+            }
+        }
+        catch(Exception $e){
+            return;
+        }
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->call_id;
+    }
+
+}

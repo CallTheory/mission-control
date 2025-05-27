@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="447px" height="468px" viewBox="0 0 447 468" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 61.2 (89653) - https://sketch.com -->
+    <title>Untitled 2</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="-25.8111137%" y1="93.0948551%" x2="94.0816343%" y2="3.64641213%" id="linearGradient-1">
+            <stop stop-color="#2D6EFF" offset="0%"></stop>
+            <stop stop-color="#3B96FF" offset="36.15%"></stop>
+            <stop stop-color="#4ABFFF" offset="78.27%"></stop>
+            <stop stop-color="#50CFFF" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="mFAX_logomark" fill-rule="nonzero">
+            <polygon id="Path" fill="#192028" points="98.4 97.9 111.4 112.4 303.5 112.4 317.8 97.9 355.1 0.1 0.3 0.1 0.3 354.7"></polygon>
+            <polygon id="Path" fill="url(#linearGradient-1)" points="305.8 467.2 98.4 467.2 98.4 300.9 240.3 300.9 277.6 203.1 98.4 203.1 98.4 97.9 446.9 97.9"></polygon>
+        </g>
+    </g>
+</svg>

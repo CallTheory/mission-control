@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head>
+    <body class="bg-light">
+        <preview>[[description]] : [[date]] - [[time]]</preview>
+        <div class="container">
+            <div class="card my-10">
+                <div class="card-body text-right">
+                    <a class="text-xs" href="[[unsubscribe_link]]">Unsubscribe</a>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <a href="[[logo_link]]">
+                            <img class="max-h-24 h-full mb-4" src="[[logo_src]]" alt="[[logo_alt]]" />
+                        </a>
+                    </div>
+                    <h1 class="h3 mb-2">[[title]]</h1>
+                    <h5 class="text-blue-700 mb-4">[[description]]</h5>
+
+                    <div class="space-y-3">
+                        [[#include_report_metadata]]
+                        <table class="table table-striped thead-default table-bordered">
+                            <thead>
+                            <tr>
+                                <th>Detail</th>
+                                <th>Information</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td class="fw-600">Account</td>
+                                <td>[[account]]</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-600">Type</td>
+                                <td>[[type]]</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-600">Generated</td>
+                                <td>[[date]] [[time]]</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        [[/include_report_metadata]]
+
+                        [[#messages]]
+                        <div class="card my-4">
+                            <div class="card-body">
+                                [[#message_lines]]
+                                [[message]]<br>
+                                [[/message_lines]]
+                                [[#include_message_history]]
+                                [[#history]]
+                                <div class="bg-light p-2 space-y-3">
+                                    <p class="text-xs">[[history_line]]</p>
+                                </div>
+                                [[/history]]
+                                [[/include_message_history]]
+                            </div>
+                        </div>
+                        [[/messages]]
+                    </div>
+
+                    <a class="btn btn-primary my-4" href="[[button_link]]" target="_blank">[[button_text]]</a>
+                </div>
+                <div class="card-body text-center">
+                    <a class="text-xs" href="[[unsubscribe_link]]">Unsubscribe</a>
+                </div>
+            </div>
+            <div class="text-center text-sm mb-4">
+                <h5 class="text-center">[[company]]</h5>
+                [[address]]<br>
+                [[#address2]]
+                [[address2]]<br>
+                [[/address2]]
+                [[city]], [[state]] [[postal]] [[country]]<br><br>
+                <a href="mailto:[[email]]">[[email]]</a><br>
+                <a href="tel:+[[phone]]">+[[phone]]</a><br>
+            </div>
+        </div>
+    </body>
+</html>

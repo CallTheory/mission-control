@@ -1,0 +1,36 @@
+===========0000005520=================
+Tue 4-Jun-24 08:00a
+======================================
+Mon 3-Jun-24 06:51p TAKEN
+Mon 3-Jun-24 06:52p DELIVERED
+
+|Emergency IT Request`|
+Name: |Katherine `|
+Phone: |888-555-1234`|
+
+
+Date / Time: 6/3/2024 6:51:50 PM
+Taken By: Ann
+Caller ID: 6145551234
+ACD ANI: CALLTHEORY
+
+
+Call Theory Internal Use Only
+5520 NotifiUs, LLC dba Call Theory
+UCN 1999360
+
+
+
+
+Message History:
+   Mon 3-Jun-24 06:51p by AC MergeCommm Slack Push initiated
+   Mon 3-Jun-24 06:51p by AC email initiated to support@calltheory.com
+   Mon 3-Jun-24 06:51p by AC WCTP page with reply (678) initiated to 6145551234 for Patrick Labbett
+   Mon 3-Jun-24 06:51p by AC Dispatch added
+   Mon 3-Jun-24 06:51p by AC Taken for Patrick Labbett
+   Mon 3-Jun-24 06:51p by WCTP WCTP page completed to 6145551234 for Patrick Labbett
+   Mon 3-Jun-24 06:51p by AC email completed to support@calltheory.com
+   Mon 3-Jun-24 06:52p by WCTP WCTP message reply '678' from 6145551234 for Patrick Labbett
+   Mon 3-Jun-24 06:52p by WCTP Dispatch deleted(MessageDelivered) for Patrick Labbett
+   Mon 3-Jun-24 06:52p by WCTP Delivered for Patrick Labbett
+===========0000005520=================

@@ -1,0 +1,16 @@
+*
+!public/
+!people-praise/
+!.gitignore
+!mfax/
+!ringcentral/
+!better-emails/
+!transcriptions/
+!files/
+!recordings/
+!screencapture/
+!streams/
+!feature-flags/
+!greetings/
+!card-processing/
+!inbound-email/

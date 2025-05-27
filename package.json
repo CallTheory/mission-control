@@ -1,0 +1,23 @@
+{
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@tailwindcss/aspect-ratio": "^0.4.2",
+        "@tailwindcss/forms": "^0.5.7",
+        "@tailwindcss/typography": "^0.5.10",
+        "@tailwindcss/vite": "^4.1.7",
+        "axios": "^1.9.0",
+        "laravel-vite-plugin": "^1.2.0",
+        "lodash": "^4.17.21",
+        "sass-embedded": "^1.89.0",
+        "tailwindcss": "^4.1.7",
+        "vite": "^6.3.5",
+        "wavesurfer.js": "^7.7.14"
+    },
+    "dependencies": {
+
+    }
+}

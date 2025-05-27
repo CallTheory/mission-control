@@ -1,0 +1,107 @@
+===========0000005520=================
+Tue 11-Jun-24 08:00a
+======================================
+Tue 11-Jun-24 07:37a TAKEN
+Tue 11-Jun-24 07:44a DELIVERED
+
+|Emergency IT Request`|
+Name: |Peter `|
+Phone: |412-555-4321`|
+
+
+Date / Time: 6/11/2024 7:37:44 AM
+Taken By: Axl R
+Caller ID: 4125554321
+ACD ANI:
+
+
+Call Theory Internal Use Only
+5520 NotifiUs, LLC dba Call Theory
+UCN 2015923
+
+
+6/11 7:43A  Cell(614-555-1234) -
+
+Message History:
+   Tue 11-Jun-24 07:37a by ATR MergeCommm Slack Push initiated
+   Tue 11-Jun-24 07:37a by ATR email initiated to support@calltheory.com
+   Tue 11-Jun-24 07:37a by ATR WCTP page with reply (407) initiated to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:37a by ATR Dispatch added
+   Tue 11-Jun-24 07:37a by ATR Taken for Patrick Labbett
+   Tue 11-Jun-24 07:37a by WCTP WCTP page completed to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:37a by ATR MessageViewed
+   Tue 11-Jun-24 07:37a by ATR email completed to support@calltheory.com
+   Tue 11-Jun-24 07:43a by ATR Dialed - Cell(?614-555-1234), Disposition: (none selected) for Patrick Labbett
+   Tue 11-Jun-24 07:43a by WCTP WCTP message reply '407' from 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:43a by WCTP Dispatch deleted(MessageDelivered) for Patrick Labbett
+   Tue 11-Jun-24 07:43a by WCTP Delivered for Patrick Labbett
+   Tue 11-Jun-24 07:43a by ATR WCTP page with reply (408) initiated to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:43a by ATR Dispatch added
+   Tue 11-Jun-24 07:43a by ATR Edited for Patrick Labbett
+   Tue 11-Jun-24 07:43a by WCTP WCTP page completed to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:43a by ATR MessageViewed
+   Tue 11-Jun-24 07:44a by WCTP WCTP message reply '408' from 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 07:44a by WCTP Dispatch deleted(MessageDelivered) for Patrick Labbett
+   Tue 11-Jun-24 07:44a by WCTP Delivered for Patrick Labbett
+======================================
+Tue 11-Jun-24 07:29a TAKEN
+Tue 11-Jun-24 07:29a DELIVERED
+
+|Non Emergency Request `|
+Name: |Peter `|
+Phone: |4125554321`|
+
+
+Date / Time: 6/11/2024 7:29:17 AM
+Taken By: Axl R
+Caller ID: 4125554321
+ACD ANI: 4125554321
+
+
+Call Theory Internal Use Only
+5520 NotifiUs, LLC dba Call Theory
+UCN 2015915
+
+
+
+
+Message History:
+   Tue 11-Jun-24 07:29a by ATR Taken for Patrick Labbett
+   Tue 11-Jun-24 07:29a by ATR Delivered
+   Tue 11-Jun-24 07:29a by ATR MessageViewed
+   Tue 11-Jun-24 07:36a by DV MessageViewed
+======================================
+Tue 11-Jun-24 01:19a TAKEN
+Tue 11-Jun-24 01:20a DELIVERED
+
+|Emergency IT Request`|
+Name: |Sarah W/ in Touch `|
+Phone: |412-555-1234`|
+
+
+Date / Time: 6/11/2024 1:19:35 AM
+Taken By: Beverleys D
+Caller ID: 4125551234
+ACD ANI: 4125551234
+
+
+Call Theory Internal Use Only
+5520 NotifiUs, LLC dba Call Theory
+UCN 2015813
+
+
+
+
+Message History:
+   Tue 11-Jun-24 01:19a by BSD MergeCommm Slack Push initiated
+   Tue 11-Jun-24 01:19a by BSD email initiated to support@calltheory.com
+   Tue 11-Jun-24 01:19a by BSD WCTP page with reply (8) initiated to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 01:19a by BSD Dispatch added
+   Tue 11-Jun-24 01:19a by WCTP WCTP page completed to 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 01:19a by BSD Taken for Patrick Labbett
+   Tue 11-Jun-24 01:19a by BSD MessageViewed
+   Tue 11-Jun-24 01:19a by BSD email completed to support@calltheory.com
+   Tue 11-Jun-24 01:20a by WCTP WCTP message reply '8' from 6145551234 for Patrick Labbett
+   Tue 11-Jun-24 01:20a by WCTP Dispatch deleted(MessageDelivered) for Patrick Labbett
+   Tue 11-Jun-24 01:20a by WCTP Delivered for Patrick Labbett
+===========0000005520=================
