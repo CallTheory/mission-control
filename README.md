@@ -111,13 +111,6 @@ Please report any security-related issues to [support@calltheory.com](mailto:sup
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
-## Utilities
+## Documentation
 
-Details on utility-specific setup requirements/guides/tips.
-
-### mFax Setup Notes
-
-- You should manually create a tag called `Resent` and `Unknown` in your mFax web console
-
-
-
+Please see the latest documentation at [learn.calltheory.com/mission-control](https://learn.calltheory.com/mission-control)
