@@ -1,8 +1,7 @@
-
-<div style="margin-left:auto;margin-right:auto;width:300px;">
-![Mission Control Logo](public/images/mission-control-wordmark.png)
-</div>
 # Mission Control
+
+![Mission Control Logo](public/images/mission-control-wordmark.png)
+
 
 [Mission Control](https://calltheory.com/mission-control) is a web-based utility dashboard for [Amtelco](https://callcenter.amtelco.com) call center environments created by [Call Theory](https://calltheory.com).
 
