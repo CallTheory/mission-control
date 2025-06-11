@@ -14,30 +14,30 @@
                 <div class=" w-full p-12 border  border-double bg-gray-100  shadow   mx-auto rounded-lg">
 
                     <div class="mt-10 sm:mt-0">
-                        <livewire:system.data-sources.intelligent lazy />
+                        <livewire:system.data-sources.intelligent lazy="lazy" />
                     </div>
                     <x-section-border />
 
                     <div class="mt-10 sm:mt-0">
-                        <livewire:system.data-sources.client-db lazy />
+                        <livewire:system.data-sources.client-db lazy="lazy" />
                     </div>
                     <x-section-border />
 
                     <div class="mt-10 sm:mt-0">
-                        <livewire:system.data-sources.isweb-api lazy />
+                        <livewire:system.data-sources.is-web-api lazy="lazy" />
                     </div>
 
 
                     <x-section-border />
 
                     <div class="mt-10 sm:mt-0">
-                        <livewire:system.data-sources.is-user lazy />
+                        <livewire:system.data-sources.is-user lazy="lazy" />
                     </div>
 
                     <x-section-border />
 
                     <div class="mt-10 sm:mt-0">
-                        <livewire:system.data-sources.amtelco-s-m-t-p lazy />
+                        <livewire:system.data-sources.amtelco-s-m-t-p lazy="lazy" />
                     </div>
 
                 </div>

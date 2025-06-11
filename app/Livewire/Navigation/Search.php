@@ -36,7 +36,7 @@ class Search extends Component
                 $this->searchTerm = null;
             }
             else{
-                if(!$this->searchTerm){
+                if(!isset($this->searchTerm)){
                     $this->searchTerm = Session::get('searchTerm');
                 }
             }

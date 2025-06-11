@@ -6,12 +6,6 @@ use StdClass;
 
 class ScreenCaptures extends Call
 {
-
-    public function __construct($parameters)
-    {
-        $this->parameters = $parameters;
-        parent::__construct($this->parameters);
-    }
     public function details(): stdClass|array|null
     {
         return $this->results ?? null;

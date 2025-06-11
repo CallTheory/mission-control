@@ -10,14 +10,9 @@ class Transcriptions extends Call
 
     public array $parameters;
 
-    public function __construct($parameters)
-    {
-        $this->parameters = $parameters;
-        parent::__construct();
-    }
-
     public function details(): stdClass|array|null
     {
+
         $redis_key = "{$this->parameters['ISCallId']}.json";
         $transcription = json_decode(Redis::get($redis_key), true);
 

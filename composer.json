@@ -28,6 +28,7 @@
         "predis/predis": "^3.0.1",
         "ringcentral/ringcentral-php": "^3.0.4",
         "socialiteproviders/saml2": "^4.7.2",
+        "spatie/browsershot": "^5.0",
         "stripe/stripe-php": "^17.2.1",
         "symfony/mailer": "^7.2.5",
         "symfony/process": "^v7.2.5",

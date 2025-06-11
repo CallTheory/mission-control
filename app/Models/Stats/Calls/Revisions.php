@@ -7,11 +7,6 @@ use StdClass;
 class Revisions extends Call
 {
 
-    public function __construct(array $parameters)
-    {
-        parent::__construct($parameters);
-    }
-
     public function details(): stdClass|array|null
     {
         return $this->results ?? null;

@@ -96,16 +96,19 @@ class CallLookup extends Component
         }
 
         $this->details = $call->details();
+
         $this->messages = $call->messages();
         $this->history = $call->history();
         $this->statistics = $call->statistics();
         $this->recordings = $call->recordings();
+
         $this->agents = $call->agents();
         $this->clients = $call->clients();
         $this->tracker = $call->tracker();
         $this->screencapture = count($call->screenCapture());
         $this->transcription = $call->transcription();
         $this->getSummaryAndDiffs();
+
 
 
     }
