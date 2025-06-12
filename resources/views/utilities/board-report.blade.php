@@ -23,7 +23,7 @@ use App\Models\MergeCommISWebTrigger;
             </div>
 
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
-                <livewire:utilities.board-report lazy></livewire:utilities.board-report>
+                <livewire:utilities.board-report lazy="lazy"></livewire:utilities.board-report>
             </div>
         </div>
     </div>

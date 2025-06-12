@@ -14,7 +14,7 @@
         </div>
         <hr class="border border-gray-300"/>
 
-        <livewire:utilities.call-lookup lazy :isCallID="$isCallID" />
+        <livewire:utilities.call-lookup lazy="lazy" :isCallID="$isCallID" />
 
         <hr class="border border-gray-300"/>
 

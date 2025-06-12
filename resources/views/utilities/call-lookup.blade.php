@@ -15,9 +15,9 @@
             </div>
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
                 @if( is_null($isCallID))
-                    <livewire:analytics.call-log lazy />
+                    <livewire:analytics.call-log lazy="lazy" />
                 @else
-                    <livewire:utilities.call-lookup lazy isCallID="{{ $isCallID }}" />
+                    <livewire:utilities.call-lookup lazy="lazy" isCallID="{{ $isCallID }}" />
                 @endif
             </div>
         </div>

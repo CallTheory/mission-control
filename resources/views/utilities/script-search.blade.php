@@ -11,7 +11,7 @@
     <div class="p-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 w-full">
 
-          <livewire:utilities.script-search lazy />
+          <livewire:utilities.script-search lazy="lazy" />
         </div>
 
     </div>

@@ -21,7 +21,7 @@ use App\Models\MergeCommISWebTrigger;
                 @include('utilities.cloud-faxing-nav')
 
                 <div>
-                    <livewire:utilities.cloud-faxing-ring-central lazy></livewire:utilities.cloud-faxing-ring-central>
+                    <livewire:utilities.cloud-faxing-ring-central lazy="lazy"></livewire:utilities.cloud-faxing-ring-central>
                 </div>
 
             </div>

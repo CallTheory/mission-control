@@ -21,7 +21,7 @@ use App\Models\MergeCommISWebTrigger;
                 @include('layouts.width-toggle')
             </div>
 
-            <livewire:utilities.card-processing lazy></livewire:utilities.card-processing>
+            <livewire:utilities.card-processing lazy="lazy"></livewire:utilities.card-processing>
 
             </div>
 

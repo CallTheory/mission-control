@@ -16,7 +16,7 @@
                 @include('layouts.width-toggle')
             </div>
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
-                <livewire:utilities.api-gateway lazy />
+                <livewire:utilities.api-gateway lazy="lazy" />
             </div>
         </div>
     </div>

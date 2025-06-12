@@ -20,7 +20,7 @@
             </div>
 
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
-                <livewire:utilities.wctp-gateway lazy />
+                <livewire:utilities.wctp-gateway lazy="lazy" />
             </div>
         </div>
     </div>

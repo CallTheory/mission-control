@@ -1,6 +1,6 @@
 @props(['formAction' => false])
 
-<div class="clear-both my-4">
+<div class="">
     @if($formAction)
         <form wire:submit="{{ $formAction }}">
     @endif
