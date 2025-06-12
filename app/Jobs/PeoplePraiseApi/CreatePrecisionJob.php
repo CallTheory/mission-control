@@ -3,6 +3,9 @@
 namespace App\Jobs\PeoplePraiseApi;
 
 use App\Models\DataSource;
+use App\Models\Stats\Calls\Call;
+use App\Models\Stats\Helpers;
+use App\Utilities\RenderMessageSummary;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -61,6 +64,16 @@ class CreatePrecisionJob implements ShouldQueue, ShouldBeEncrypted, ShouldBeUniq
             return;
         }
 
+        $callData = new Call(['ISCallId' => $this->call_id]);
+        $call = $callData->results[0];
+        $messageData = $call->messages[0] ?? null;
+        if(is_null($messageData)){
+            $message = 'No Message';
+        }
+        else{
+            $message = $messageData->Summary ?? 'No Message';
+        }
+
         $response = $client->request('POST', $this->api_endpoint, [
             'auth' => [$username, $password],
             'timeout' => $this->api_timeout,
@@ -72,7 +85,13 @@ class CreatePrecisionJob implements ShouldQueue, ShouldBeEncrypted, ShouldBeUniq
                 'create_datetime' =>  Carbon::parse($this->create_datetime, $datasource->timezone)->format('Y-m-d H:i:s'),
                 'notes' => $this->notes,
                 'reporter_initial' => $this->reporter_initial,
-                'object_id' => $this->call_id
+                'object_id' => $this->call_id,
+                'files' => [
+                    [
+                        'filename' => "{$this->call_id}.png",
+                        'filedata' => RenderMessageSummary::htmlToImage(Helpers::formatMessageSummary($message)),
+                    ]
+                ]
             ]
         ]);
 

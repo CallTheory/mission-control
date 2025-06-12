@@ -15,12 +15,12 @@ use Livewire\Component;
 class User extends Component
 {
     #[Locked]
-    public User $user;
+    public mixed $user;
 
     public array $agents, $roles;
     public Collection $teams;
 
-    public int $new_team, $user_agtId;
+    public int|null $new_team, $user_agtId;
 
     public string $new_role, $user_name, $user_email, $user_timezone;
 
@@ -74,7 +74,7 @@ class User extends Component
             $this->user->name = $this->user_name;
             $this->user->email = $this->user_email;
             $this->user->timezone = $this->user_timezone;
-            $this->user->agtId = $this->user_agtId;
+            $this->user->agtId = $this->user_agtId ?? null;
             $this->user->save();
             $this->dispatch('saved');
         } catch (Exception $e) {
@@ -144,7 +144,7 @@ class User extends Component
         $this->user_name = $user->name;
         $this->user_email = $user->email;
         $this->user_timezone = $user->timezone;
-        $this->user_agtId = $user->agtId;
+        $this->user_agtId = $user->agtId ?? null;
 
         try {
             $agentList = new Listing(['all' => true]);

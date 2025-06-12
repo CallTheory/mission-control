@@ -40,6 +40,7 @@ RUN apt-get update && apt-get upgrade -y \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_VERSION.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
     && apt-get update \
+    && apt-get install -y libx11-xcb1 libxcomposite1 libatk1.0-0 libatk-bridge2.0-0 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgbm1 libgcc1 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3-dev libnss3  \
     && apt-get install -y nodejs \
     && npm install -g npm \
     && npm install -g pnpm \
@@ -60,6 +61,27 @@ RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.4
 
 RUN groupadd --force -g $WWWGROUP sail
 RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 sail
+
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc
+
+RUN curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/mssql-release.list
+
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y unixodbc unixodbc-dev msodbcsql18 mssql-tools18 cmake
+
+RUN pecl install sqlsrv
+RUN pecl install pdo_sqlsrv
+
+RUN printf "; priority=20\nextension=sqlsrv.so\n" > /etc/php/8.4/mods-available/sqlsrv.ini
+RUN printf "; priority=30\nextension=pdo_sqlsrv.so\n" > /etc/php/8.4/mods-available/pdo_sqlsrv.ini
+
+RUN phpenmod sqlsrv pdo_sqlsrv
+
+RUN git clone https://github.com/ggerganov/whisper.cpp.git /opt/whisper.cpp
+RUN cd /opt/whisper.cpp && bash ./models/download-ggml-model.sh base.en && make
+RUN chown -R sail /opt/whisper.cpp/*
+
+RUN apt-get install -y sox lame libsox-fmt-all ffmpeg
 
 COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

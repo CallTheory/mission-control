@@ -45,6 +45,9 @@ composer install
 # Install JavaScript dependencies
 npm install
 
+# Install headless browser for screenshots
+npx puppeteer browsers install chrome-headless-shell
+
 # Build assets
 npm run build
 

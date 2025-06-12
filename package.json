@@ -18,6 +18,6 @@
         "wavesurfer.js": "^7.7.14"
     },
     "dependencies": {
-
+        "puppeteer": "^24.10.0"
     }
 }

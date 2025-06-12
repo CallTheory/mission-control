@@ -11,7 +11,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden  sm:rounded-lg  flex">
 
-                <div class=" w-full p-12 border  border-double bg-gray-100  shadow   mx-auto rounded-lg">
+                <div class=" w-full p-12 border border-gray-300 bg-gray-100  shadow   mx-auto rounded-lg">
 
                     <div class="mt-10 sm:mt-0">
                         <livewire:system.data-sources.intelligent lazy="lazy" />

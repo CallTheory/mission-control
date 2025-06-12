@@ -24,8 +24,6 @@
 
                 <livewire:teams.billing-numbers lazy="lazy" :team="$team" />
 
-                <x-section-border />
-
                 <livewire:teams.team-member-manager lazy="lazy" :team="$team" />
 
                 <x-section-border />
