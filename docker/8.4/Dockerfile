@@ -32,7 +32,7 @@ RUN apt-get update && apt-get upgrade -y \
        php8.4-imap php8.4-mysql php8.4-mbstring \
        php8.4-xml php8.4-zip php8.4-bcmath php8.4-soap \
        php8.4-intl php8.4-readline \
-       php8.4-ldap \
+       php8.4-ldap php8.4-mailparse \
        php8.4-msgpack php8.4-igbinary php8.4-redis \
 #       php8.4-swoole \
        php8.4-memcached php8.4-pcov php8.4-imagick php8.4-xdebug \

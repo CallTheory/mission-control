@@ -15,7 +15,7 @@
             </div>
 
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
-                <livewire:accounts.clients lazy />
+                <livewire:accounts.clients lazy="lazy" />
             </div>
         </div>
     </div>

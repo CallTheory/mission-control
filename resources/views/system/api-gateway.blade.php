@@ -17,7 +17,7 @@
             </div>
 
             <div class="w-full min-w-full p-4 mx-auto mb-4">
-                <livewire:system.api-gateway lazy />
+                <livewire:system.api-gateway lazy="lazy" />
             </div>
         </div>
     </div>

@@ -17,7 +17,7 @@
             </div>
 
             <div class="w-full min-w-full p-4 mx-auto mb-4">
-                <livewire:system.mcp-server lazy />
+                <livewire:system.mcp-server lazy="lazy" />
             </div>
         </div>
     </div>

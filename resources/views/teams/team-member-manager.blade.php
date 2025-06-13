@@ -162,7 +162,7 @@ catch(Exception $e)
                             <div class="flex items-center">
                                 <img class="w-8 h-8 rounded-full" src="{{ $team->owner->profile_photo_url }}" alt="{{ $team->owner->name }}">
                                 <div class="ml-4 ">
-                                    <livewire:teams.edit-user-profile lazy :user="$team->owner" />
+                                    <livewire:teams.edit-user-profile lazy="lazy" :user="$team->owner" />
                                 </div>
                             </div>
 
@@ -177,7 +177,7 @@ catch(Exception $e)
                                 <div class="flex items-center">
                                     <img class="w-8 h-8 rounded-full" src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}">
                                     <div class="ml-4 ">
-                                        <livewire:teams.edit-user-profile lazy :user="$user" />
+                                        <livewire:teams.edit-user-profile lazy="lazy" :user="$user" />
                                     </div>
                                 </div>
 

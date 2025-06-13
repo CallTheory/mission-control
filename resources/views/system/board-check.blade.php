@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 
                 <div class="inline-flex w-full p-2 mx-auto   mb-4">
 
-                    <livewire:system.board-check lazy />
+                    <livewire:system.board-check lazy="lazy" />
                 </div>
 
             </div>

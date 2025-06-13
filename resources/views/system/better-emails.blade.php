@@ -18,7 +18,7 @@
             </div>
 
             <div class="inline-flex min-w-full p-2 mx-auto mb-4">
-                <livewire:system.better-emails lazy />
+                <livewire:system.better-emails lazy="lazy" />
             </div>
         </div>
     </div>
