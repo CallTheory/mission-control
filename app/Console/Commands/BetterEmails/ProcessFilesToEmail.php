@@ -33,7 +33,8 @@ class ProcessFilesToEmail extends Command
     public function handle(): int
     {
         if(!Helpers::isSystemFeatureEnabled('better-emails')) {
-            return CommandStatus::FAILURE;
+            // Success, so we don't throw an error in the logs (Stack Trace, etc.)
+            return CommandStatus::SUCCESS;
         }
 
         $betterEmailSetups = BetterEmails::all();
