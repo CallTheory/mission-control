@@ -11,8 +11,8 @@ class Sources extends Stat
         if (array_key_exists('all', $this->parameters)) {
             return true;
         } elseif (
-            array_key_exists('cltId', $this->parameters) //ISCallId must be included
-            && (int) $this->parameters['cltId'] > 0) { //ISCallId must be greater than 0
+            array_key_exists('cltId', $this->parameters) // ISCallId must be included
+            && (int) $this->parameters['cltId'] > 0) { // ISCallId must be greater than 0
             return true;
         }
 

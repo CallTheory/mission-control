@@ -8,13 +8,15 @@ use Illuminate\Http\Request;
 
 class DatabaseHealthController extends Controller
 {
-    public function __invoke(Request $request){
+    public function __invoke(Request $request)
+    {
 
-        if(Helpers::isSystemFeatureEnabled('database-health') && $request->user()->currentTeam->utility_database_health){
+        if (Helpers::isSystemFeatureEnabled('database-health') && $request->user()->currentTeam->utility_database_health) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
+
             return view('utilities.database-health');
         }
 

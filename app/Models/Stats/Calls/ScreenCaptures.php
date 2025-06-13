@@ -13,9 +13,9 @@ class ScreenCaptures extends Call
 
     public function tsql(): string
     {
-        if(isset($this->parameters['ScreenCaptureData']) && $this->parameters['ScreenCaptureData'] === true){
+        if (isset($this->parameters['ScreenCaptureData']) && $this->parameters['ScreenCaptureData'] === true) {
             $query = ',vlogStreams.[Data]';
-        }else{
+        } else {
             $query = '--,vlogStreams.[Data]';
         }
 

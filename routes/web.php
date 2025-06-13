@@ -1,56 +1,57 @@
 <?php
 
-use App\Http\Controllers\PrivacyPolicyController;
-use App\Http\Controllers\SAML2\RedirectController as SAMLRedirectController;
-use App\Http\Controllers\SAML2\CallbackController as SAMLCallbackController;
-//use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
-use App\Http\Controllers\SAML2\MetadataController as SAMLMetadataController;
-use App\Http\Controllers\SAML2\DownloadCertificateController as SAMLDownloadCertificateController;
-use App\Http\Controllers\TermsOfServiceController;
-use App\Http\Controllers\Utilities\CallLookupController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RecordingController;
-use App\Http\Controllers\RedirectHomeController;
-use App\Http\Controllers\SendGrid\ParseController;
-use App\Http\Controllers\Utilities\DatabaseHealthController;
-use App\Http\Controllers\Utilities\ScriptSearchController;
-use App\Http\Controllers\System\DataSourcesController;
-use App\Http\Controllers\System\IntegrationsController;
-use App\Http\Controllers\System\PermissionsController;
-use App\Http\Controllers\System\SystemController;
-use App\Http\Controllers\Utilities\BoardCheckController;
-use App\Http\Controllers\Utilities\BoardReportController;
-use App\Http\Controllers\Utilities\BoardActivityController;
-use App\Http\Controllers\Utilities\BoardReviewController;
-use App\Http\Controllers\Utilities\CardProcessingController;
-use App\Http\Controllers\Utilities\CloudFaxingController;
-use App\Http\Controllers\Utilities\DownloadTBSReport;
-use App\Http\Controllers\Utilities\InboundEmailController;
-use App\Http\Controllers\Utilities\McpServerController;
-use App\Http\Controllers\Utilities\CsvExportController;
-use App\Http\Controllers\UtilitiesController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ScreenCaptureController;
-use App\Http\Controllers\Utilities\ApiGatewayController;
-use App\Http\Controllers\Utilities\BetterEmailController;
-use App\Http\Controllers\System\BetterEmailController as BetterEmailSettingsController;
-use App\Http\Controllers\System\PreviewBetterEmailsThemeController;
-use App\Http\Controllers\Utilities\DirectorySearchController;
-use App\Http\Controllers\EmailUnsubscribeController;
-use App\Http\Controllers\System\BoardCheckController as BoardCheckSettingsController;
-use App\Http\Controllers\System\CloudFaxingController as CloudFaxingSettingsController;
-use App\Http\Controllers\System\McpServerController as McpServerSettingsController;
-use App\Http\Controllers\System\ScriptSearchController as ScriptSearchSettingsController;
-use App\Http\Controllers\System\CsvExportController as CsvExportSettingsController;
-use App\Http\Controllers\System\SamlSettingsController;
-use App\Http\Controllers\System\ApiGatewayController as ApiGatewaySettingsController;
-use App\Http\Controllers\System\WctpGatewayController as WctpGatewaySettingsController;
-use App\Http\Controllers\Utilities\WctpGatewayController as WctpGatewayController;
-use App\Http\Controllers\System\UsersController as UsersAndGroupsController;
-use App\Http\Controllers\System\UserController as UserDetailController;
 use App\Http\Controllers\Accounts\ClientAccountsController;
 use App\Http\Controllers\Accounts\ClientDetailController;
 use App\Http\Controllers\Accounts\ClientGreetingController;
+// use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailUnsubscribeController;
+use App\Http\Controllers\PrivacyPolicyController;
+use App\Http\Controllers\RecordingController;
+use App\Http\Controllers\RedirectHomeController;
+use App\Http\Controllers\SAML2\CallbackController as SAMLCallbackController;
+use App\Http\Controllers\SAML2\DownloadCertificateController as SAMLDownloadCertificateController;
+use App\Http\Controllers\SAML2\MetadataController as SAMLMetadataController;
+use App\Http\Controllers\SAML2\RedirectController as SAMLRedirectController;
+use App\Http\Controllers\ScreenCaptureController;
+use App\Http\Controllers\SendGrid\ParseController;
+use App\Http\Controllers\System\ApiGatewayController as ApiGatewaySettingsController;
+use App\Http\Controllers\System\BetterEmailController as BetterEmailSettingsController;
+use App\Http\Controllers\System\BoardCheckController as BoardCheckSettingsController;
+use App\Http\Controllers\System\CloudFaxingController as CloudFaxingSettingsController;
+use App\Http\Controllers\System\CsvExportController as CsvExportSettingsController;
+use App\Http\Controllers\System\DataSourcesController;
+use App\Http\Controllers\System\IntegrationsController;
+use App\Http\Controllers\System\McpServerController as McpServerSettingsController;
+use App\Http\Controllers\System\PermissionsController;
+use App\Http\Controllers\System\PreviewBetterEmailsThemeController;
+use App\Http\Controllers\System\SamlSettingsController;
+use App\Http\Controllers\System\ScriptSearchController as ScriptSearchSettingsController;
+use App\Http\Controllers\System\SystemController;
+use App\Http\Controllers\System\UserController as UserDetailController;
+use App\Http\Controllers\System\UsersController as UsersAndGroupsController;
+use App\Http\Controllers\System\WctpGatewayController as WctpGatewaySettingsController;
+use App\Http\Controllers\TermsOfServiceController;
+use App\Http\Controllers\Utilities\ApiGatewayController;
+use App\Http\Controllers\Utilities\BetterEmailController;
+use App\Http\Controllers\Utilities\BoardActivityController;
+use App\Http\Controllers\Utilities\BoardCheckController;
+use App\Http\Controllers\Utilities\BoardReportController;
+use App\Http\Controllers\Utilities\BoardReviewController;
+use App\Http\Controllers\Utilities\CallLookupController;
+use App\Http\Controllers\Utilities\CardProcessingController;
+use App\Http\Controllers\Utilities\CloudFaxingController;
+use App\Http\Controllers\Utilities\CsvExportController;
+use App\Http\Controllers\Utilities\DatabaseHealthController;
+use App\Http\Controllers\Utilities\DirectorySearchController;
+use App\Http\Controllers\Utilities\DownloadTBSReport;
+use App\Http\Controllers\Utilities\InboundEmailController;
+use App\Http\Controllers\Utilities\McpServerController;
+use App\Http\Controllers\Utilities\ScriptSearchController;
+use App\Http\Controllers\Utilities\WctpGatewayController;
+use App\Http\Controllers\UtilitiesController;
+use Illuminate\Support\Facades\Route;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -87,7 +88,6 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/directory-searc
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-server', McpServerController::class)->name('utilities.mcp-server');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', CsvExportController::class)->name('utilities.csv-export');
 
-
 Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController::class)->name('system');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/data-sources', DataSourcesController::class)->name('system.data-sources');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/integrations', IntegrationsController::class)->name('system.integrations');
@@ -121,6 +121,6 @@ Route::match(['get', 'post'], '/sso/saml2/redirect', SAMLRedirectController::cla
 Route::match(['get', 'post'], '/sso/saml2/callback', SAMLCallbackController::class)->name('sso.saml2.callback');
 Route::match(['get', 'post'], '/sso/saml2/metadata', SAMLMetadataController::class)->name('sso.saml2.metadata');
 
-//SLO requires a `samesite` cookie to be set to `none`, meaning any site can post cookies. don't like it.
-//let's disable this until it's something we need...
-//Route::match(['get', 'post'], '/sso/saml2/slo', SAMLLogoutController::class)->name('sso.saml2.slo');
+// SLO requires a `samesite` cookie to be set to `none`, meaning any site can post cookies. don't like it.
+// let's disable this until it's something we need...
+// Route::match(['get', 'post'], '/sso/saml2/slo', SAMLLogoutController::class)->name('sso.saml2.slo');

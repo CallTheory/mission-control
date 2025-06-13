@@ -128,4 +128,4 @@ class ProcessingCleanupTest extends TestCase
         $this->assertTrue(Storage::exists($jsonFile));
         $this->assertTrue(Storage::exists($mp4File));
     }
-} 
+}

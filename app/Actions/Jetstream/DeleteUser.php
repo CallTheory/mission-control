@@ -11,15 +11,12 @@ class DeleteUser implements DeletesUsers
 {
     /**
      * The team deleter implementation.
-     *
-     * @var DeletesTeams
      */
     protected DeletesTeams $deletesTeams;
 
     /**
      * Create a new action instance.
      *
-     * @param DeletesTeams $deletesTeams
      * @return void
      */
     public function __construct(DeletesTeams $deletesTeams)
@@ -29,9 +26,6 @@ class DeleteUser implements DeletesUsers
 
     /**
      * Delete the given user.
-     *
-     * @param  User  $user
-     * @return void
      */
     public function delete(User $user): void
     {
@@ -45,9 +39,6 @@ class DeleteUser implements DeletesUsers
 
     /**
      * Delete the teams and team associations attached to the user.
-     *
-     * @param User $user
-     * @return void
      */
     protected function deleteTeams(User $user): void
     {

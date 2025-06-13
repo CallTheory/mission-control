@@ -28,12 +28,10 @@ class MonitorFaxBuildup extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
-        if(!Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+        if (! Helpers::isSystemFeatureEnabled('cloud-faxing')) {
             return CommandStatus::FAILURE;
         }
 

@@ -2,19 +2,19 @@
 
 namespace App\Livewire\Utilities\BetterEmail;
 
+use App\Mail\BetterEmailsUnsubscribeNotification;
 use App\Models\System\Settings;
 use Exception;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 use Livewire\Component;
-use App\Mail\BetterEmailsUnsubscribeNotification;
 
 class EmailUnsubscribe extends Component
 {
-
     public bool $unsubscribed = false;
 
     public $email;
+
     public $campaign;
 
     public array $company_details;
@@ -23,7 +23,7 @@ class EmailUnsubscribe extends Component
     {
         $this->email = $email;
         $this->campaign = $campaign;
-        if(!in_array($this->email, json_decode($this->campaign->recipients))){
+        if (! in_array($this->email, json_decode($this->campaign->recipients))) {
             abort(404);
         }
 
@@ -47,21 +47,21 @@ class EmailUnsubscribe extends Component
 
         $recipientList = json_decode($this->campaign->recipients);
         $updatedList = [];
-        foreach($recipientList as $key => $email){
-            if($email != $this->email){
+        foreach ($recipientList as $key => $email) {
+            if ($email != $this->email) {
                 $updatedList[] = $email;
             }
         }
 
-        if(count($updatedList) == 0){
+        if (count($updatedList) == 0) {
             $updatedList[] = $settings->better_emails_canspam_email;
         }
 
         $this->campaign->recipients = json_encode($updatedList);
         $notes = '';
-        try{
+        try {
             $this->campaign->save();
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $notes = "Unable to remove email from campaign.  Error: {$e->getMessage()}";
         }
 
@@ -80,7 +80,7 @@ class EmailUnsubscribe extends Component
     {
         return view('livewire.utilities.better-email.email-unsubscribe', [
             'email' => $this->email,
-            'campaign' => $this->campaign
+            'campaign' => $this->campaign,
         ]);
     }
 }

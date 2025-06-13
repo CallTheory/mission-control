@@ -28,16 +28,16 @@ class EmailRelayProcessing extends Command
     #[NoReturn]
     public function handle(): void
     {
-        $raw_email = file_get_contents("php://stdin");
-        Log::info("Raw Email", [$raw_email]);
-        //we need to get these:
+        $raw_email = file_get_contents('php://stdin');
+        Log::info('Raw Email', [$raw_email]);
+        // we need to get these:
         // subject
         // to
         // body
         $mime = mailparse_msg_create();
-        mailparse_msg_parse($mime,$raw_email);
+        mailparse_msg_parse($mime, $raw_email);
         mailparse_msg_free($mime);
-        Log::info("Mime Parsed", [$mime]);
+        Log::info('Mime Parsed', [$mime]);
         exit;
     }
 }

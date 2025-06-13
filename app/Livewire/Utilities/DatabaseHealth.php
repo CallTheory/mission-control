@@ -7,13 +7,13 @@ use App\Models\Stats\Helpers;
 use App\Models\Stats\Schedule\Maintenance;
 use App\Models\System\Settings;
 use Exception;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Illuminate\Support\Facades\App;
 use Livewire\WithPagination;
 
 class DatabaseHealth extends Component
@@ -25,12 +25,18 @@ class DatabaseHealth extends Component
 
     public $results = null;
 
-    public $maintenance_schedule, $maintenance_checklist;
+    public $maintenance_schedule;
+
+    public $maintenance_checklist;
+
     private DataSource $datasource;
 
     public string $switch_timezone;
 
-    public array $scheduleTypes, $scheduleRecurrenceTypes;
+    public array $scheduleTypes;
+
+    public array $scheduleRecurrenceTypes;
+
     public function placeholder(): string
     {
         return <<<'HTML'
@@ -64,58 +70,65 @@ class DatabaseHealth extends Component
         try {
             $this->results = DB::connection('intelligent')->selectResultSets($this->tsql());
         } catch (Exception $e) {
-            if(App::environment('local')){
+            if (App::environment('local')) {
                 throw $e;
             }
             Log::error($e->getMessage());
             $this->results = null;
         }
 
-        $maintenance = new Maintenance();
+        $maintenance = new Maintenance;
         $this->maintenance_schedule = $maintenance->details();
         $checklist = collect($this->maintenance_schedule);
 
         $this->maintenance_checklist = [
-            'archive' => $checklist->contains(function($val, int $key){
-                if($val->Action == 0){ //Archive
+            'archive' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 0) { // Archive
                     return true;
                 }
+
                 return false;
             }),
-            'purge' => $checklist->contains(function($val, int $key){
-                if($val->Action == 1){ //Purge
+            'purge' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 1) { // Purge
                     return true;
                 }
+
                 return false;
             }),
-            'archive_oncall' => $checklist->contains(function($val, int $key){
-                if($val->Action == 11){ //ArchiveOncall
+            'archive_oncall' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 11) { // ArchiveOncall
                     return true;
                 }
+
                 return false;
             }),
-            'purge_oncall' => $checklist->contains(function($val, int $key){
-                if($val->Action == 12){ //PurgeOncall
+            'purge_oncall' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 12) { // PurgeOncall
                     return true;
                 }
+
                 return false;
             }),
-            'archive_voicelogs' => $checklist->contains(function($val, int $key){
-                if($val->Action == 9){ //ArchiveVoiceLogs
+            'archive_voicelogs' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 9) { // ArchiveVoiceLogs
                     return true;
                 }
+
                 return false;
             }),
-            'purge_voicelogs' => $checklist->contains(function($val, int $key){
-                if($val->Action == 10){ //PurgevoiceLogs
+            'purge_voicelogs' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 10) { // PurgevoiceLogs
                     return true;
                 }
+
                 return false;
             }),
-            'purge_stats' => $checklist->contains(function($val, int $key){
-                if($val->Action == 8){ //PurgeStats
+            'purge_stats' => $checklist->contains(function ($val, int $key) {
+                if ($val->Action == 8) { // PurgeStats
                     return true;
                 }
+
                 return false;
             }),
         ];
@@ -126,7 +139,7 @@ class DatabaseHealth extends Component
         return view('livewire.utilities.database-health');
     }
 
-    private function tsql():string
+    private function tsql(): string
     {
         return "declare @DatabaseServerInformation nvarchar(max);
 declare @Hostname nvarchar(50) = (select convert(varchar(50),@@SERVERNAME));

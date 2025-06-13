@@ -3,13 +3,12 @@
 namespace App\Livewire\System\Integrations;
 
 use App\Models\DataSource;
+use Exception;
 use Illuminate\View\View;
 use Livewire\Component;
-use Exception;
 
 class PeoplePraise extends Component
 {
-
     public bool $isOpen = false;
 
     public array $state;

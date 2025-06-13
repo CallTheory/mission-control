@@ -41,7 +41,7 @@ class CheckInboundEmails extends Command
      */
     public function handle()
     {
-        if(Helpers::isSystemFeatureEnabled('inbound-email')) {
+        if (Helpers::isSystemFeatureEnabled('inbound-email')) {
             $emails = InboundEmail::whereNull('processed_at')->whereNull('ignored_at')->get();
 
             if ($emails->count() > 0) {

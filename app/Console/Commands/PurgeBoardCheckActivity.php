@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Symfony\Component\Console\Command\Command as CommandStatus;
 
 class PurgeBoardCheckActivity extends Command
@@ -25,8 +25,6 @@ class PurgeBoardCheckActivity extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {

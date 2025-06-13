@@ -9,6 +9,7 @@ use Livewire\Component;
 class MarketingSite extends Component
 {
     public array $state;
+
     public DataSource $datasource;
 
     public function mount(): void

@@ -18,7 +18,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class ExportBoardCheckForPeoplePraiseApi implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class ExportBoardCheckForPeoplePraiseApi implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -44,12 +44,10 @@ class ExportBoardCheckForPeoplePraiseApi implements ShouldQueue, ShouldBeUnique,
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {
-        if(Helpers::isSystemFeatureEnabled('board-check')){
+        if (Helpers::isSystemFeatureEnabled('board-check')) {
             $bcc = Helpers::boardCheckCategories();
 
             if (is_null($this->settings)) {
@@ -105,7 +103,7 @@ class ExportBoardCheckForPeoplePraiseApi implements ShouldQueue, ShouldBeUnique,
                 }
             }
 
-            //update if `largestMsgId` isn't 0, and it's bigger than the existing setting.
+            // update if `largestMsgId` isn't 0, and it's bigger than the existing setting.
             if ($this->largestMsgId > 0 && $this->largestMsgId > $this->settings->board_check_starting_msgId) {
                 $this->settings->board_check_starting_msgId = $this->largestMsgId;
                 try {

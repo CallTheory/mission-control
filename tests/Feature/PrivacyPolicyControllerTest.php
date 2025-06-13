@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
-use Laravel\Jetstream\Jetstream;
 use Tests\TestCase;
 
 final class PrivacyPolicyControllerTest extends TestCase
@@ -15,13 +14,13 @@ final class PrivacyPolicyControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up the policy.md file path
         $this->policyPath = resource_path('markdown/policy.md');
-        
+
         // Create the directory if it doesn't exist
         File::ensureDirectoryExists(dirname($this->policyPath));
-        
+
         // Create a temporary policy.md file for testing
         File::put($this->policyPath, '# Test Privacy Policy');
     }
@@ -45,4 +44,4 @@ final class PrivacyPolicyControllerTest extends TestCase
         $response->assertViewHas('policy');
         $response->assertSee('Test Privacy Policy');
     }
-} 
+}

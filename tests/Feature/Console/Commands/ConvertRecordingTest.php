@@ -24,7 +24,7 @@ class ConvertRecordingTest extends TestCase
     public function it_converts_recording_and_dispatches_transcription_job()
     {
         $isCallId = 'test-call-123';
-        
+
         // Mock the Call model and its recordingData method
         $call = $this->mock(Call::class);
         $call->shouldReceive('recordingData')
@@ -32,12 +32,12 @@ class ConvertRecordingTest extends TestCase
             ->andReturn(collect([
                 (object) [
                     'fileID' => 'file1',
-                    'Data' => 'mock-wav-data-1'
+                    'Data' => 'mock-wav-data-1',
                 ],
                 (object) [
                     'fileID' => 'file2',
-                    'Data' => 'mock-wav-data-2'
-                ]
+                    'Data' => 'mock-wav-data-2',
+                ],
             ]));
 
         $this->artisan('recording:convert', ['isCallID' => $isCallId])
@@ -60,7 +60,7 @@ class ConvertRecordingTest extends TestCase
     public function it_handles_no_recordings()
     {
         $isCallId = 'test-call-123';
-        
+
         // Mock the Call model to return empty collection
         $call = $this->mock(Call::class);
         $call->shouldReceive('recordingData')
@@ -85,7 +85,7 @@ class ConvertRecordingTest extends TestCase
     public function it_cleans_up_files_after_conversion()
     {
         $isCallId = 'test-call-123';
-        
+
         // Mock the Call model
         $call = $this->mock(Call::class);
         $call->shouldReceive('recordingData')
@@ -93,8 +93,8 @@ class ConvertRecordingTest extends TestCase
             ->andReturn(collect([
                 (object) [
                     'fileID' => 'file1',
-                    'Data' => 'mock-wav-data-1'
-                ]
+                    'Data' => 'mock-wav-data-1',
+                ],
             ]));
 
         $this->artisan('recording:convert', ['isCallID' => $isCallId])
@@ -106,4 +106,4 @@ class ConvertRecordingTest extends TestCase
         // Assert final file exists
         $this->assertTrue(Storage::exists("recordings/{$isCallId}.wav"));
     }
-} 
+}

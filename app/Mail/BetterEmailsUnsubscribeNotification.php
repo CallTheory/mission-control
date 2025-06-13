@@ -15,8 +15,11 @@ class BetterEmailsUnsubscribeNotification extends Mailable implements ShouldQueu
     use Queueable, SerializesModels;
 
     public string $unsubscribeEmail;
+
     public string $accountNumber;
+
     public string $unsubscribeTitle;
+
     public string $additionalNotes;
 
     /**

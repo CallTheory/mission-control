@@ -9,7 +9,7 @@ use LivewireUI\Modal\ModalComponent;
 
 class CallLookupModal extends ModalComponent
 {
-    public int|null $isCallID = null;
+    public ?int $isCallID = null;
 
     public array $state = [];
 
@@ -49,7 +49,7 @@ class CallLookupModal extends ModalComponent
     /**
      * @throws Exception
      */
-    public function mount(int $isCallID = null): void
+    public function mount(?int $isCallID = null): void
     {
         if ($this->isCallID) {
             $this->lookupCall();

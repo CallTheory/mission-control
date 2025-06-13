@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class MoveFailedFaxFiles implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class MoveFailedFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -27,7 +27,6 @@ class MoveFailedFaxFiles implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
     public string $fsFileName;
 
     public string $fax_provider;
-
 
     /**
      * Create a new job instance.
@@ -47,8 +46,6 @@ class MoveFailedFaxFiles implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {

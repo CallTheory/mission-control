@@ -10,15 +10,14 @@ use Illuminate\View\View;
 class ClientAccountsController extends Controller
 {
     /**
-     * @param Request $request
-     * @return View
      * @throws Exception
      */
     public function __invoke(Request $request): View
     {
-        if($request->user()->currentTeam->personal_team === true) {
+        if ($request->user()->currentTeam->personal_team === true) {
             abort(403);
         }
+
         return view('accounts.client-accounts');
     }
 }

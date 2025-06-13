@@ -15,6 +15,7 @@ final class UtilitiesControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Team $team;
 
     protected function setUp(): void

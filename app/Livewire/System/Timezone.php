@@ -10,7 +10,7 @@ class Timezone extends Component
 {
     public array $state;
 
-    public Settings  $settings;
+    public Settings $settings;
 
     public function saveSwitchTimezone(): void
     {

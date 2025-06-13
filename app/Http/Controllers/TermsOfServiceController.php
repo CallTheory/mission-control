@@ -11,9 +11,6 @@ class TermsOfServiceController extends Controller
 {
     /**
      * Show the terms of service for the application.
-     *
-     * @param Request $request
-     * @return View
      */
     public function show(Request $request): View
     {

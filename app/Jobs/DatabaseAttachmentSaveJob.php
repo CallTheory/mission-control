@@ -24,7 +24,9 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
     use Queueable;
 
     private InboundEmail $email;
+
     private string $database_actions;
+
     private array $database_commands;
 
     private DataSource $datasource;
@@ -42,8 +44,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
         $this->database_commands['action'] = $commands[1] ?? 'fail';
         $this->database_commands['table_name'] = $commands[2] ?? 'fail';
 
-        if(isset($commands[3]))
-        {
+        if (isset($commands[3])) {
             $this->database_commands['column_for_pk'] = $commands[3];
         }
         $this->email = $email;
@@ -54,41 +55,37 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
      */
     public function handle(): void
     {
-        //make sure we have a database and table
+        // make sure we have a database and table
         $validator = Validator::make($this->database_commands, [
             'database' => 'required|string|in:database',
             'action' => 'required|string|in:replace',
             'table_name' => 'required|string',
-            'column_for_pk' => 'required_if:action,merge|integer|min:1|max:255'
+            'column_for_pk' => 'required_if:action,merge|integer|min:1|max:255',
         ]);
 
-        if(!$validator->errors()->any())
-        {
-            if($this->database_commands['action'] === 'merge') {
-                try{
+        if (! $validator->errors()->any()) {
+            if ($this->database_commands['action'] === 'merge') {
+                try {
                     $this->mergeToClientDatabase();
-                }catch(Exception $e){
+                } catch (Exception $e) {
                     Log::error('Unable to merge database', ['database_commands' => $this->database_commands, 'e' => $e->getMessage()]);
                     $this->email->processed_at = Carbon::now();
                     $this->email->save();
                 }
-            } elseif($this->database_commands['action'] === 'replace'){
-                try{
+            } elseif ($this->database_commands['action'] === 'replace') {
+                try {
                     $this->replaceClientDatabase();
-                }
-                catch(Exception $e){
+                } catch (Exception $e) {
                     Log::error('Unable to replace database', ['database_commands' => $this->database_commands, 'e' => $e->getMessage()]);
                     $this->email->processed_at = Carbon::now();
                     $this->email->save();
                 }
-            }
-            else{
-               Log::error('Invalid action trying to parse database', ['database_commands' => $this->database_commands]);
+            } else {
+                Log::error('Invalid action trying to parse database', ['database_commands' => $this->database_commands]);
                 $this->email->processed_at = Carbon::now();
                 $this->email->save();
             }
-        }
-        else{
+        } else {
             Log::error('Invalid action trying to parse database action', ['errors' => $validator->errors()->toArray()]);
             $this->email->processed_at = Carbon::now();
             $this->email->save();
@@ -114,7 +111,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
             'password' => 'required|string',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             $this->email->processed_at = Carbon::now();
             $this->email->save();
             throw new Exception('Invalid datasource configuration');
@@ -132,11 +129,11 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
 
         $this->validateDatabaseConnection();
 
-        //check to see if the table exists
-        //if so, truncate the table
-        //if the database/table does not exist, we create it,
-        //then iterate through the records and save the files
-        try{
+        // check to see if the table exists
+        // if so, truncate the table
+        // if the database/table does not exist, we create it,
+        // then iterate through the records and save the files
+        try {
             Config::set('database.connections.clientdb', [
                 'driver' => 'sqlsrv',
                 'host' => $this->datasource->client_db_host,
@@ -147,11 +144,11 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
                 'encrypt' => true,
                 'trust_server_certificate' => true,
             ]);
-        }
-        catch(Exception $e){
-            Log::error('Error decrypting datasource client_db_pass: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Error decrypting datasource client_db_pass: '.$e->getMessage());
             $this->email->processed_at = Carbon::now();
             $this->email->save();
+
             return;
         }
 
@@ -159,24 +156,25 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
 
         $attachment_details = json_decode($this->email->attachment_info, true);
 
-        foreach($attachment_details as $k => $attachment_detail){
-            if($attachment_detail['type'] === 'text/csv' || $attachment_detail['type'] === 'text/plain'){
+        foreach ($attachment_details as $k => $attachment_detail) {
+            if ($attachment_detail['type'] === 'text/csv' || $attachment_detail['type'] === 'text/plain') {
                 $file_details = pathinfo($attachment_detail['filename']);
             }
         }
 
-        if(is_null($file_details)){
+        if (is_null($file_details)) {
             Log::error('No CSV file was found in attachments.');
             $this->email->processed_at = Carbon::now();
             $this->email->save();
+
             return;
         }
 
-        $filename = Str::slug($file_details['filename']) . '.' . $file_details['extension'];
+        $filename = Str::slug($file_details['filename']).'.'.$file_details['extension'];
         $csv_location = "app/inbound-email/{$this->email->id}/{$filename}";
 
         $csv = Reader::createFromString(file_get_contents(storage_path($csv_location)));
-        $csv->setEscape(''); //required in PHP8.4+
+        $csv->setEscape(''); // required in PHP8.4+
 
         $csv->setHeaderOffset(0);
         $header = $csv->getHeader(); // Get the header row
@@ -186,21 +184,19 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
             // Generate basic column names if the header row doesn't exist
             $firstRecord = $csv->first();
             $header = array_map(function ($index) {
-                return 'column_' . ($index + 1);
+                return 'column_'.($index + 1);
             }, array_keys($firstRecord));
         }
 
-        if(!Schema::connection('clientdb')->hasTable($this->database_commands['table_name'])){
+        if (! Schema::connection('clientdb')->hasTable($this->database_commands['table_name'])) {
             // Create the table schema
             Schema::connection('clientdb')->create($this->database_commands['table_name'], function ($table) use ($header) {
                 $table->increments('id');
-                foreach ($header as $column)
-                {
+                foreach ($header as $column) {
                     $column = Str::trim($column);
-                    if($this->database_commands['column_for_pk'] === $column){
+                    if ($this->database_commands['column_for_pk'] === $column) {
                         $table->string($column)->unique();
-                    }
-                    else{
+                    } else {
                         $table->string($column)->nullable();
                     }
                 }
@@ -209,17 +205,16 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
 
         $records_that_exist = [];
 
-        //Update or Insert records based on the 'column_for_pk' variable
-        foreach ($records as $record)
-        {
+        // Update or Insert records based on the 'column_for_pk' variable
+        foreach ($records as $record) {
             DB::connection('clientdb')
                 ->table($this->database_commands['table_name'])
-                ->updateOrInsert([ $this->database_commands['column_for_pk'] => $record[$this->database_commands['column_for_pk']]], $record);
+                ->updateOrInsert([$this->database_commands['column_for_pk'] => $record[$this->database_commands['column_for_pk']]], $record);
 
             $records_that_exist[] = $record['id'];
         }
 
-         DB::connection('clientdb')->table($this->database_commands['table_name'])->whereNotIn($this->database_commands['column_for_pk'], $records_that_exist)->delete();
+        DB::connection('clientdb')->table($this->database_commands['table_name'])->whereNotIn($this->database_commands['column_for_pk'], $records_that_exist)->delete();
 
         $this->email->processed_at = Carbon::now();
         $this->email->save();
@@ -235,11 +230,11 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
     {
         $this->validateDatabaseConnection();
 
-        //check to see if the table exists
-        //if so, truncate the table
-        //if the database/table does not exist, we create it,
-        //then iterate through the records and save the files
-        try{
+        // check to see if the table exists
+        // if so, truncate the table
+        // if the database/table does not exist, we create it,
+        // then iterate through the records and save the files
+        try {
             Config::set('database.connections.clientdb', [
                 'driver' => 'sqlsrv',
                 'host' => $this->datasource->client_db_host,
@@ -250,11 +245,11 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
                 'encrypt' => true,
                 'trust_server_certificate' => true,
             ]);
-        }
-        catch(Exception $e){
-            Log::error('Error decrypting datasource client_db_pass: ' . $e->getMessage());
+        } catch (Exception $e) {
+            Log::error('Error decrypting datasource client_db_pass: '.$e->getMessage());
             $this->email->processed_at = Carbon::now();
             $this->email->save();
+
             return;
         }
 
@@ -263,64 +258,65 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
         $attachment_details = json_decode($this->email->attachment_info, true);
         Log::info('Attachment details', ['attachment_details' => $attachment_details]);
 
-        foreach($attachment_details as $k => $attachment_detail){
+        foreach ($attachment_details as $k => $attachment_detail) {
             // handle attachment types here (i.e., helpscout attachments vs. plain text attachments)
-            if($attachment_detail['type'] === 'text/csv' || $attachment_detail['type'] === 'text/plain'){
+            if ($attachment_detail['type'] === 'text/csv' || $attachment_detail['type'] === 'text/plain') {
                 $file_details = pathinfo($attachment_detail['filename']);
             }
         }
 
-        if(is_null($file_details)){
+        if (is_null($file_details)) {
             Log::error('No CSV file was found in attachments.');
             $this->email->processed_at = Carbon::now();
             $this->email->save();
+
             return;
         }
 
-        $filename = Str::slug($file_details['filename']) . '.' . $file_details['extension'];
+        $filename = Str::slug($file_details['filename']).'.'.$file_details['extension'];
         $csv_location = "app/inbound-email/{$this->email->id}/{$filename}";
 
         $csv = Reader::createFromString(file_get_contents(storage_path($csv_location)));
 
-        try{
+        try {
             $csv->setHeaderOffset(0);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             Log::error('Unable to set header offset', ['database_commands' => $this->database_commands, 'csv_location' => $csv_location, 'filename' => $filename, 'email' => $this->email->id]);
+
             return;
         }
 
-        try{
+        try {
             $header = $csv->getHeader(); // Get the header row
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             Log::error('Unable to get header row', ['database_commands' => $this->database_commands, 'csv_location' => $csv_location, 'filename' => $filename, 'email' => $this->email->id]);
+
             return;
         }
 
-        try{
+        try {
             $records = $csv->getRecords(); // Get the records
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             Log::error('No records found in CSV file', ['database_commands' => $this->database_commands, 'csv_location' => $csv_location, 'filename' => $filename, 'email' => $this->email->id]);
+
             return;
         }
 
         if (empty($header)) {
             // Generate basic column names if the header row doesn't exist
-            try{
+            try {
                 $firstRecord = $csv->first();
-            }
-            catch(Exception $e){
+            } catch (Exception $e) {
                 Log::error('Unable to get first record', ['database_commands' => $this->database_commands, 'csv_location' => $csv_location, 'filename' => $filename, 'email' => $this->email->id]);
+
                 return;
             }
             $header = array_map(function ($index) {
-                return 'column_' . ($index + 1);
+                return 'column_'.($index + 1);
             }, array_keys($firstRecord));
         }
 
-        if(!Schema::connection('clientdb')->hasTable($this->database_commands['table_name'])){
+        if (! Schema::connection('clientdb')->hasTable($this->database_commands['table_name'])) {
             // Create the table schema
             Schema::connection('clientdb')->create($this->database_commands['table_name'], function ($table) use ($header) {
                 $table->increments('id');
@@ -338,8 +334,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
         DB::connection('clientdb')->table($this->database_commands['table_name'])->truncate();
         Log::error('Truncating database table', ['database_commands' => $this->database_commands, 'csv_location' => $csv_location, 'filename' => $filename, 'email' => $this->email->id]);
 
-        foreach ($records as $record)
-        {
+        foreach ($records as $record) {
             DB::connection('clientdb')->table($this->database_commands['table_name'])->insert($record);
         }
 
@@ -364,7 +359,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
             // Generate basic column names if the header row doesn't exist
             $firstRecord = $csv->first();
             $header = array_map(function ($index) {
-                return 'column_' . ($index + 1);
+                return 'column_'.($index + 1);
             }, array_keys($firstRecord));
         }
 
@@ -381,7 +376,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
             'missing_in_database' => $missingInDatabase,
             'extra_in_database' => $extraInDatabase,
             'columns_from_table' => $columns,
-            'header_from_csv' => $header
+            'header_from_csv' => $header,
         ];
     }
 }

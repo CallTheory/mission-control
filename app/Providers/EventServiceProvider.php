@@ -20,8 +20,8 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         SocialiteWasCalled::class => [
-            Saml2ExtendSocialite::class . '@handle',
-        ]
+            Saml2ExtendSocialite::class.'@handle',
+        ],
     ];
 
     /**

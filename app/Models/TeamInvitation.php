@@ -20,8 +20,6 @@ class TeamInvitation extends JetstreamTeamInvitation
 
     /**
      * Get the team that the invitation belongs to.
-     *
-     * @return BelongsTo
      */
     public function team(): BelongsTo
     {

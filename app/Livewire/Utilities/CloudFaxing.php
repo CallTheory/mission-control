@@ -24,7 +24,7 @@ class CloudFaxing extends Component
 
     public bool $confirmResendFax = false;
 
-    public string|null $faxIdToSend;
+    public ?string $faxIdToSend;
 
     protected $listeners = ['faxResent'];
 
@@ -58,7 +58,7 @@ class CloudFaxing extends Component
             $faxInfo = $this->guzzle->get("/v1/fax/{$messageId}/info");
             $this->state['faxInfo'] = json_decode($faxInfo->getBody(), true, JSON_THROW_ON_ERROR);
         } catch (Exception $e) {
-            Log::error('Documo api error' . $e->getMessage());
+            Log::error('Documo api error'.$e->getMessage());
             throw $e;
         }
 
@@ -72,12 +72,14 @@ class CloudFaxing extends Component
         if ($this->faxIdToSend === null) {
             $this->faxIdToSend = null;
             $this->confirmResendFax = false;
+
             return;
         }
 
         if ($this->datasource->mfax_api_key === null) {
             $this->faxIdToSend = null;
             $this->confirmResendFax = false;
+
             return;
         }
 
@@ -125,10 +127,9 @@ class CloudFaxing extends Component
         if ($resend->getStatusCode() !== 200) {
             $this->faxIdToSend = null;
             $this->confirmResendFax = false;
+
             return;
         }
-
-
 
         $this->confirmResendFax = false;
         $this->dispatch('resendFax', $this->faxIdToSend);
@@ -171,7 +172,7 @@ class CloudFaxing extends Component
         if (is_null($cachedAppId)) {
             try {
                 $me = $this->guzzle->get('/v1/me');
-            } catch (Exception $e) {;
+            } catch (Exception $e) {
                 return false;
             }
 
@@ -242,7 +243,7 @@ class CloudFaxing extends Component
 
     public function updateTags(): void
     {
-        //mfax only
+        // mfax only
         try {
             $existingTagList = $this->guzzle->get('/v1/tags');
         } catch (Exception $e) {

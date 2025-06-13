@@ -3,8 +3,5 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-class MergeCommISWebTrigger extends Model
-{
 
-
-}
+class MergeCommISWebTrigger extends Model {}

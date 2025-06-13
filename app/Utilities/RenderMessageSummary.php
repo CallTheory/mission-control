@@ -2,7 +2,6 @@
 
 namespace App\Utilities;
 
-
 use Exception;
 use Illuminate\Support\Facades\View;
 use Spatie\Browsershot\Browsershot;
@@ -10,8 +9,11 @@ use Spatie\Browsershot\Browsershot;
 class RenderMessageSummary
 {
     private const int DEFAULT_WIDTH = 800;
+
     private const int DEFAULT_HEIGHT = 600;
+
     private const int DEFAULT_QUALITY = 90;
+
     private const string DEFAULT_FORMAT = 'png';
 
     private const int DEFAULT_TIMEOUT = 30;

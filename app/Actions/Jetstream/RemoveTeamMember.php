@@ -15,10 +15,6 @@ class RemoveTeamMember implements RemovesTeamMembers
     /**
      * Remove the team member from the given team.
      *
-     * @param User $user
-     * @param Team $team
-     * @param User $teamMember
-     * @return void
      * @throws AuthorizationException
      * @throws ValidationException
      */
@@ -36,10 +32,6 @@ class RemoveTeamMember implements RemovesTeamMembers
     /**
      * Authorize that the user can remove the team member.
      *
-     * @param User $user
-     * @param Team $team
-     * @param User $teamMember
-     * @return void
      * @throws AuthorizationException
      */
     protected function authorize(User $user, Team $team, User $teamMember): void
@@ -53,9 +45,6 @@ class RemoveTeamMember implements RemovesTeamMembers
     /**
      * Ensure that the currently authenticated user does not own the team.
      *
-     * @param User $teamMember
-     * @param Team $team
-     * @return void
      * @throws ValidationException
      */
     protected function ensureUserDoesNotOwnTeam(User $teamMember, Team $team): void

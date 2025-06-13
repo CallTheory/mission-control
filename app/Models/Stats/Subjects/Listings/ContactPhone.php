@@ -6,7 +6,6 @@ use App\Models\Stats\Stat;
 
 class ContactPhone extends Stat
 {
-
     public function tsql(): string
     {
         return trim(<<<'TSQL'
@@ -26,10 +25,11 @@ class ContactPhone extends Stat
 
     public function validateParams(): bool
     {
-        if(isset($this->parameters[0])){
+        if (isset($this->parameters[0])) {
 
             return true;
         }
+
         return false;
     }
 

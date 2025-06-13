@@ -3,11 +3,11 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use LivewireUI\Modal\ModalComponent;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardConfirmProblem extends ModalComponent
 {
@@ -30,7 +30,7 @@ class BoardConfirmProblem extends ModalComponent
         $this->state['comments'] = $item->comments ?? null;
         $this->state['category'] = $item->category ?? null;
         BoardCheckActivity::create([
-            'activity_type' => "Opened",
+            'activity_type' => 'Opened',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -46,7 +46,7 @@ class BoardConfirmProblem extends ModalComponent
         }
 
         BoardCheckActivity::create([
-            'activity_type' => "Confirmed Problem",
+            'activity_type' => 'Confirmed Problem',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);

@@ -7,7 +7,6 @@ use Livewire\Component;
 
 class ApiGateway extends Component
 {
-
     public array $apis = [];
 
     public function mount(): void

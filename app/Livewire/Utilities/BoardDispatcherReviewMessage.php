@@ -3,19 +3,19 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\Calls\Call;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use LivewireUI\Modal\ModalComponent;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardDispatcherReviewMessage extends ModalComponent
 {
     public int $msgId;
 
-    public int|null $isCallID = null;
+    public ?int $isCallID = null;
 
     public array $state = [];
 
@@ -55,7 +55,7 @@ class BoardDispatcherReviewMessage extends ModalComponent
     /**
      * @throws Exception
      */
-    public function mount(int $msgId, int $isCallID = null): void
+    public function mount(int $msgId, ?int $isCallID = null): void
     {
         $this->isCallID = $isCallID;
 
@@ -70,7 +70,7 @@ class BoardDispatcherReviewMessage extends ModalComponent
         $this->state['category'] = $item->category ?? null;
         $this->state['agtId'] = $item->agtId ?? null;
         BoardCheckActivity::create([
-            'activity_type' => "Opened",
+            'activity_type' => 'Opened',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -94,7 +94,7 @@ class BoardDispatcherReviewMessage extends ModalComponent
             $item->save();
 
             BoardCheckActivity::create([
-                'activity_type' => "Dispatcher Flagged",
+                'activity_type' => 'Dispatcher Flagged',
                 'user_id' => Auth::user()->id,
                 'msgId' => $this->msgId,
             ]);
@@ -116,7 +116,7 @@ class BoardDispatcherReviewMessage extends ModalComponent
             $item->save();
 
             BoardCheckActivity::create([
-                'activity_type' => "Dispatcher Approved",
+                'activity_type' => 'Dispatcher Approved',
                 'user_id' => Auth::user()->id,
                 'msgId' => $this->msgId,
             ]);

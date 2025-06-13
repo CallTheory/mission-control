@@ -41,11 +41,11 @@ class ProcessRingCentralNewFaxes extends Command
     private function isFaxEnabled(): bool
     {
 
-        if(!Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+        if (! Helpers::isSystemFeatureEnabled('cloud-faxing')) {
             return false;
         }
 
-        if($this->datasource->ringcentral_client_id &&
+        if ($this->datasource->ringcentral_client_id &&
             decrypt($this->datasource->ringcentral_client_secret) &&
             decrypt($this->datasource->ringcentral_jwt_token) &&
             $this->datasource->ringcentral_api_endpoint
@@ -58,14 +58,12 @@ class ProcessRingCentralNewFaxes extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
         $this->datasource = DataSource::firstOrFail();
 
-        //check to see if Ring Central is even set up...
+        // check to see if Ring Central is even set up...
         if (! $this->isFaxEnabled()) {
             return CommandStatus::FAILURE;
         }

@@ -37,18 +37,15 @@ class ExportPeoplePraiseBoardCheckFile extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
-        if(Helpers::isSystemFeatureEnabled('board-check')) {
+        if (Helpers::isSystemFeatureEnabled('board-check')) {
             $settings = Settings::first();
 
-            if($settings->board_check_people_praise_export_method === 'file'){
+            if ($settings->board_check_people_praise_export_method === 'file') {
                 ExportBoardCheckForPeoplePraise::dispatch();
-            }
-            elseif($settings->board_check_people_praise_export_method === 'api'){
+            } elseif ($settings->board_check_people_praise_export_method === 'api') {
                 ExportBoardCheckForPeoplePraiseApi::dispatch();
             }
         }

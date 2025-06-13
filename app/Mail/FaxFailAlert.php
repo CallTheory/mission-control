@@ -24,7 +24,7 @@ class FaxFailAlert extends Mailable implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(array $fax, string $details = null)
+    public function __construct(array $fax, ?string $details = null)
     {
         $this->details = $details;
         $this->fax = $fax;

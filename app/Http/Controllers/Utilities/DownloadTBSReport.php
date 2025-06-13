@@ -11,14 +11,14 @@ class DownloadTBSReport extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Helpers::isSystemFeatureEnabled('card-processing') && $request->user()->currentTeam->utility_card_processing) {
+        if (Helpers::isSystemFeatureEnabled('card-processing') && $request->user()->currentTeam->utility_card_processing) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 
             if (session()->has('utilities.card-processing.export_file')) {
-                return  Storage::download(session()->get('utilities.card-processing.export_file'));
+                return Storage::download(session()->get('utilities.card-processing.export_file'));
             }
         }
         abort(404);

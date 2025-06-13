@@ -21,7 +21,7 @@ class ClientDb extends Component
         $this->state['client_db_port'] = $this->datasource->client_db_port ?? '';
         $this->state['client_db_data'] = $this->datasource->client_db_data ?? '';
         $this->state['client_db_user'] = $this->datasource->client_db_user ?? '';
-        //don't show the password by default, require it for changes
+        // don't show the password by default, require it for changes
         $this->state['client_db_pass'] = '';
         $this->state['client_db_pass_confirmation'] = '';
     }

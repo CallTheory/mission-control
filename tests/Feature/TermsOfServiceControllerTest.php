@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
-use Laravel\Jetstream\Jetstream;
 use Tests\TestCase;
 
 final class TermsOfServiceControllerTest extends TestCase
@@ -15,13 +14,13 @@ final class TermsOfServiceControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Set up the terms.md file path
         $this->termsPath = resource_path('markdown/terms.md');
-        
+
         // Create the directory if it doesn't exist
         File::ensureDirectoryExists(dirname($this->termsPath));
-        
+
         // Create a temporary terms.md file for testing
         File::put($this->termsPath, '# Test Terms of Service');
     }
@@ -45,4 +44,4 @@ final class TermsOfServiceControllerTest extends TestCase
         $response->assertViewHas('terms');
         $response->assertSee('Test Terms of Service');
     }
-} 
+}

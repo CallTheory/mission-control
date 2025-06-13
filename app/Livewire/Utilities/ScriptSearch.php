@@ -2,20 +2,20 @@
 
 namespace App\Livewire\Utilities;
 
-use Exception;
 use App\Models\DataSource;
+use Exception;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Component;
 use PDO;
-use Illuminate\Support\Facades\App;
 
 class ScriptSearch extends Component
 {
-
     public mixed $searchResults = null;
+
     public string $searchQuery = '';
 
     /**
@@ -39,8 +39,8 @@ class ScriptSearch extends Component
             'encrypt' => true,
             'trust_server_certificate' => true,
             'options' => [
-                PDO::SQLSRV_ATTR_QUERY_TIMEOUT => 300
-            ]
+                PDO::SQLSRV_ATTR_QUERY_TIMEOUT => 300,
+            ],
         ]);
 
         try {
@@ -48,7 +48,7 @@ class ScriptSearch extends Component
             $this->searchResults = DB::connection('intelligent')->select($this->tsql(), $params);
 
         } catch (Exception $e) {
-            if(App::environment('local')){
+            if (App::environment('local')) {
                 throw $e;
             }
             Log::error($e->getMessage());
@@ -63,9 +63,9 @@ class ScriptSearch extends Component
         return view('livewire.utilities.script-search');
     }
 
-    private function tsql():string
+    private function tsql(): string
     {
-        return "select p.pageid as PageID,
+        return 'select p.pageid as PageID,
 c.ClientName as ClientName,
 c.ClientNumber as ClientNumber,
 s.[Name] as ScriptName,
@@ -78,6 +78,6 @@ left join cltclients c on c.cltid = s.cltid
 where cast(p.script as varbinary(3)) = cast(0x1F8B08 as varbinary(3))
 and p.scriptversionID = s.activescriptversionId
 and CHARINDEX(:searchQuery, CAST(DECOMPRESS(CAST(p.script AS varbinary(max))) AS nvarchar(max))) > 0
-";
+';
     }
 }

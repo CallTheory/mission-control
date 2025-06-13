@@ -16,13 +16,16 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
-class BeautifyEmail implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class BeautifyEmail implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public array $log;
+
     public array $envelope;
+
     public int $retryAfter = 60;
+
     public BetterEmails $eml;
 
     /**
@@ -39,8 +42,6 @@ class BeautifyEmail implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {
@@ -59,7 +60,7 @@ class BeautifyEmail implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
                 'log' => $this->log,
                 'subject' => $this->eml->subject,
                 'logo' => [
-                    'src' =>  $this->eml->logo,
+                    'src' => $this->eml->logo,
                     'alt' => $this->eml->logo_alt,
                     'link' => $this->eml->logo_link,
                 ],
@@ -76,11 +77,11 @@ class BeautifyEmail implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
                     'country' => $settings->better_emails_canspam_country ?? '',
                     'email' => $settings->better_emails_canspam_email ?? '',
                     'phone' => $settings->better_emails_canspam_phone ?? '',
-                    'company' => $settings->better_emails_canspam_company ?? ''
-                ]
+                    'company' => $settings->better_emails_canspam_company ?? '',
+                ],
             ];
 
-            foreach(json_decode($this->eml->recipients) as $recipient){
+            foreach (json_decode($this->eml->recipients) as $recipient) {
                 $email_details['unsubscribe_link'] = URL::signedRoute('email-unsubscribe', ['eid' => $this->eml->id, 'email' => $recipient]);
                 Mail::to($recipient)->queue(new PrettyLog($email_details));
             }

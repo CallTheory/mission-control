@@ -24,9 +24,9 @@ class PrettyLog extends Mailable implements ShouldQueue
      */
     public function __construct(array $email_details)
     {
-        if(Validator::make(['theme' => $email_details['theme']], [
+        if (Validator::make(['theme' => $email_details['theme']], [
             'theme' => 'required|in:standard,dark,custom',
-        ])->fails()){
+        ])->fails()) {
             throw new NotFoundResourceException('Theme not found');
         }
         $this->email_details = $email_details;

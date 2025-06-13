@@ -23,7 +23,7 @@ class Mfax extends Component
         $this->datasource = DataSource::firstOrNew();
 
         if ($this->datasource->mfax_basic_auth_username === null || $this->datasource->mfax_basic_auth_password === null) {
-            //Automatically create a username / password
+            // Automatically create a username / password
             try {
                 $this->datasource->mfax_basic_auth_username = encrypt(bin2hex(random_bytes(8)));
                 $this->datasource->mfax_basic_auth_password = encrypt(bin2hex(random_bytes(8)));

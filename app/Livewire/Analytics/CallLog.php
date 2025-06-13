@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Analytics;
 
-use App\Models\Stats\Messages\Keywords;
 use App\Models\Stats\Agents\Listing;
 use App\Models\Stats\Calls\CallLog as CallLogStats;
 use App\Models\Stats\Helpers;
+use App\Models\Stats\Messages\Keywords;
 use App\Models\System\Settings;
 use Carbon\Carbon;
 use Exception;
@@ -13,10 +13,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Livewire\Attributes\Url;
-use Livewire\Attributes\On;
 
 class CallLog extends Component
 {
@@ -25,29 +25,47 @@ class CallLog extends Component
     #[Url]
     public int $page;
 
-    public array $ck = [], $st = [], $agents = [];
+    public array $ck = [];
+
+    public array $st = [];
+
+    public array $agents = [];
 
     public array $sql_params = [];
+
     public string $sql_code = '';
 
     public ?string $start_date = null;
+
     public ?string $end_date = null;
+
     public ?string $client_number = null;
+
     public ?string $ani = null;
+
     public ?string $call_type = null;
+
     public ?string $agent = null;
+
     public ?string $min_duration = null;
+
     public ?string $max_duration = null;
+
     public ?string $keyword = null;
+
     public ?string $keyword_search = null;
 
     public bool $has_any = true;
+
     public bool $has_messages = false;
+
     public bool $has_recordings = false;
+
     public bool $has_video = false;
 
     #[Locked]
     public string $sort_by = 'statCallStart.Stamp';
+
     public string $sort_direction = 'desc';
 
     public string $timezone = 'UTC';
@@ -57,20 +75,17 @@ class CallLog extends Component
     public function mount(): void
     {
 
-        try{
+        try {
             $agents = new Listing;
             $this->agents = $agents->results;
-        }
-        catch(Exception $e)
-        {
+        } catch (Exception $e) {
             $this->agents = [];
         }
 
-        try{
+        try {
             $keywords = new Keywords;
             $this->keywords = $keywords->results;
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             $this->keywords = [];
         }
 
@@ -130,20 +145,17 @@ class CallLog extends Component
     public function setSorting($field, $direction): void
     {
 
-        if($direction === 'desc'){
+        if ($direction === 'desc') {
             $this->sort_direction = 'desc';
-        }
-        else{
+        } else {
             $this->sort_direction = 'asc';
         }
 
-        if($field === 'Duration'){
+        if ($field === 'Duration') {
             $this->sort_by = 'CallDuration';
-        }
-        elseif($field === 'Stamp'){
+        } elseif ($field === 'Stamp') {
             $this->sort_by = 'statCallStart.Stamp';
-        }
-        else{
+        } else {
             $this->sort_by = 'statCallStart.Stamp';
         }
         Session::put('call_log:filter:sort_by', $this->sort_by);
@@ -151,6 +163,7 @@ class CallLog extends Component
         $this->dispatch('saved');
 
     }
+
     public function applyFilter(): void
     {
         Session::put('call_log:filter:start_date', $this->start_date);
@@ -175,7 +188,8 @@ class CallLog extends Component
         $this->dispatch('saved');
     }
 
-    public function filterCalls(): LengthAwarePaginator{
+    public function filterCalls(): LengthAwarePaginator
+    {
 
         try {
             $callLog = new CallLogStats(
@@ -209,7 +223,7 @@ class CallLog extends Component
         }
 
         $per_page = 50;
-        $starting_point = ( $this->getPage()  * $per_page) - $per_page;
+        $starting_point = ($this->getPage() * $per_page) - $per_page;
 
         return new LengthAwarePaginator(
             array_slice($callLogArray, $starting_point, $per_page),
@@ -231,6 +245,7 @@ class CallLog extends Component
     public function render(): View
     {
         $call_log = $this->filterCalls();
+
         return view('livewire.analytics.call-log', ['call_log' => $call_log]);
     }
 }

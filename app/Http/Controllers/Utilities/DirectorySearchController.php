@@ -11,9 +11,10 @@ class DirectorySearchController extends Controller
     public function __invoke(Request $request)
     {
         if (Helpers::isSystemFeatureEnabled('directory-search') && $request->user()->currentTeam->utility_directory_search) {
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
+
             return view('utilities.directory-search');
         }
 

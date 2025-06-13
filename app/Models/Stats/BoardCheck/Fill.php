@@ -19,8 +19,8 @@ class Fill extends Stat
                 if ($result->msgId > $settings->board_check_starting_msgId) {
                     $bci = BoardCheckItem::where('msgId', $result->msgId)->first();
 
-                    if (is_null($bci)) { //not an existing entry
-                        if (! is_null($result->callId) || ! is_null($result->savedCallID)) { //it has referenced callId
+                    if (is_null($bci)) { // not an existing entry
+                        if (! is_null($result->callId) || ! is_null($result->savedCallID)) { // it has referenced callId
                             $b = new BoardCheckItem;
                             $b->msgId = $result->msgId;
                             $b->callId = $result->callId ?? $result->savedCallID;
@@ -35,8 +35,8 @@ class Fill extends Stat
     public function validateParams(): bool
     {
         if (
-            array_key_exists('msgId', $this->parameters) //ISCallId must be included
-            && (int) $this->parameters['msgId'] > 0  //ISCallId must be greater than 0
+            array_key_exists('msgId', $this->parameters) // ISCallId must be included
+            && (int) $this->parameters['msgId'] > 0  // ISCallId must be greater than 0
         ) {
             return true;
         }

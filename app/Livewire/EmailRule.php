@@ -9,7 +9,7 @@ use Livewire\Component;
 
 class EmailRule extends Component
 {
-    public InboundEmailRules|null $r;
+    public ?InboundEmailRules $r;
 
     public bool $isOpen = false;
 
@@ -65,7 +65,7 @@ class EmailRule extends Component
     public function openFreshPanel(): void
     {
         $this->state = [];
-        $this->r = new InboundEmailRules();
+        $this->r = new InboundEmailRules;
         $this->state['name'] = '';
         $this->state['category'] = '';
         $this->state['rules'] = [];

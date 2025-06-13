@@ -1,5 +1,7 @@
 <?php
+
 use LightSaml\SamlConstants;
+
 return [
 
     /*
@@ -17,7 +19,7 @@ return [
     'stripe' => [
         'publishable_key' => env('STRIPE_KEY'),
         'secret_key' => env('STRIPE_SECRET'),
-        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET')
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
@@ -40,36 +42,36 @@ return [
             'cover_page_id' => env('DOCUMO_COVERPAGE_ID', ''),
         ],
         'ringcentral' => [
-            //this needs fixed eventually
-            //basically we "activate" using ring central instead of mfax with this toggle...
+            // this needs fixed eventually
+            // basically we "activate" using ring central instead of mfax with this toggle...
             'active' => env('RING_CENTRAL_ACTIVE', 0),
             'client_id' => env('RING_CENTRAL_CLIENT_ID'),
             'client_secret' => env('RING_CENTRAL_CLIENT_SECRET'),
             'jwt_token' => env('RING_CENTRAL_JWT_TOKEN'),
-            'api_endpoint' => env('RING_CENTRAL_API_ENDPOINT', 'https://platform.ringcentral.com')
+            'api_endpoint' => env('RING_CENTRAL_API_ENDPOINT', 'https://platform.ringcentral.com'),
         ],
     ],
     'saml2' => [
         'metadata' => '',
         'sp_default_binding_method' => SamlConstants::BINDING_SAML2_HTTP_POST,
-        //'sp_sls' => 'sso/saml2/slo', //same_site = none => i.e., bad security
+        // 'sp_sls' => 'sso/saml2/slo', //same_site = none => i.e., bad security
         'sp_acs' => 'sso/saml2/callback',
         'sp_certificate' => null,
         'sp_private_key' => null,
-        //'sp_private_key_passphrase' => '', //do not include unless its needed
+        // 'sp_private_key_passphrase' => '', //do not include unless its needed
         'sp_sign_assertions' => false, // or false to disable assertion signing
-        'ttl' => 60*60*24, // 24 hours
+        'ttl' => 60 * 60 * 24, // 24 hours
         'validation' => [
             'clock_skew' => 120,
-            'repeated_id_ttl' => null, //365*24*60*60
+            'repeated_id_ttl' => null, // 365*24*60*60
         ],
-        'sp_entityid' => 'sso/saml2', //needs to be full url
+        'sp_entityid' => 'sso/saml2', // needs to be full url
         'sp_tech_contact_surname' => 'Patrick',
         'sp_tech_contact_givenname' => 'Labbett',
         'sp_tech_contact_email' => 'support@calltheory.com',
         'sp_org_lang' => 'en',
         'sp_org_name' => 'Call Theory',
         'sp_org_display_name' => 'Call Theory',
-        'sp_org_url' => 'https://calltheory.com'
+        'sp_org_url' => 'https://calltheory.com',
     ],
 ];

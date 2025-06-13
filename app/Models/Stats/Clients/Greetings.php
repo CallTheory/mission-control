@@ -6,17 +6,16 @@ use App\Models\Stats\Stat;
 
 class Greetings extends Stat
 {
-
     public function validateParams(): bool
     {
-        if(array_key_exists('greetingID', $this->parameters) && (int) $this->parameters['greetingID'] > 0) {
+        if (array_key_exists('greetingID', $this->parameters) && (int) $this->parameters['greetingID'] > 0) {
             return true;
         }
         if (array_key_exists('all', $this->parameters)) {
             return true;
         } elseif (
-            array_key_exists('cltId', $this->parameters) //ISCallId must be included
-            && (int) $this->parameters['cltId'] > 0) { //ISCallId must be greater than 0
+            array_key_exists('cltId', $this->parameters) // ISCallId must be included
+            && (int) $this->parameters['cltId'] > 0) { // ISCallId must be greater than 0
             return true;
         }
 
@@ -25,8 +24,7 @@ class Greetings extends Stat
 
     public function tsql(): string
     {
-        if(array_key_exists('greetingID', $this->parameters))
-        {
+        if (array_key_exists('greetingID', $this->parameters)) {
             return trim(<<<'TSQL'
             select
                 cltGreetings.greetingID,

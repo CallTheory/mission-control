@@ -82,18 +82,17 @@ class CardProcessing extends Component
      */
     public function processCardsSmallBatch($production = false)
     {
-        //production means CHARGE CLIENTS SO BE CAREFUL
+        // production means CHARGE CLIENTS SO BE CAREFUL
         if ($production === true) {
             if (strlen(decrypt($this->datasource->stripe_prod_secret_key))) {
                 Stripe::setApiKey(decrypt($this->datasource->stripe_prod_secret_key));
                 $stripe = new StripeClient(decrypt($this->datasource->stripe_prod_secret_key));
             } else {
-                try{
+                try {
                     $validator = Validator::make(['processing' => decrypt($this->datasource->stripe_prod_secret_key)], ['processing' => 'required'], [
                         'processing' => 'Missing production Stripe API key. Please check system data sources.',
                     ]);
-                }
-                catch(Exception $e){
+                } catch (Exception $e) {
                     return response()->withErrors(['processing' => 'Missing production Stripe API key. Please check system data sources.'])->withInput();
                 }
 
@@ -106,14 +105,13 @@ class CardProcessing extends Component
                 Stripe::setApiKey(decrypt($this->datasource->stripe_test_secret_key));
                 $stripe = new StripeClient(decrypt($this->datasource->stripe_test_secret_key));
             } else {
-                try{
+                try {
                     $validator = Validator::make(['processing' => decrypt($this->datasource->stripe_test_secret_key)], ['processing' => 'required'], [
                         'processing' => 'Missing test Stripe API key. Please check system data sources.',
                     ]);
+                } catch (Exception $e) {
+                    return response()->withErrors(['processing' => 'Missing test Stripe API key. Please check system data sources.'])->withInput();
                 }
-               catch(Exception $e){
-                   return response()->withErrors(['processing' => 'Missing test Stripe API key. Please check system data sources.'])->withInput();
-               }
 
                 if ($validator->fails()) {
                     return response()->withErrors($validator)->withInput();
@@ -136,8 +134,8 @@ class CardProcessing extends Component
                             ['expand' => ['invoice_settings']]
                         );
                     } catch (Exception $e) {
-                        //If the customer is null, don't charge
-                        //But if we aren't in production, grab the first client to charge against
+                        // If the customer is null, don't charge
+                        // But if we aren't in production, grab the first client to charge against
                         if ($production === true) {
                             $customer = null;
                         } else {
@@ -154,7 +152,7 @@ class CardProcessing extends Component
 
                                 try {
                                     $pi = PaymentIntent::create([
-                                        //'setup_future_usage' => 'off_session',
+                                        // 'setup_future_usage' => 'off_session',
                                         'payment_method' => $customer->default_source,
                                         'amount' => $fmt->parseCurrency($record[7], $curr) * 100,
                                         'currency' => 'usd',
@@ -172,7 +170,7 @@ class CardProcessing extends Component
                                 $this->processResults['failures'][$record[5]] = array_merge($record, ['results' => $e->getMessage()]);
                             }
                         } else {
-                            //check if they have a default payment method set under invoice settings
+                            // check if they have a default payment method set under invoice settings
                             $invoice_settings = $customer->invoice_settings ?? null;
 
                             if (! isset($invoice_settings->default_payment_method) || $invoice_settings->default_payment_method === null) {
@@ -183,7 +181,7 @@ class CardProcessing extends Component
 
                                 try {
                                     $pi = PaymentIntent::create([
-                                        //'setup_future_usage' => 'off_session',
+                                        // 'setup_future_usage' => 'off_session',
                                         'payment_method' => $payment_method->id,
                                         'amount' => $fmt->parseCurrency($record[7], $curr) * 100,
                                         'currency' => 'usd',
@@ -204,7 +202,7 @@ class CardProcessing extends Component
                     }
                 }
 
-                //get existing data
+                // get existing data
                 $existingEntries = session()->get('utilities.card-processing.process_results');
 
                 if ($existingEntries !== null) {
@@ -238,19 +236,20 @@ class CardProcessing extends Component
 
             foreach ($this->processResults['charges'] as $stripeCustomerID => $charge) {
 
-                if(is_array($charge)) {
+                if (is_array($charge)) {
 
                     $arr = collect(array_filter($this->records, function ($k) {
                         if (strlen($k[5])) {
                             return true;
                         }
+
                         return false;
                     }));
 
                     $filtered = $arr->where(5, $stripeCustomerID);
                     $record = $filtered->first();
 
-                    //American Express, Diners Club, Discover, JCB, MasterCard, UnionPay, Visa, or Unknown
+                    // American Express, Diners Club, Discover, JCB, MasterCard, UnionPay, Visa, or Unknown
                     $cardBrands['visa'] = 'VISA';
                     $cardBrands['mastercard'] = 'MC';
                     $cardBrands['amex'] = 'AMEX';
@@ -262,7 +261,7 @@ class CardProcessing extends Component
 
                     try {
                         // $.charges.data.[0].payment_method_details.card.brand
-                        if (!isset($cardBrands[$charge['charges']['data'][0]['payment_method_details']['card']['brand']])) {
+                        if (! isset($cardBrands[$charge['charges']['data'][0]['payment_method_details']['card']['brand']])) {
                             $cardBrand = 'CC';
                         } else {
                             $cardBrand = $cardBrands[$charge['charges']['data'][0]['payment_method_details']['card']['brand']];
@@ -280,14 +279,13 @@ class CardProcessing extends Component
                         Carbon::now($export_tz)->format('Ymd'), // PaymentDate
                         $record[2], // CustRefCode
                         $record[3], // CustAccount
-                        $charge['id'], ## $charge['charges']['data'][0]['id'], // Invoice#
+                        $charge['id'], // # $charge['charges']['data'][0]['id'], // Invoice#
                         $cardBrand, // PaymentType
-                        substr($charge['id'], 3, 4), ## substr($charge['charges']['data'][0]['id'], 3, 4), // PaymtID
-                        substr($charge['id'], -8), ## substr($charge['charges']['data'][0]['id'], -8), // AuthCode
-                        number_format((float)($charge['amount_received'] / 100), 2, '.', ''), // ApprovedAmount
+                        substr($charge['id'], 3, 4), // # substr($charge['charges']['data'][0]['id'], 3, 4), // PaymtID
+                        substr($charge['id'], -8), // # substr($charge['charges']['data'][0]['id'], -8), // AuthCode
+                        number_format((float) ($charge['amount_received'] / 100), 2, '.', ''), // ApprovedAmount
                     ];
-                }
-                else{
+                } else {
                     Log::info('Billing Broken Charge', $charge ?? []);
                 }
             }
@@ -325,8 +323,8 @@ class CardProcessing extends Component
         $headers = array_slice($lines, 0, 1);
         $headers = str_getcsv($headers[0]);
 
-        //Array entries 0-16 are page header/report header details
-        //We don't need them.
+        // Array entries 0-16 are page header/report header details
+        // We don't need them.
 
         for ($i = 0; $i <= 16; $i++) {
             unset($headers[$i]);
@@ -354,7 +352,7 @@ class CardProcessing extends Component
                     $temp[32],
                 ];
 
-                //re-index our array keys and add a processed tracker
+                // re-index our array keys and add a processed tracker
                 $results[$k] = array_merge(array_values($r), ['processed' => 'no']);
             }
         }

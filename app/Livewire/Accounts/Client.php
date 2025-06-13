@@ -2,17 +2,18 @@
 
 namespace App\Livewire\Accounts;
 
+use App\Models\Stats\Clients\Client as IntelligentClient;
 use App\Models\Stats\Clients\Greetings;
 use App\Models\Stats\Clients\Sources;
 use App\Models\System\Settings;
 use Exception;
 use Illuminate\View\View;
 use Livewire\Component;
-use App\Models\Stats\Clients\Client as IntelligentClient;
 
 class Client extends Component
 {
     public string $switch_timezone = 'UTC';
+
     public string $client_number;
 
     public function mount(string $client_number): void
@@ -31,6 +32,7 @@ class Client extends Component
         $account = new IntelligentClient(['client_number' => $this->client_number]);
         $sources = new Sources(['cltId' => $account->cltId]);
         $greetings = new Greetings(['cltId' => $account->cltId]);
+
         return view('livewire.accounts.client',
             [
                 'account' => $account->details(),

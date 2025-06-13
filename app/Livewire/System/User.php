@@ -17,12 +17,23 @@ class User extends Component
     #[Locked]
     public mixed $user;
 
-    public array $agents, $roles;
+    public array $agents;
+
+    public array $roles;
+
     public Collection $teams;
 
-    public int|null $new_team, $user_agtId;
+    public ?int $new_team;
 
-    public string $new_role, $user_name, $user_email, $user_timezone;
+    public ?int $user_agtId;
+
+    public string $new_role;
+
+    public string $user_name;
+
+    public string $user_email;
+
+    public string $user_timezone;
 
     public bool $confirmingUserDeletion = false;
 
@@ -34,7 +45,7 @@ class User extends Component
         $this->clearValidation();
 
         foreach ($this->user->ownedTeams as $team) {
-            if (!$team->personal_team) {
+            if (! $team->personal_team) {
                 $this->addError('delete_user', 'A user cannot be deleted if they own a team (personal teams are excluded)');
                 exit;
             }
@@ -51,6 +62,7 @@ class User extends Component
 
         $this->user->removeApplicationData();
         $this->user->delete();
+
         return redirect()->route('system.users');
     }
 
@@ -90,6 +102,7 @@ class User extends Component
             $team = Team::findOrFail($this->new_team);
         } catch (Exception $e) {
             $this->addError('new_team', 'Matching team not found');
+
             return;
         }
 
@@ -97,18 +110,20 @@ class User extends Component
             $role = Jetstream::$roles[$this->new_role];
         } catch (Exception $e) {
             $this->addError('new_role', 'Matching role not found');
+
             return;
         }
 
         if ($this->user->ownsTeam($team)) {
             $this->addError('new_team', 'User owns this team, you cannot change roles.');
+
             return;
         }
 
         if ($this->user->belongsToTeam($team)) {
             if ($this->user->hasTeamRole($team, $role->key)) {
-                //they are on the team already
-                //they have the role being assigned already
+                // they are on the team already
+                // they have the role being assigned already
                 $this->addError('new_team', 'User already has this role on this team');
             } else {
                 $team->users()->updateExistingPivot($this->user->id, [
@@ -130,6 +145,7 @@ class User extends Component
         $this->clearValidation();
         if ($this->user->ownsTeam($team)) {
             $this->addError('remove_error', 'User owns this team, you cannot remove them.');
+
             return;
         } else {
             $team->removeUser($this->user);
@@ -138,6 +154,7 @@ class User extends Component
         }
         $this->dispatch('saved');
     }
+
     public function mount($user): void
     {
         $this->user = $user;

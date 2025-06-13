@@ -3,6 +3,7 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\BoardCheck\Fill as Recent;
 use App\Models\System\Settings;
 use Exception;
@@ -12,7 +13,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardCheck extends Component
 {
@@ -27,8 +27,8 @@ class BoardCheck extends Component
         try {
             BoardCheckItem::truncate();
             BoardCheckActivity::create([
-                'activity_type' => "Cleared all records",
-                'user_id' => Auth::user()->id
+                'activity_type' => 'Cleared all records',
+                'user_id' => Auth::user()->id,
             ]);
         } catch (Exception $e) {
         }
@@ -51,13 +51,12 @@ class BoardCheck extends Component
 
                 $fill->insertBoardCheckItems();
             } catch (Exception $e) {
-                if(App::environment('local')) {
+                if (App::environment('local')) {
                     throw new Exception($e->getMessage());
                 }
                 Log::alert($e->getMessage());
             }
         }
-
 
         $this->mount();
     }

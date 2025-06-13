@@ -8,10 +8,11 @@ use Illuminate\Http\Request;
 
 class ScriptSearchController extends Controller
 {
-    public function __invoke(Request $request){
-        if(Helpers::isSystemFeatureEnabled('script-search')&& $request->user()->currentTeam->utility_script_search){
+    public function __invoke(Request $request)
+    {
+        if (Helpers::isSystemFeatureEnabled('script-search') && $request->user()->currentTeam->utility_script_search) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 

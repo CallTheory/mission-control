@@ -42,7 +42,7 @@ class Status extends Component
             $this->monitored['amtelco_intelligent_web']->name = 'Intelligent Series miTeamWeb';
 
             if ($services->miteamweb_site) {
-                $client = new Guzzle();
+                $client = new Guzzle;
                 try {
                     $response = $client->get($services->miteamweb_site);
                     $statusCode = $response->getStatusCode();
@@ -64,7 +64,7 @@ class Status extends Component
             $this->monitored['amtelco_intelligent_api']->name = 'Intelligent Series Web REST API';
 
             if ($services->is_web_api_endpoint) {
-                $client = new Guzzle();
+                $client = new Guzzle;
                 try {
                     $response = $client->get($services->is_web_api_endpoint);
                     $statusCode = $response->getStatusCode();
@@ -87,7 +87,7 @@ class Status extends Component
             $this->monitored['customer_landing_site']->name = 'Marketing Site';
 
             if ($services->marketing_site) {
-                $client = new Guzzle();
+                $client = new Guzzle;
                 try {
                     $response = $client->get($services->marketing_site);
                     $statusCode = $response->getStatusCode();

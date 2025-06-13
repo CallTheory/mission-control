@@ -10,5 +10,4 @@ class InboundEmailRules extends Model
     use HasFactory;
 
     protected $guarded = [];
-
 }

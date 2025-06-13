@@ -13,33 +13,31 @@ use Illuminate\Support\Facades\Redis;
 class RecordingController extends Controller
 {
     /**
-     * @param Request $request
-     * @param int $isCallID
-     * @return Response
      * @throws Exception
      */
     public function __invoke(Request $request, int $isCallID): Response
     {
-        try{
+        try {
             $call = new Call(['ISCallId' => $isCallID]);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             abort(400);
         }
 
-        if(Helpers::allowedAccountAccess(
-                $call->ClientNumber,
-                $call->BillingCode ?? '',
-                $request->user()->currentTeam->allowed_accounts ?? '',
-                $request->user()->currentTeam->allowed_billing ?? ''
-            ) !== true){
+        if (Helpers::allowedAccountAccess(
+            $call->ClientNumber,
+            $call->BillingCode ?? '',
+            $request->user()->currentTeam->allowed_accounts ?? '',
+            $request->user()->currentTeam->allowed_billing ?? ''
+        ) !== true) {
             abort(403);
         }
 
         $recording = Redis::get("{$isCallID}.wav");
 
         if (! $recording) {
-           ProcessCallRecording::dispatch($isCallID);
-           return response()->noContent(202);
+            ProcessCallRecording::dispatch($isCallID);
+
+            return response()->noContent(202);
         }
 
         $headers = [

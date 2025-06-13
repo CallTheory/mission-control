@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
-class SyncMergeCommWebHooks implements ShouldQueue, ShouldBeEncrypted
+class SyncMergeCommWebHooks implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -29,14 +29,12 @@ class SyncMergeCommWebHooks implements ShouldQueue, ShouldBeEncrypted
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {
         $datasources = DataSource::firstOrFail();
 
-        if(!$datasources) {
+        if (! $datasources) {
             return;
         }
 

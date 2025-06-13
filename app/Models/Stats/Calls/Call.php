@@ -2,8 +2,8 @@
 
 namespace App\Models\Stats\Calls;
 
-use Exception;
 use App\Models\Stats\Stat;
+use Exception;
 use stdClass;
 
 class Call extends Stat
@@ -111,9 +111,9 @@ class Call extends Stat
     public function validateParams(): bool
     {
         if (
-            array_key_exists('ISCallId', $this->parameters) //ISCallId must be included
-            && is_int((int) $this->parameters['ISCallId'])  //ISCallId must be an integer value
-            && (int) $this->parameters['ISCallId'] > 0) { //ISCallId must be greater than 0
+            array_key_exists('ISCallId', $this->parameters) // ISCallId must be included
+            && is_int((int) $this->parameters['ISCallId'])  // ISCallId must be an integer value
+            && (int) $this->parameters['ISCallId'] > 0) { // ISCallId must be greater than 0
             return true;
         }
 

@@ -3,8 +3,8 @@
 namespace App\Models\Stats\Agents;
 
 use App\Models\Stats\Stat;
-use stdClass;
 use Exception;
+use stdClass;
 
 class Agent extends Stat
 {
@@ -21,13 +21,13 @@ class Agent extends Stat
     public function validateParams(): bool
     {
         if (
-            array_key_exists('agent_name', $this->parameters) //agent_name must be included
-            && strlen($this->parameters['agent_name']) > 0 //the length of agent_name must be greater than 0
+            array_key_exists('agent_name', $this->parameters) // agent_name must be included
+            && strlen($this->parameters['agent_name']) > 0 // the length of agent_name must be greater than 0
         ) {
             return true;
         } elseif (
-            array_key_exists('agtId', $this->parameters) //agtId must be included
-            && strlen($this->parameters['agtId']) > 0 //the length of agent_name must be greater than 0
+            array_key_exists('agtId', $this->parameters) // agtId must be included
+            && strlen($this->parameters['agtId']) > 0 // the length of agent_name must be greater than 0
         ) {
             return true;
         }

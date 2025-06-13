@@ -3,6 +3,7 @@
 namespace App\Models\Stats\Subjects\Listings;
 
 use App\Models\Stats\Stat;
+
 class ContactWctp extends Stat
 {
     public function tsql(): string
@@ -24,7 +25,7 @@ class ContactWctp extends Stat
 
     public function validateParams(): bool
     {
-        if(isset($this->paramaters[0])){
+        if (isset($this->paramaters[0])) {
             return true;
         }
 

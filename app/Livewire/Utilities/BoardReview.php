@@ -10,13 +10,16 @@ use Livewire\WithPagination;
 class BoardReview extends Component
 {
     use WithPagination;
+
     public $currentUrl;
 
     public $listeners = ['boardCheckSupervisorItemUpdated' => 'render'];
+
     public function mount(): void
     {
         $this->currentUrl = url()->current();
     }
+
     public function render(): View
     {
         return view('livewire.utilities.board-review', [

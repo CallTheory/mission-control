@@ -3,23 +3,23 @@
 use App\Http\Controllers\API\Agents\CallerHistoryController as CallerHistory;
 use App\Http\Controllers\API\Agents\InboundEmail\ForwardController as ForwardInboundEmail;
 use App\Http\Controllers\API\Agents\InboundEmail\ViewController as ViewInboundEmail;
-use App\Http\Controllers\API\MeController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\Utilities\KebabCaseController;
 use App\Http\Controllers\API\Integrations\StripeFillOutController as StripeFillOut;
-use App\Http\Controllers\API\Utilities\TransliterateAsciiController;
+use App\Http\Controllers\API\MeController;
 use App\Http\Controllers\API\Utilities\ApaCaseController;
-use App\Http\Controllers\API\Utilities\Base64EncodeController;
 use App\Http\Controllers\API\Utilities\Base64DecodeController;
+use App\Http\Controllers\API\Utilities\Base64EncodeController;
 use App\Http\Controllers\API\Utilities\CamelCaseController;
-use App\Http\Controllers\API\Utilities\SnakeCaseController;
-use App\Http\Controllers\API\Utilities\StudlyCaseController;
-use App\Http\Controllers\API\Utilities\TitleCaseController;
 use App\Http\Controllers\API\Utilities\IsJsonController;
 use App\Http\Controllers\API\Utilities\IsUrlController;
-use App\Models\Stats\Helpers;
-use App\Http\Controllers\API\Utilities\TextBetweenController;
+use App\Http\Controllers\API\Utilities\KebabCaseController;
 use App\Http\Controllers\API\Utilities\PregMatchController;
+use App\Http\Controllers\API\Utilities\SnakeCaseController;
+use App\Http\Controllers\API\Utilities\StudlyCaseController;
+use App\Http\Controllers\API\Utilities\TextBetweenController;
+use App\Http\Controllers\API\Utilities\TitleCaseController;
+use App\Http\Controllers\API\Utilities\TransliterateAsciiController;
+use App\Models\Stats\Helpers;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,7 +32,7 @@ use App\Http\Controllers\API\Utilities\PregMatchController;
 |
 */
 
-if(Helpers::isSystemFeatureEnabled('api-gateway')){
+if (Helpers::isSystemFeatureEnabled('api-gateway')) {
 
     Route::match(['get', 'post'], '/utilities/kebab-case', KebabCaseController::class)
         ->name('api.utilities.kebab-case');
@@ -88,7 +88,7 @@ if(Helpers::isSystemFeatureEnabled('api-gateway')){
         ->middleware('auth:sanctum');
 }
 
-if(Helpers::isSystemFeatureEnabled('inbound-email')){
+if (Helpers::isSystemFeatureEnabled('inbound-email')) {
 
     // Requires valid signed url generated from inbound email controllers
     Route::get('/agents/inbound-email/view/{email}', ViewInboundEmail::class)
@@ -99,5 +99,3 @@ if(Helpers::isSystemFeatureEnabled('inbound-email')){
     Route::post('/agents/inbound-email/forward/{email}', ForwardInboundEmail::class)
         ->name('api.agents.inbound-email.forward');
 }
-
-

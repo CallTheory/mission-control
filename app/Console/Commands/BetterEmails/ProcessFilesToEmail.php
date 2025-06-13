@@ -27,19 +27,17 @@ class ProcessFilesToEmail extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
-        if(!Helpers::isSystemFeatureEnabled('better-emails')) {
+        if (! Helpers::isSystemFeatureEnabled('better-emails')) {
             // Success, so we don't throw an error in the logs (Stack Trace, etc.)
             return CommandStatus::SUCCESS;
         }
 
         $betterEmailSetups = BetterEmails::all();
 
-        foreach($betterEmailSetups as $config){
+        foreach ($betterEmailSetups as $config) {
 
             $fileWriteFolder = storage_path("app/better-emails/{$config->client_number}/{$config->id}/");
             $filesToProcess = array_diff(scandir($fileWriteFolder), ['.', '..', '.gitignore']);
@@ -51,7 +49,7 @@ class ProcessFilesToEmail extends Command
                 $log = $parsedLog['log'] ?? null;
 
                 BeautifyEmail::dispatch($config, $log, $envelope);
-                //delete the job so it's not processed again
+                // delete the job so it's not processed again
                 Storage::delete("better-emails/{$config->client_number}/{$config->id}/{$file}");
             }
         }

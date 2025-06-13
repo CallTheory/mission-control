@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Models\BetterEmails as BetterEmailsModel;
 use Illuminate\View\View;
 use Livewire\Component;
-use App\Models\BetterEmails as BetterEmailsModel;
 use Livewire\WithPagination;
-
 
 class BetterEmails extends Component
 {
@@ -25,7 +24,7 @@ class BetterEmails extends Component
         $this->state['subject'] = $betterEmail->subject;
         $this->state['title'] = $betterEmail->title;
         $this->state['description'] = $betterEmail->description;
-        $this->state['recipients'] = implode("\n",json_decode($betterEmail->recipients));
+        $this->state['recipients'] = implode("\n", json_decode($betterEmail->recipients));
         $this->state['report_metadata'] = $betterEmail->report_metadata;
         $this->state['message_history'] = $betterEmail->message_history;
         $this->state['theme'] = $betterEmail->theme;
@@ -63,14 +62,13 @@ class BetterEmails extends Component
             'state.button_link' => 'required|string',
         ]);
 
-
         $betterEmail->client_number = $this->state['client_number'];
         $betterEmail->subject = $this->state['subject'];
         $betterEmail->title = $this->state['title'];
         $betterEmail->description = $this->state['description'];
         $betterEmail->recipients = json_encode(explode("\n", $this->state['recipients']));
         $betterEmail->report_metadata = $this->state['report_metadata'];
-        $betterEmail->message_history =$this->state['message_history'];
+        $betterEmail->message_history = $this->state['message_history'];
         $betterEmail->theme = $this->state['theme'];
         $betterEmail->logo = $this->state['logo'];
         $betterEmail->logo_alt = $this->state['logo_alt'];
@@ -83,7 +81,6 @@ class BetterEmails extends Component
         $this->dispatch('saved');
     }
 
-
     public function deleteBetterEmail(BetterEmailsModel $betterEmail): void
     {
         $betterEmail->delete();
@@ -93,6 +90,7 @@ class BetterEmails extends Component
     public function render(): View
     {
         $logs = BetterEmailsModel::paginate(25);
+
         return view('livewire.utilities.better-emails', ['logs' => $logs]);
     }
 }

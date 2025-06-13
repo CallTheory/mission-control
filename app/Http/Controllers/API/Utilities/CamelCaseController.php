@@ -12,14 +12,15 @@ use Illuminate\Support\Str;
 
 class CamelCaseController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
         $settings = Settings::firstOrFail();
 
-        if($settings->api_whitelist){
+        if ($settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
-        if($settings->require_api_tokens){
+        if ($settings->require_api_tokens) {
             $this->middleware('auth:sanctum');
         }
 
@@ -32,8 +33,8 @@ class CamelCaseController extends Controller
     {
         $string = $request->input('string') ?? null;
 
-        if($string === null){
-            abort(400, 'Missing `string` parameter (GET or POST)' );
+        if ($string === null) {
+            abort(400, 'Missing `string` parameter (GET or POST)');
         }
 
         $validator = Validator::make([
@@ -48,10 +49,10 @@ class CamelCaseController extends Controller
             abort(400, App::environment('local') ? $validator->messages()->first() : 'Failed validation of `string` values.');
         }
 
-        return response()->json( $this->camel_case($string), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return response()->json($this->camel_case($string), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    private function camel_case( string $string): string
+    private function camel_case(string $string): string
     {
         return Str::camel($string);
     }

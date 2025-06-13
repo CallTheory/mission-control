@@ -10,9 +10,9 @@ class CardProcessingController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Helpers::isSystemFeatureEnabled('card-processing') && $request->user()->currentTeam->utility_card_processing) {
+        if (Helpers::isSystemFeatureEnabled('card-processing') && $request->user()->currentTeam->utility_card_processing) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 

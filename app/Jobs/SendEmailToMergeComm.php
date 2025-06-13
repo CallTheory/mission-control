@@ -18,7 +18,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\URL;
 
-class SendEmailToMergeComm implements ShouldQueue, ShouldBeEncrypted
+class SendEmailToMergeComm implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -32,8 +32,6 @@ class SendEmailToMergeComm implements ShouldQueue, ShouldBeEncrypted
 
     /**
      * Delete the job if its models no longer exist.
-     *
-     * @var bool
      */
     public bool $deleteWhenMissingModels = true;
 
@@ -47,7 +45,6 @@ class SendEmailToMergeComm implements ShouldQueue, ShouldBeEncrypted
     /**
      * Execute the job.
      *
-     * @return void
      * @throws GuzzleException
      * @throws Exception
      */
@@ -68,7 +65,7 @@ class SendEmailToMergeComm implements ShouldQueue, ShouldBeEncrypted
 
         $params = [
             'clientId' => $this->config->clientId,
-            //'clientNumber' => '6145551234', //undocumented, but working, per amtelco...?????
+            // 'clientNumber' => '6145551234', //undocumented, but working, per amtelco...?????
             'listId' => 0,
             'apiKey' => $this->config->apiKey,
             'Parameters' => 'email',

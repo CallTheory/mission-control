@@ -15,13 +15,13 @@ class Maintenance extends Stat
 
     public function details(): array|\stdClass|null
     {
-        //We want all the objects
+        // We want all the objects
         return $this->results;
     }
 
     public function validateParams(): bool
     {
-        //no params
+        // no params
         return true;
     }
 

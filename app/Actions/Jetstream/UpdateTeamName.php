@@ -15,10 +15,6 @@ class UpdateTeamName implements UpdatesTeamNames
     /**
      * Validate and update the given team's name.
      *
-     * @param User $user
-     * @param Team $team
-     * @param array $input
-     * @return void
      * @throws AuthorizationException
      * @throws ValidationException
      */

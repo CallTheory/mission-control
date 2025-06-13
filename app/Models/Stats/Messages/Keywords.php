@@ -8,12 +8,14 @@ class Keywords extends Stat
 {
     public function validateParams(): bool
     {
-        return true; //no parameters to validate
+        return true; // no parameters to validate
     }
-    public function details(): array|null
+
+    public function details(): ?array
     {
         return $this->results ?? null;
     }
+
     public function tsql(): string
     {
         return trim(<<<'TSQL'

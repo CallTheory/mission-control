@@ -7,7 +7,6 @@ use StdClass;
 
 class Transcriptions extends Call
 {
-
     public array $parameters;
 
     public function details(): stdClass|array|null
@@ -17,18 +16,17 @@ class Transcriptions extends Call
         $transcription = json_decode(Redis::get($redis_key), true);
 
         $formatted_divs = '';
-        if($transcription && isset($transcription['transcription'])){
-            foreach($transcription['transcription'] as $transcription_line) {
+        if ($transcription && isset($transcription['transcription'])) {
+            foreach ($transcription['transcription'] as $transcription_line) {
                 $formatted_divs .= "<span class=\"text-sm\" data-offsetFrom=\"{$transcription_line['offsets']['from']}\" data-offsetTo=\"{$transcription_line['offsets']['to']}\">{$transcription_line['text']}</span>";
             }
         }
 
-        if(strlen($formatted_divs)){
+        if (strlen($formatted_divs)) {
             return [
                 'html' => $formatted_divs ?? '',
             ];
-        }
-        else{
+        } else {
             return null;
         }
 

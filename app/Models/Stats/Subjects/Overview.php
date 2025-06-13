@@ -8,7 +8,7 @@ class Overview extends Stat
 {
     public function validateParams(): bool
     {
-        return true; //no parameters
+        return true; // no parameters
     }
 
     public function tsql(): string

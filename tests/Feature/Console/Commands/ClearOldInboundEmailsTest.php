@@ -22,11 +22,11 @@ class ClearOldInboundEmailsTest extends TestCase
     {
         // Create old and new inbound emails
         $oldEmail = InboundEmail::factory()->create([
-            'created_at' => now()->subDays(config('utilities.inbound-email.days_to_keep') + 1)
+            'created_at' => now()->subDays(config('utilities.inbound-email.days_to_keep') + 1),
         ]);
 
         $newEmail = InboundEmail::factory()->create([
-            'created_at' => now()->subDays(config('utilities.inbound-email.days_to_keep') - 1)
+            'created_at' => now()->subDays(config('utilities.inbound-email.days_to_keep') - 1),
         ]);
 
         // Create attachment directories
@@ -34,7 +34,7 @@ class ClearOldInboundEmailsTest extends TestCase
         Storage::makeDirectory("inbound-email/{$newEmail->id}");
 
         $this->artisan('app:clear-old-inbound-emails')
-            ->expectsOutput('Removing inbound emails older than ' . config('utilities.inbound-email.days_to_keep') . ' days')
+            ->expectsOutput('Removing inbound emails older than '.config('utilities.inbound-email.days_to_keep').' days')
             ->assertExitCode(0);
 
         // Assert old email and its attachments are deleted
@@ -54,7 +54,7 @@ class ClearOldInboundEmailsTest extends TestCase
         Storage::makeDirectory("inbound-email/{$nonExistentEmailId}");
 
         $this->artisan('app:clear-old-inbound-emails')
-            ->expectsOutput('Removing inbound emails older than ' . config('utilities.inbound-email.days_to_keep') . ' days')
+            ->expectsOutput('Removing inbound emails older than '.config('utilities.inbound-email.days_to_keep').' days')
             ->assertExitCode(0);
 
         // Assert orphaned directory is removed
@@ -65,10 +65,10 @@ class ClearOldInboundEmailsTest extends TestCase
     public function it_handles_empty_inbound_emails_table()
     {
         $this->artisan('app:clear-old-inbound-emails')
-            ->expectsOutput('Removing inbound emails older than ' . config('utilities.inbound-email.days_to_keep') . ' days')
+            ->expectsOutput('Removing inbound emails older than '.config('utilities.inbound-email.days_to_keep').' days')
             ->assertExitCode(0);
 
         // Command should complete successfully with no errors
         $this->assertTrue(true);
     }
-} 
+}

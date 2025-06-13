@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class MoveSuccessfulFaxFiles implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -46,8 +46,6 @@ class MoveSuccessfulFaxFiles implements ShouldQueue, ShouldBeUnique, ShouldBeEnc
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(): void
     {

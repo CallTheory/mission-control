@@ -16,15 +16,16 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 
-class ProcessScreenCapture implements ShouldQueue, ShouldBeEncrypted, ShouldBeUnique
+class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected int $timeout = 300;
+
     protected int $processTimeout = 295;
 
-
     protected string $isCallID;
+
     /**
      * Create a new job instance.
      */
@@ -36,30 +37,30 @@ class ProcessScreenCapture implements ShouldQueue, ShouldBeEncrypted, ShouldBeUn
 
     /**
      * Execute the job.
+     *
      * @throws Exception
      */
     public function handle(): void
     {
-        try{
+        try {
             $call = new Call(['ISCallId' => $this->isCallID, 'ScreenCaptureData' => true]);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             return;
         }
 
-        //clear any previous artifacts
+        // clear any previous artifacts
         $this->cleanupStorage($this->isCallID);
 
         $screenCapture = $call->screenCapture();
-        foreach($screenCapture as $capture){
-            //save a recording file to a temp path
+        foreach ($screenCapture as $capture) {
+            // save a recording file to a temp path
             $recordingPath[$capture->fileID] = "screencapture/{$this->isCallID}/{$capture->fileID}.mp4";
             Storage::put($recordingPath[$capture->fileID], $capture->Data);
         }
 
         $files = Storage::files("screencapture/{$this->isCallID}");
 
-        $concat_list  = '';
+        $concat_list = '';
 
         foreach ($files as $file) {
             $path = storage_path("app/{$file}");
@@ -70,14 +71,14 @@ class ProcessScreenCapture implements ShouldQueue, ShouldBeEncrypted, ShouldBeUn
         $concat_file = storage_path("app/screencapture/{$this->isCallID}.txt");
         $mp4_file = storage_path("app/screencapture/{$this->isCallID}.mp4");
 
-        try{
+        try {
             // -safe 0 is required to allow for paths ("/") in the file names
             $process = Process::timeout($this->processTimeout)->run("ffmpeg -y -f concat -safe 0 -i {$concat_file} -c:a copy {$mp4_file}")->throw();
-        }
-        catch(Exception $e){
-            if(App::environment('local')){
+        } catch (Exception $e) {
+            if (App::environment('local')) {
                 throw $e;
             }
+
             return;
         }
 

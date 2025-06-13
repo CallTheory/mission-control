@@ -11,11 +11,11 @@ class CloudFaxingController extends Controller
 {
     public function __invoke(Request $request, $provider = 'mfax')
     {
-        if(Helpers::isSystemFeatureEnabled('cloud-faxing') && $request->user()->currentTeam->utility_cloud_faxing) {
+        if (Helpers::isSystemFeatureEnabled('cloud-faxing') && $request->user()->currentTeam->utility_cloud_faxing) {
             $user = Auth::user();
             $agent = null;
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 
@@ -33,12 +33,9 @@ class CloudFaxingController extends Controller
                 abort(403);
             }
 
-            if($provider === 'ringcentral')
-            {
+            if ($provider === 'ringcentral') {
                 return view('utilities.cloud-faxing-ringcentral');
-            }
-            else
-            {
+            } else {
                 return view('utilities.cloud-faxing');
             }
         }

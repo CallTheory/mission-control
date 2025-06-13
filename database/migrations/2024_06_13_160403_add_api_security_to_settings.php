@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('settings', function (Blueprint $table) {
-            $table->json('api_whitelist')->nullable(); //JSON array of IP addresses to allow
-            $table->boolean('require_api_tokens')->default(false); //require sanctum auth
+            $table->json('api_whitelist')->nullable(); // JSON array of IP addresses to allow
+            $table->boolean('require_api_tokens')->default(false); // require sanctum auth
         });
     }
 

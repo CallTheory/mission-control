@@ -9,8 +9,8 @@ class Message extends Stat
     public function validateParams(): bool
     {
         if (
-            array_key_exists('msgId', $this->parameters) //msgId must be included
-            && (int) $this->parameters['msgId'] > 0) { //msgId must be greater than 0
+            array_key_exists('msgId', $this->parameters) // msgId must be included
+            && (int) $this->parameters['msgId'] > 0) { // msgId must be greater than 0
             return true;
         }
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Controllers;
 
-use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 final class RedirectHomeControllerTest extends TestCase
 {
@@ -17,4 +17,4 @@ final class RedirectHomeControllerTest extends TestCase
 
         $response->assertRedirect('/dashboard');
     }
-} 
+}

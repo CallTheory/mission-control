@@ -17,12 +17,14 @@ use RingCentral\SDK\SDK as RingCentralSDK;
 class CloudFaxingRingCentral extends Component
 {
     #[Locked]
-    public string|null $client_id = null;
+    public ?string $client_id = null;
 
     #[Locked]
     public string $client_secret;
+
     #[Locked]
     public string $jwtToken;
+
     #[Locked]
     public string $api_endpoint;
 
@@ -34,7 +36,7 @@ class CloudFaxingRingCentral extends Component
 
     public bool $confirmResendFax = false;
 
-    public string|null $faxIdToSend;
+    public ?string $faxIdToSend;
 
     protected $listeners = ['faxResent'];
 
@@ -47,10 +49,10 @@ class CloudFaxingRingCentral extends Component
     {
         $this->datasource = DataSource::firstOrFail();
         $this->client_id = $this->datasource->ringcentral_client_id ?? '';
-        try{
+        try {
             $this->client_secret = decrypt($this->datasource->ringcentral_client_secret) ?? '';
             $this->jwtToken = decrypt($this->datasource->ringcentral_jwt_token) ?? '';
-        }catch(Exception $e){
+        } catch (Exception $e) {
             $this->client_secret = '';
             $this->jwtToken = '';
         }
@@ -64,7 +66,7 @@ class CloudFaxingRingCentral extends Component
 
         $this->state['files_to_send_count'] = 0;
         $this->state['files_in_sent_count'] = 0;
-        $this->state['files_in_fail_count'] =0;
+        $this->state['files_in_fail_count'] = 0;
         $this->state['files_in_pre_count'] = 0;
     }
 
@@ -76,17 +78,17 @@ class CloudFaxingRingCentral extends Component
         /* Authenticate a user using a personal JWT token */
         try {
             // Instantiate the SDK and get the platform instance
-            $rcsdk = new RingCentralSDK( $this->client_id, $this->client_secret, $this->api_endpoint );
+            $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
             $platform = $rcsdk->platform();
-            $platform->login(["jwt" => $this->jwtToken]);
-        }
-        catch (Exception $e) {
+            $platform->login(['jwt' => $this->jwtToken]);
+        } catch (Exception $e) {
             Log::error($e->getMessage());
+
             return;
         }
 
         try {
-            $endpoint = "/restapi/v1.0/account/~/extension/~/message-store/".$messageId;
+            $endpoint = '/restapi/v1.0/account/~/extension/~/message-store/'.$messageId;
             $resp = $platform->get($endpoint);
             $this->state['faxInfo'] = $resp->jsonArray();
 
@@ -98,7 +100,6 @@ class CloudFaxingRingCentral extends Component
         $this->faxIdToSend = $messageId;
         $this->confirmResendFax = true;
 
-        return;
     }
 
     /**
@@ -109,19 +110,21 @@ class CloudFaxingRingCentral extends Component
         if ($this->faxIdToSend === null) {
             $this->faxIdToSend = null;
             $this->confirmResendFax = false;
+
             return;
         }
 
         $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
         $platform = $rcsdk->platform();
         try {
-            $platform->login(["jwt" => $this->jwtToken]);
+            $platform->login(['jwt' => $this->jwtToken]);
         } catch (Exception $e) {
             Log::error($e->getMessage());
+
             return;
         }
         try {
-            $endpoint = "/restapi/v1.0/account/~/extension/~/fax";
+            $endpoint = '/restapi/v1.0/account/~/extension/~/fax';
             $resp = $platform->get($endpoint);
 
             $bodyParams = $rcsdk->createMultipartBuilder()
@@ -133,7 +136,7 @@ class CloudFaxingRingCentral extends Component
             $resp = $platform->sendRequest($bodyParams);
 
         } catch (Exception $e) {
-            if(App::environment('local')){
+            if (App::environment('local')) {
                 throw $e;
             }
             Log::error($e->getMessage());
@@ -158,48 +161,48 @@ class CloudFaxingRingCentral extends Component
 
         $cachedResults = Redis::get('cloud-faxing:ring-central:failed-faxes');
         if ($cachedResults !== null) {
-            //Log::alert('Ring Central - Using cached results in display');
+            // Log::alert('Ring Central - Using cached results in display');
             return json_decode($cachedResults, true, 512, JSON_THROW_ON_ERROR);
         }
 
-        if(!is_null($this->client_id) && $this->client_id !== '')
-        {
+        if (! is_null($this->client_id) && $this->client_id !== '') {
             try {
-                $rcsdk = new RingCentralSDK( $this->client_id, $this->client_secret, $this->api_endpoint );
+                $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
                 $platform = $rcsdk->platform();
-                $platform->login(["jwt" => $this->jwtToken]);
-            }
-            catch (Exception $e) {
+                $platform->login(['jwt' => $this->jwtToken]);
+            } catch (Exception $e) {
                 Log::error($e->getMessage());
+
                 return false;
             }
-        }
-        else{
+        } else {
             return false;
         }
 
         try {
             $now = Carbon::now();
             $queryParams = [
-                //The default value is dateTo minus 24 hours
-                //'dateFrom' => '2023-01-01T00:00:00.000Z',
-                //'dateFrom' => $now->copy()->subHours(24)->format('c'),
-                //The default value is current time
-                //'dateTo' => '2023-01-31T23:59:59.999Z',
-                //'dateTo' => $now->format('c'),
-                'messageType' => ["Fax"],
-                'perPage' => 50
+                // The default value is dateTo minus 24 hours
+                // 'dateFrom' => '2023-01-01T00:00:00.000Z',
+                // 'dateFrom' => $now->copy()->subHours(24)->format('c'),
+                // The default value is current time
+                // 'dateTo' => '2023-01-31T23:59:59.999Z',
+                // 'dateTo' => $now->format('c'),
+                'messageType' => ['Fax'],
+                'perPage' => 50,
             ];
 
-            $endpoint = "/restapi/v1.0/account/~/extension/~/message-store";
+            $endpoint = '/restapi/v1.0/account/~/extension/~/message-store';
 
             $resp = $platform->get($endpoint, $queryParams);
             $jsonArray = $resp->jsonArray();
             Redis::setEx('cloud-faxing:ring-central:failed-faxes', 15, json_encode($jsonArray['records'], JSON_UNESCAPED_SLASHES));
+
             return $jsonArray['records'];
 
         } catch (Exception $e) {
             Log::error($e->getMessage());
+
             return false;
         }
 
@@ -217,12 +220,11 @@ class CloudFaxingRingCentral extends Component
         $this->state['files_in_fail_count'] = count($this->state['files_in_fail']);
         $this->state['files_in_pre_count'] = count($this->state['files_in_pre']);
 
-        try{
+        try {
             $this->state['ringcentral_failed_faxes'] = $this->getFailedFaxes();
-        }
-        catch(Exception $e ){
+        } catch (Exception $e) {
             Log::error($e->getMessage());
-            $this->state['ringcentral_failed_faxes']  = [];
+            $this->state['ringcentral_failed_faxes'] = [];
 
         }
     }

@@ -22,4 +22,4 @@ class SyncISDataTest extends TestCase
 
         Queue::assertPushed(SyncMergeCommWebHooks::class);
     }
-} 
+}

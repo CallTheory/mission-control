@@ -3,35 +3,31 @@
 namespace App\Http\Controllers\System;
 
 use App\Http\Controllers\Controller;
-use Exception;
-use Illuminate\Http\Request;
 use App\Mail\PrettyLog;
 use App\Models\Stats\Helpers;
+use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
-
 
 class PreviewBetterEmailsThemeController extends Controller
 {
     /**
-     * @param Request $request
-     * @param $theme
-     * @return PrettyLog
      * @throws Exception
      */
     public function __invoke(Request $request, $theme): PrettyLog
     {
-        if($request->user()->currentTeam->personal_team === true) {
+        if ($request->user()->currentTeam->personal_team === true) {
             abort(403);
         }
 
-        $file_name = $request->get('example_file','messages 5520 06042024-070000.txt');
+        $file_name = $request->get('example_file', 'messages 5520 06042024-070000.txt');
         $parsedLog = Helpers::parseMessageLog("better-emails/{$file_name}");
 
         $email_details = [
             'theme' => $theme,
             'include' => [
                 'report_metadata' => $request->get('report_metadata'),
-                'message_history' => $request->get('message_history')
+                'message_history' => $request->get('message_history'),
             ],
             'title' => $request->get('title') ?? 'Messages from your call center',
             'description' => $request->get('description') ?? 'Your daily message log',
@@ -39,7 +35,7 @@ class PreviewBetterEmailsThemeController extends Controller
             'log' => $parsedLog['log'],
             'subject' => $request->get('subject') ?? 'Messages from your call center',
             'logo' => [
-                'src' =>  $request->get('logo') ?? url('/images/mission-control.png'),
+                'src' => $request->get('logo') ?? url('/images/mission-control.png'),
                 'alt' => $request->get('logo_alt') ?? 'Mission Control',
                 'link' => $request->get('logo_link') ?? url('/'),
             ],
@@ -58,15 +54,15 @@ class PreviewBetterEmailsThemeController extends Controller
                 'phone' => $request->get('canspam_phone') ?? '614-555-1234',
                 'company' => $request->get('canspam_company') ?? 'Mission Control',
             ],
-            'unsubscribe_link' => URL::signedRoute('email-unsubscribe', ['eid' => 1 ,'email' => 'test@test.com'])
+            'unsubscribe_link' => URL::signedRoute('email-unsubscribe', ['eid' => 1, 'email' => 'test@test.com']),
         ];
 
-        try{
+        try {
             $email = new PrettyLog($email_details);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             abort(500);
         }
+
         return $email;
     }
 }

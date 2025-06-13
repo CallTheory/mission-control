@@ -31,9 +31,9 @@ class RecentCaller
     /**
      * @throws Exception
      */
-    public function recent(int $results_to_return = null ): array
+    public function recent(?int $results_to_return = null): array
     {
-        if($results_to_return){
+        if ($results_to_return) {
             $this->results_to_return = $results_to_return;
         }
 
@@ -85,8 +85,7 @@ class RecentCaller
 
                     foreach ($fields as $arrayIterator => $fieldArray) {
                         foreach ($fieldArray as $fieldKey => $fieldValue) {
-                            if($fieldValue)
-                            {
+                            if ($fieldValue) {
                                 $fields[$arrayIterator][$fieldKey] = trim(str_replace('*', '', $fieldValue));
                             }
 
@@ -96,10 +95,10 @@ class RecentCaller
                                 }
                             } else {
                                 if (count($wanted) > 0) {
-                                    //We want to remove unwanted fields to de-dupe
+                                    // We want to remove unwanted fields to de-dupe
                                     unset($fields[$arrayIterator][$fieldKey]);
                                 }
-                                //return all fields for every record
+                                // return all fields for every record
                             }
                         }
                     }

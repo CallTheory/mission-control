@@ -12,8 +12,8 @@ class InboundEmailController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Helpers::isSystemFeatureEnabled('inbound-email') && $request->user()->currentTeam->utility_inbound_email) {
-            if($request->user()->currentTeam->personal_team === true) {
+        if (Helpers::isSystemFeatureEnabled('inbound-email') && $request->user()->currentTeam->utility_inbound_email) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 
@@ -27,8 +27,7 @@ class InboundEmailController extends Controller
                 $rules = InboundEmailRules::all();
 
                 return view('utilities.inbound-email')->with('emails', $emails)->with('rules', $rules);
-            }else
-            {
+            } else {
                 abort(403);
             }
         }

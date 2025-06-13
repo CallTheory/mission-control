@@ -30,8 +30,6 @@ class JetstreamServiceProvider extends ServiceProvider
 
     /**
      * Bootstrap any application services.
-     *
-     * @return void
      */
     public function boot(): void
     {
@@ -52,7 +50,7 @@ class JetstreamServiceProvider extends ServiceProvider
         }
 
         if ($user_count > 0) {
-            //disable the registration view after the first user is created
+            // disable the registration view after the first user is created
             Fortify::registerView(function () {
                 abort(404);
             });
@@ -61,8 +59,6 @@ class JetstreamServiceProvider extends ServiceProvider
 
     /**
      * Configure the roles and permissions that are available within the application.
-     *
-     * @return void
      */
     protected function configurePermissions(): void
     {

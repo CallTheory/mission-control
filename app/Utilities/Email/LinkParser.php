@@ -10,7 +10,7 @@ class LinkParser
     public static function parse($text): array
     {
         $links = Arr::where(explode(' ', $text), function ($value, $key) {
-            //Get all of our well-formed http links
+            // Get all of our well-formed http links
             return Str::startsWith($value, '<http') && Str::endsWith($value, '>');
         });
 

@@ -8,10 +8,11 @@ use Illuminate\Http\Request;
 
 class WctpGatewayController extends Controller
 {
-    public function __invoke( Request $request){
-        if(Helpers::isSystemFeatureEnabled('wctp-gateway') && $request->user()->currentTeam->utility_wctp_gateway){
+    public function __invoke(Request $request)
+    {
+        if (Helpers::isSystemFeatureEnabled('wctp-gateway') && $request->user()->currentTeam->utility_wctp_gateway) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 

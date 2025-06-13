@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 class TotalAbandon extends Stat
 {
     private string $allowed_accounts;
+
     private string $allowed_billing;
 
     public function __construct(array $parameters)
@@ -31,42 +32,44 @@ class TotalAbandon extends Stat
 
     public function tsql(): string
     {
-        if(strlen($this->allowed_accounts)){
+        if (strlen($this->allowed_accounts)) {
             $allowed_accounts_filter = '';
-            $items = explode(",", implode(",", array_filter(explode("\n", trim($this->allowed_accounts)))));
-            foreach($items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
+            $items = explode(',', implode(',', array_filter(explode("\n", trim($this->allowed_accounts)))));
+            foreach ($items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
                     $allowed_accounts_filter .= "or cltClients.ClientNumber between {$parts[0]} and {$parts[1]}\n";
-                }
-                else{
+                } else {
                     $allowed_accounts_filter .= "or cltClients.ClientNumber in ({$item})\n";
                 }
             }
 
-            if(Str::startsWith($allowed_accounts_filter, 'or' )){
-                $allowed_accounts_filter = "and (" . substr($allowed_accounts_filter, 2) . ")\n";
+            if (Str::startsWith($allowed_accounts_filter, 'or')) {
+                $allowed_accounts_filter = 'and ('.substr($allowed_accounts_filter, 2).")\n";
             }
-        }else{ $allowed_accounts_filter = '';}
+        } else {
+            $allowed_accounts_filter = '';
+        }
 
-        if(strlen($this->allowed_billing)){
+        if (strlen($this->allowed_billing)) {
             $allowed_billing_filter = '';
-            $items = explode(",", implode(",", array_filter(explode("\n", trim($this->allowed_billing)))));
-            foreach($items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
+            $items = explode(',', implode(',', array_filter(explode("\n", trim($this->allowed_billing)))));
+            foreach ($items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
                     $allowed_billing_filter .= "or cltClients.BillingCode between {$parts[0]} and {$parts[1]}\n";
-                }
-                else{
+                } else {
                     $allowed_billing_filter .= "or cltClients.BillingCode in ({$item})\n";
                 }
             }
 
-            if(Str::startsWith($allowed_billing_filter, 'or' )){
-                $allowed_billing_filter = "and (" . substr($allowed_billing_filter, 2) . ")\n";
+            if (Str::startsWith($allowed_billing_filter, 'or')) {
+                $allowed_billing_filter = 'and ('.substr($allowed_billing_filter, 2).")\n";
             }
 
-        }else{ $allowed_billing_filter = '';}
+        } else {
+            $allowed_billing_filter = '';
+        }
 
         return trim(<<<TSQL
             select count(*) as [total] from statCallEnd

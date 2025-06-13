@@ -6,7 +6,6 @@ use App\Models\Stats\Stat;
 
 class ContactVocera extends Stat
 {
-
     public function tsql(): string
     {
         return trim(<<<'TSQL'
@@ -26,7 +25,7 @@ class ContactVocera extends Stat
 
     public function validateParams(): bool
     {
-        if(isset($this->paramaters[0])){
+        if (isset($this->paramaters[0])) {
             return true;
         }
 

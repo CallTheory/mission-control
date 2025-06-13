@@ -6,5 +6,5 @@ return [
     ],
     'inbound-email' => [
         'days_to_keep' => env('INBOUND_EMAIL_DAYS_TO_KEEP', 30),
-    ]
+    ],
 ];

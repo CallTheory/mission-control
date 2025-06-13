@@ -8,12 +8,41 @@ use Illuminate\Support\Str;
 class CallLog extends Stat
 {
     public string $tz;
-    public $client_number, $ani, $call_type, $agent, $min_duration, $max_duration, $keyword, $keyword_search;
-    public $start_date, $end_date;
-    public $hasMessages, $hasRecordings, $hasVideo, $hasAny;
+
+    public $client_number;
+
+    public $ani;
+
+    public $call_type;
+
+    public $agent;
+
+    public $min_duration;
+
+    public $max_duration;
+
+    public $keyword;
+
+    public $keyword_search;
+
+    public $start_date;
+
+    public $end_date;
+
+    public $hasMessages;
+
+    public $hasRecordings;
+
+    public $hasVideo;
+
+    public $hasAny;
+
     public string $sortBy;
 
-    private $allowed_accounts, $allowed_billing;
+    private $allowed_accounts;
+
+    private $allowed_billing;
+
     public string $sortDirection;
 
     public function validateParams(): bool
@@ -25,9 +54,9 @@ class CallLog extends Stat
     }
 
     public function __construct($start_date = null, $end_date = null, $tz = 'UTC', $client_number = null,
-    $ani = null, $call_type = null, $agent = null, $min_duration = null, $max_duration = null, $keyword = null, $keyword_search = null,
-    $sort_by = null, $sort_direction = null, $hasMessages = null, $hasRecordings = null, $hasVideo = null, $hasAny = false,
-    $allowed_accounts = '', $allowed_billing = '')
+        $ani = null, $call_type = null, $agent = null, $min_duration = null, $max_duration = null, $keyword = null, $keyword_search = null,
+        $sort_by = null, $sort_direction = null, $hasMessages = null, $hasRecordings = null, $hasVideo = null, $hasAny = false,
+        $allowed_accounts = '', $allowed_billing = '')
     {
         $this->ani = $ani;
         $this->call_type = $call_type;
@@ -45,14 +74,13 @@ class CallLog extends Stat
         $this->hasAny = $hasAny;
 
         $this->allowed_accounts = $allowed_accounts;
-        $this->allowed_billing  = $allowed_billing;;
+        $this->allowed_billing = $allowed_billing;
 
-        if($this->hasAny === true){
+        if ($this->hasAny === true) {
             $this->hasRecordings = null;
             $this->hasMessages = null;
             $this->hasVideo = null;
-        }
-        else{
+        } else {
             $this->hasAny = null;
             $this->hasRecordings = $hasRecordings;
             $this->hasMessages = $hasMessages;
@@ -63,23 +91,21 @@ class CallLog extends Stat
 
     public function tsql(): string
     {
-        if($this->client_number) {
+        if ($this->client_number) {
             $client_sql_filter = " and cltClients.ClientNumber = ?\n ";
             $this->parameters['client_number'] = $this->client_number;
-        }
-        else{
+        } else {
             $client_sql_filter = '';
         }
 
-        if($this->call_type) {
+        if ($this->call_type) {
             $calltype_sql_filter = " and statCallEnd.[Kind] = ?\n ";
             $this->parameters['call_type'] = $this->call_type;
-        }
-        else{
+        } else {
             $calltype_sql_filter = '';
         }
 
-        if($this->agent) {
+        if ($this->agent) {
             $agent_sql_filter = "AND (
                   SELECT STRING_AGG(agtId, ',')
                   FROM (
@@ -90,20 +116,18 @@ class CallLog extends Stat
                   ) AS distinctAgents
               ) LIKE CONCAT ('%', ?, '%')\n";
             $this->parameters['agent'] = $this->agent;
-        }
-        else{
+        } else {
             $agent_sql_filter = '';
         }
 
-        if($this->ani) {
+        if ($this->ani) {
             $ani_sql_filter = " and statCallStart.ANI = ?\n ";
             $this->parameters['ani'] = $this->ani;
-        }
-        else{
+        } else {
             $ani_sql_filter = '';
         }
 
-        if($this->min_duration) {
+        if ($this->min_duration) {
             $min_duration_sql_filter = " and (
                     statCallEnd.[selDisc] +
                     statCallEnd.[unselDisc] +
@@ -135,12 +159,11 @@ class CallLog extends Stat
                     statCallEnd.[unselBridge]
                 ) >= ?\n ";
             $this->parameters['min_duration'] = $this->min_duration;
-        }
-        else{
+        } else {
             $min_duration_sql_filter = '';
         }
 
-        if($this->max_duration) {
+        if ($this->max_duration) {
             $max_duration_sql_filter = " and (
                     statCallEnd.[selDisc] +
                     statCallEnd.[unselDisc] +
@@ -172,14 +195,13 @@ class CallLog extends Stat
                     statCallEnd.[unselBridge]
                 ) < ?\n ";
             $this->parameters['max_duration'] = $this->max_duration;
-        }
-        else{
+        } else {
             $max_duration_sql_filter = '';
         }
 
-        if($this->keyword_search){
+        if ($this->keyword_search) {
 
-            if($this->keyword){
+            if ($this->keyword) {
                 $keyword_search_sql_filter = " and exists (
             select 1
             from msgMessages
@@ -189,8 +211,7 @@ class CallLog extends Stat
             and msgMessageKeywords.Value like CONCAT ('%', ?, '%'))\n";
                 $this->parameters['keyword'] = $this->keyword;
                 $this->parameters['keyword_search'] = $this->keyword_search;
-            }
-            else{
+            } else {
                 $keyword_search_sql_filter = " and exists (
             select 1
             from msgMessages
@@ -199,27 +220,24 @@ class CallLog extends Stat
             and msgMessageKeywords.Value like CONCAT ('%', ?, '%'))\n";
                 $this->parameters['keyword_search'] = $this->keyword_search;
             }
-        }
-        else{
+        } else {
             $keyword_search_sql_filter = '';
         }
 
-        if($this->hasAny === true ){
+        if ($this->hasAny === true) {
             $has_video_sql_filter = '';
             $has_messages_sql_filter = '';
             $has_recording_sql_filter = '';
-        }
-        else{
+        } else {
 
-            if($this->hasVideo === true ){
+            if ($this->hasVideo === true) {
                 $has_video_sql_filter = " and EXISTS (
                    select 1
                     from vlogFiles
                     where vlogFiles.callID = statCallStart.callId
                       and vlogFiles.mimetype = 'video'
                 )\n";
-            }
-            else{
+            } else {
                 $has_video_sql_filter = " and NOT EXISTS (
                    select 1
                     from vlogFiles
@@ -228,15 +246,14 @@ class CallLog extends Stat
                 )\n";
             }
 
-            if($this->hasMessages === true ){
+            if ($this->hasMessages === true) {
                 $has_messages_sql_filter = " and EXISTS (
                     select 1
                     from msgMessages
                     where msgMessages.callID = statCallStart.callId
                       or msgMessages.savedCallID = statCallStart.callId
                 )\n";
-            }
-            else{
+            } else {
                 $has_messages_sql_filter = " and NOT EXISTS (
                     select 1
                     from msgMessages
@@ -245,15 +262,14 @@ class CallLog extends Stat
                 )\n";
             }
 
-            if($this->hasRecordings === true ){
+            if ($this->hasRecordings === true) {
                 $has_recording_sql_filter = " and EXISTS (
                      select 1
                     from vlogFiles
                     where vlogFiles.callID = statCallStart.callId
                       and vlogFiles.mimetype <> 'video'
                 )\n";
-            }
-            else{
+            } else {
                 $has_recording_sql_filter = " and NOT EXISTS (
                      select 1
                     from vlogFiles
@@ -263,42 +279,44 @@ class CallLog extends Stat
             }
         }
 
-        if(strlen($this->allowed_accounts)){
+        if (strlen($this->allowed_accounts)) {
             $allowed_accounts_filter = '';
-            $items = explode(",", implode(",", array_filter(explode("\n", trim($this->allowed_accounts)))));
-            foreach($items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
+            $items = explode(',', implode(',', array_filter(explode("\n", trim($this->allowed_accounts)))));
+            foreach ($items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
                     $allowed_accounts_filter .= "or cltClients.ClientNumber between {$parts[0]} and {$parts[1]}\n";
-                }
-                else{
+                } else {
                     $allowed_accounts_filter .= "or cltClients.ClientNumber in ({$item})\n";
                 }
             }
 
-            if(Str::startsWith($allowed_accounts_filter, 'or' )){
-                $allowed_accounts_filter = "and (" . substr($allowed_accounts_filter, 2) . ")\n";
+            if (Str::startsWith($allowed_accounts_filter, 'or')) {
+                $allowed_accounts_filter = 'and ('.substr($allowed_accounts_filter, 2).")\n";
             }
-        }else{ $allowed_accounts_filter = '';}
+        } else {
+            $allowed_accounts_filter = '';
+        }
 
-        if(strlen($this->allowed_billing)){
+        if (strlen($this->allowed_billing)) {
             $allowed_billing_filter = '';
-            $items = explode(",", implode(",", array_filter(explode("\n", trim($this->allowed_billing)))));
-            foreach($items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
+            $items = explode(',', implode(',', array_filter(explode("\n", trim($this->allowed_billing)))));
+            foreach ($items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
                     $allowed_billing_filter .= "or cltClients.BillingCode between {$parts[0]} and {$parts[1]}\n";
-                }
-                else{
+                } else {
                     $allowed_billing_filter .= "or cltClients.BillingCode in ({$item})\n";
                 }
             }
 
-            if(Str::startsWith($allowed_billing_filter, 'or' )){
-                $allowed_billing_filter = "and (" . substr($allowed_billing_filter, 2) . ")\n";
+            if (Str::startsWith($allowed_billing_filter, 'or')) {
+                $allowed_billing_filter = 'and ('.substr($allowed_billing_filter, 2).")\n";
             }
 
-        }else{ $allowed_billing_filter = '';}
+        } else {
+            $allowed_billing_filter = '';
+        }
 
         $total_filter = "{$client_sql_filter} {$calltype_sql_filter} {$agent_sql_filter} {$ani_sql_filter} {$min_duration_sql_filter} {$max_duration_sql_filter} {$keyword_search_sql_filter} {$has_video_sql_filter} {$has_messages_sql_filter} {$has_recording_sql_filter}{$allowed_accounts_filter}{$allowed_billing_filter}";
         $total_filter = rtrim($total_filter);

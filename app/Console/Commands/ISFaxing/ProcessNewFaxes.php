@@ -40,11 +40,11 @@ class ProcessNewFaxes extends Command
 
     private function isFaxEnabled(): bool
     {
-        if(!Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+        if (! Helpers::isSystemFeatureEnabled('cloud-faxing')) {
             return false;
         }
 
-        //Only an API key is required
+        // Only an API key is required
         if ($this->datasource->mfax_api_key !== null) {
             return true;
         }
@@ -54,14 +54,12 @@ class ProcessNewFaxes extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
         $this->datasource = DataSource::firstOrFail();
 
-        //check to see if mFax is even setup...
+        // check to see if mFax is even setup...
         if (! $this->isFaxEnabled()) {
             return CommandStatus::FAILURE;
         }

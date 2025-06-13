@@ -20,8 +20,6 @@ class GeneralModal extends Component
 
     /**
      * Get the view / contents that represent the component.
-     *
-     * @return View|Closure|string
      */
     public function render(): View|Closure|string
     {

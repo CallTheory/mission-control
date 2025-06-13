@@ -31,7 +31,7 @@ class Statistic extends Component
 
     public string $type = '';
 
-    public function update(string $period = null ): void
+    public function update(?string $period = null): void
     {
         $settings = Settings::firstOrFail();
 
@@ -44,11 +44,10 @@ class Statistic extends Component
         $startDate = Carbon::now($switchTimezone)->subHours(24)->format('Y-m-d H:i:s');
         $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
 
-        if(isset($period) && $period === 'lastHour'){
+        if (isset($period) && $period === 'lastHour') {
             $startDate = Carbon::now($switchTimezone)->subHours(1)->format('Y-m-d H:i:s');
             $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
-        }
-        elseif(isset($period) && $period === 'sinceMidnight'){
+        } elseif (isset($period) && $period === 'sinceMidnight') {
             $startDate = Carbon::today($switchTimezone)->format('Y-m-d H:i:s');
             $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
         }

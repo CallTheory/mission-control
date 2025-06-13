@@ -14,7 +14,7 @@ class RecentCalls extends Component
     public function render(): View
     {
         try {
-            $recent = new Recent();
+            $recent = new Recent;
         } catch (Exception $e) {
         }
         $this->recentCalls = $recent->results ?? [];

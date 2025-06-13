@@ -6,7 +6,6 @@ use StdClass;
 
 class Revisions extends Call
 {
-
     public function details(): stdClass|array|null
     {
         return $this->results ?? null;

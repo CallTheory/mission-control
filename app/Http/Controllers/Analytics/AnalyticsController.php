@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\Analytics;
 
-use Exception;
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AnalyticsController extends Controller
 {
     /**
-     * @param Request $request
-     * @return View
      * @throws Exception
      */
     public function __invoke(Request $request): View

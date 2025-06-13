@@ -11,14 +11,15 @@ use Illuminate\Support\Facades\Validator;
 
 class KebabCaseController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
         $settings = Settings::firstOrFail();
 
-        if($settings->api_whitelist){
+        if ($settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
-        if($settings->require_api_tokens){
+        if ($settings->require_api_tokens) {
             $this->middleware('auth:sanctum');
         }
 
@@ -31,8 +32,8 @@ class KebabCaseController extends Controller
     {
         $string = $request->input('string') ?? null;
 
-        if($string === null){
-            abort(400, 'Missing `string` parameter (GET or POST)' );
+        if ($string === null) {
+            abort(400, 'Missing `string` parameter (GET or POST)');
         }
 
         $validator = Validator::make([
@@ -47,17 +48,17 @@ class KebabCaseController extends Controller
             abort(400, App::environment('local') ? $validator->messages()->first() : 'Failed validation of `string` values.');
         }
 
-        return response()->json( $this->kebab_case($string), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return response()->json($this->kebab_case($string), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    private function kebab_case( string $string): string
+    private function kebab_case(string $string): string
     {
         $string = strtoupper($string);
 
         $kebab_dashed = '';
 
-        for( $i= 0; $i < strlen($string); $i++){
-            $kebab_dashed .= $string[$i] . '-';
+        for ($i = 0; $i < strlen($string); $i++) {
+            $kebab_dashed .= $string[$i].'-';
         }
 
         return rtrim(str_replace('--', ' ', str_replace(' ', '', $kebab_dashed)), '-');

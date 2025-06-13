@@ -17,14 +17,14 @@ class CheckInboundEmailsTest extends TestCase
     public function it_processes_unprocessed_inbound_emails_when_feature_is_enabled()
     {
         Queue::fake();
-        
+
         // Enable the inbound-email feature
         Helpers::enableSystemFeature('inbound-email');
 
         // Create unprocessed inbound emails
         $emails = InboundEmail::factory()->count(3)->create([
             'processed_at' => null,
-            'ignored_at' => null
+            'ignored_at' => null,
         ]);
 
         $this->artisan('inbound-emails:check')
@@ -43,14 +43,14 @@ class CheckInboundEmailsTest extends TestCase
     public function it_does_not_process_emails_when_feature_is_disabled()
     {
         Queue::fake();
-        
+
         // Disable the inbound-email feature
         Helpers::disableSystemFeature('inbound-email');
 
         // Create unprocessed inbound emails
         InboundEmail::factory()->count(3)->create([
             'processed_at' => null,
-            'ignored_at' => null
+            'ignored_at' => null,
         ]);
 
         $this->artisan('inbound-emails:check')
@@ -65,18 +65,18 @@ class CheckInboundEmailsTest extends TestCase
     public function it_does_not_process_already_processed_emails()
     {
         Queue::fake();
-        
+
         Helpers::enableSystemFeature('inbound-email');
 
         // Create processed and unprocessed emails
         InboundEmail::factory()->create([
             'processed_at' => now(),
-            'ignored_at' => null
+            'ignored_at' => null,
         ]);
 
         $unprocessedEmail = InboundEmail::factory()->create([
             'processed_at' => null,
-            'ignored_at' => null
+            'ignored_at' => null,
         ]);
 
         $this->artisan('inbound-emails:check')
@@ -88,4 +88,4 @@ class CheckInboundEmailsTest extends TestCase
             return $job->email->id === $unprocessedEmail->id;
         });
     }
-} 
+}

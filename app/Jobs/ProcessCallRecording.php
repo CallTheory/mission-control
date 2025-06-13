@@ -12,12 +12,14 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
-class ProcessCallRecording implements ShouldQueue, ShouldBeEncrypted, ShouldBeUnique
+class ProcessCallRecording implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $timeout = 240;
+
     public string $isCallID;
+
     /**
      * Create a new job instance.
      */

@@ -18,6 +18,7 @@ use Livewire\Component;
 class DirectorySearch extends Component
 {
     public mixed $searchResults = null;
+
     public string $searchQuery = '';
 
     public string $contactSearchType = 'phone';
@@ -26,11 +27,11 @@ class DirectorySearch extends Component
     {
         $this->validate([
             'searchQuery' => 'required|string|min:3|max:255',
-            'contactSearchType' => 'required|string|in:phone,email,fax,vocera,cisco,wctp,tap,msm,sms'
+            'contactSearchType' => 'required|string|in:phone,email,fax,vocera,cisco,wctp,tap,msm,sms',
         ]);
         $results = null;
-        try{
-            switch($this->contactSearchType) {
+        try {
+            switch ($this->contactSearchType) {
                 case 'phone':
                     $results = new ContactPhone([0 => $this->searchQuery]);
                     break;
@@ -59,15 +60,13 @@ class DirectorySearch extends Component
                     $results = new ContactSms([0 => $this->searchQuery]);
                     break;
             }
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             $results = [];
         }
 
-        if(is_null($results)){
+        if (is_null($results)) {
             $this->searchResults = [];
-        }
-        else{
+        } else {
             $this->searchResults = $results->results ?? [];
 
         }

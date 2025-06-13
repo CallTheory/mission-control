@@ -26,8 +26,6 @@ class ProcessingCleanup extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
@@ -36,18 +34,17 @@ class ProcessingCleanup extends Command
         $screencaptures = Storage::allFiles('screencapture');
 
         $this->info('Checking recording wav files...');
-        foreach($recordings as $file)
-        {
+        foreach ($recordings as $file) {
             $this->cleanupFile($file, '.wav');
         }
 
         $this->info('Checking transcription json files...');
-        foreach($transcriptions as $file){
+        foreach ($transcriptions as $file) {
             $this->cleanupFile($file, '.json');
         }
 
         $this->info('Checking screen capture mp4 files...');
-        foreach($screencaptures as $file) {
+        foreach ($screencaptures as $file) {
             $this->cleanupFile($file, '.mp4');
         }
 
@@ -58,15 +55,13 @@ class ProcessingCleanup extends Command
 
     private function cleanupFile($file, $extension): void
     {
-        if(Str::endsWith($file, $extension)){
+        if (Str::endsWith($file, $extension)) {
             $modified = Carbon::createFromTimestampUTC(Storage::lastModified($file));
-            if($modified->lt(Carbon::now('UTC')->subHours()))
-            {
+            if ($modified->lt(Carbon::now('UTC')->subHours())) {
                 $this->info("Removing {$file}");
                 Storage::delete($file);
             }
-        }
-        else{
+        } else {
             $this->info("Skipping {$file}");
         }
     }

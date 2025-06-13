@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Accounts;
 
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Clients\Greetings;
+use App\Models\Stats\Helpers;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -13,55 +14,46 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use App\Models\Stats\Helpers;
 
 class ClientGreetingController extends Controller
 {
     /**
-     * @param Request $request
-     * @param $greetingID
-     * @return Response
      * @throws Exception
      */
     public function __invoke(Request $request, $greetingID): Response
     {
 
-        if($request->user()->currentTeam->personal_team === true) {
+        if ($request->user()->currentTeam->personal_team === true) {
             abort(403);
         }
 
-        try{
+        try {
             $greeting = new Greetings(['greetingID' => $greetingID]);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             abort(404, 'Greeting not found');
         }
 
-        if(Helpers::allowedAccountAccess(
+        if (Helpers::allowedAccountAccess(
             $greeting->ClientNumber,
             $greeting->BillingCode ?? '',
             $request->user()->currentTeam->allowed_accounts ?? '',
             $request->user()->currentTeam->allowed_billing ?? ''
-        ) !== true){
+        ) !== true) {
             abort(403, 'Forbidden account number or billing code');
         }
 
         $vf = Helpers::voiceFormats();
 
         $format = Str::lower($vf[$greeting->Format]);
-        if($format == 'wav'){
+        if ($format == 'wav') {
             $extension = 'wav';
-        }
-        elseif($format == 'wav16'){
+        } elseif ($format == 'wav16') {
             $extension = 'wav';
-        }
-        elseif($format == 'ulaw'){
+        } elseif ($format == 'ulaw') {
             $extension = 'ulaw';
-        }
-        elseif($format == 'gsm'){
+        } elseif ($format == 'gsm') {
             $extension = 'gsm';
-        }
-        else{
+        } else {
             abort(400, 'Unknown voice format supplied');
         }
 
@@ -71,89 +63,83 @@ class ClientGreetingController extends Controller
             $greetingPath[$greetingID] = "greetings/{$greetingID}/{$greetingID}.{$extension}";
             Storage::put($greetingPath[$greetingID], $greeting->Greeting);
 
-            if($extension == 'ulaw'){
+            if ($extension == 'ulaw') {
                 try {
                     $process = new Process(array_merge(
-                            ['sox'],
-                            ['-e', 'mu-law'],
-                            ['-t', 'ul'],
-                            [storage_path("app/{$greetingPath[$greetingID]}")],
-                            ['-b', 1],
-                            ['-c', 1],
-                            ['-r', 16000],
-                            [storage_path("app/greetings/{$greetingID}.wav")])
+                        ['sox'],
+                        ['-e', 'mu-law'],
+                        ['-t', 'ul'],
+                        [storage_path("app/{$greetingPath[$greetingID]}")],
+                        ['-b', 1],
+                        ['-c', 1],
+                        ['-r', 16000],
+                        [storage_path("app/greetings/{$greetingID}.wav")])
                     );
                     $process->run();
                 } catch (Exception $e) {
                     Storage::delete("greetings/{$greetingID}.wav");
-                    Storage::delete($greetingPath[$greetingID] );
+                    Storage::delete($greetingPath[$greetingID]);
                     Storage::deleteDirectory("greetings/{$greetingID}");
-                    if(App::environment('local')){
+                    if (App::environment('local')) {
                         throw $e;
-                    }
-                    else {
+                    } else {
                         abort(500, 'Unable to process file');
                     }
                 }
-            }
-            elseif($extension == 'gsm'){
+            } elseif ($extension == 'gsm') {
                 try {
                     $process = new Process(array_merge(
-                            ['sox'],
-                            ['-e', 'gsm-full-rate'],
-                            ['-t', 'gsm'],
-                            [storage_path("app/{$greetingPath[$greetingID]}")],
-                            ['-b', 1],
-                            ['-c', 1],
-                            ['-r', 16000],
-                            [storage_path("app/greetings/{$greetingID}.wav")])
+                        ['sox'],
+                        ['-e', 'gsm-full-rate'],
+                        ['-t', 'gsm'],
+                        [storage_path("app/{$greetingPath[$greetingID]}")],
+                        ['-b', 1],
+                        ['-c', 1],
+                        ['-r', 16000],
+                        [storage_path("app/greetings/{$greetingID}.wav")])
                     );
                     $process->run();
                 } catch (Exception $e) {
                     Storage::delete("greetings/{$greetingID}.wav");
-                    Storage::delete($greetingPath[$greetingID] );
+                    Storage::delete($greetingPath[$greetingID]);
                     Storage::deleteDirectory("greetings/{$greetingID}");
-                    if(App::environment('local')){
+                    if (App::environment('local')) {
                         throw $e;
-                    }
-                    else {
+                    } else {
                         abort(500, 'Unable to process file');
                     }
                 }
-            }
-            else{
+            } else {
                 try {
                     $process = new Process(array_merge(
-                            ['sox'],
-                            [storage_path("app/{$greetingPath[$greetingID]}")],
-                            ['-b', 1],
-                            ['-c', 1],
-                            ['-r', 16000],
-                            [storage_path("app/greetings/{$greetingID}.wav")])
+                        ['sox'],
+                        [storage_path("app/{$greetingPath[$greetingID]}")],
+                        ['-b', 1],
+                        ['-c', 1],
+                        ['-r', 16000],
+                        [storage_path("app/greetings/{$greetingID}.wav")])
                     );
                     $process->run();
                 } catch (Exception $e) {
                     Storage::delete("greetings/{$greetingID}.wav");
-                    Storage::delete($greetingPath[$greetingID] );
+                    Storage::delete($greetingPath[$greetingID]);
                     Storage::deleteDirectory("greetings/{$greetingID}");
-                    if(App::environment('local')){
+                    if (App::environment('local')) {
                         throw $e;
-                    }
-                    else {
+                    } else {
                         abort(500, 'Unable to process file');
                     }
                 }
 
             }
 
-            if (!$process->isSuccessful()) {
+            if (! $process->isSuccessful()) {
                 Storage::delete("greetings/{$greetingID}.wav");
-                Storage::delete($greetingPath[$greetingID] );
+                Storage::delete($greetingPath[$greetingID]);
                 Storage::deleteDirectory("greetings/{$greetingID}");
-                if(App::environment('local')){
+                if (App::environment('local')) {
                     throw new ProcessFailedException($process);
-                }
-                else {
+                } else {
                     abort(500, 'Unable to process file');
                 }
             }
@@ -162,12 +148,11 @@ class ClientGreetingController extends Controller
                 $greetingData = Storage::get("greetings/{$greetingID}.wav");
                 Redis::setEx("greetings-{$greetingID}.wav", 86400, $greetingData);
                 Storage::delete("greetings/{$greetingID}.wav");
-                Storage::delete($greetingPath[$greetingID] );
+                Storage::delete($greetingPath[$greetingID]);
                 Storage::deleteDirectory("greetings/{$greetingID}");
-            }
-            else{
+            } else {
                 Storage::delete("greetings/{$greetingID}.wav");
-                Storage::delete($greetingPath[$greetingID] );
+                Storage::delete($greetingPath[$greetingID]);
                 Storage::deleteDirectory("greetings/{$greetingID}");
                 abort(404, 'No greeting found');
             }
@@ -175,9 +160,10 @@ class ClientGreetingController extends Controller
 
         $headers = [
             'content-type' => 'audio/wav',
-            'content-disposition' => 'attachment:filename="' . $greetingID . '.wav"',
+            'content-disposition' => 'attachment:filename="'.$greetingID.'.wav"',
             'content-length' => strlen($greetingData),
         ];
+
         return response($greetingData, 200, $headers);
     }
 }

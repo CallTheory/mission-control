@@ -21,7 +21,7 @@ class Intelligent extends Component
         $this->state['is_db_port'] = $this->datasource->is_db_port ?? '';
         $this->state['is_db_data'] = $this->datasource->is_db_data ?? '';
         $this->state['is_db_user'] = $this->datasource->is_db_user ?? '';
-        //don't show the password by default, require it for changes
+        // don't show the password by default, require it for changes
         $this->state['is_db_pass'] = '';
         $this->state['is_db_pass_confirmation'] = '';
     }

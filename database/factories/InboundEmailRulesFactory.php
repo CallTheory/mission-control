@@ -24,8 +24,8 @@ class InboundEmailRulesFactory extends Factory
                 'from' => ['exact_match' => ['sender@example.com']],
                 'subject' => ['starts_with' => ['Test']],
                 'text' => ['contains' => ['test email']],
-                'attachment' => ['exact_match' => ['testfile.txt']]
-            ]
+                'attachment' => ['exact_match' => ['testfile.txt']],
+            ],
         ];
     }
 }

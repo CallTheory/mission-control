@@ -25,7 +25,7 @@ class SettingsFactory extends Factory
     public function definition(): array
     {
         return [
-            'switch_data_timezone' => 'UTC'
+            'switch_data_timezone' => 'UTC',
         ];
     }
 }

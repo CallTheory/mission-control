@@ -3,11 +3,11 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use LivewireUI\Modal\ModalComponent;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardFlagIssue extends ModalComponent
 {
@@ -22,7 +22,7 @@ class BoardFlagIssue extends ModalComponent
         $this->state['comments'] = $item->comments ?? null;
         $this->state['category'] = $item->category ?? null;
         BoardCheckActivity::create([
-            'activity_type' => "Opened",
+            'activity_type' => 'Opened',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -40,7 +40,7 @@ class BoardFlagIssue extends ModalComponent
             $item->save();
 
             BoardCheckActivity::create([
-                'activity_type' => "Flagged Message",
+                'activity_type' => 'Flagged Message',
                 'user_id' => Auth::user()->id,
                 'msgId' => $this->msgId,
             ]);

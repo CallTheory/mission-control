@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
-class SendFaxJob implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -77,11 +77,12 @@ class SendFaxJob implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
      * Execute the job.
      *
      * @return void
+     *
      * @throws GuzzleException
      */
     public function handle()
     {
-        if(Helpers::isSystemFeatureEnabled('cloud-faxing')){
+        if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
 
             if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
                 $toNumber = "+1{$this->phone}";
@@ -124,7 +125,7 @@ class SendFaxJob implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
 
             $useTag = null;
 
-            foreach ($existingTagList['rows'] ?? []  as $existingTag) {
+            foreach ($existingTagList['rows'] ?? [] as $existingTag) {
                 if ($existingTag['name'] === (string) $isClientInfo['ClientNumber']) {
                     $useTag = $existingTag;
                 }
@@ -188,9 +189,7 @@ class SendFaxJob implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
                         $attachments,
                     ],
                 ];
-            }
-            else
-            {
+            } else {
                 $request = [
                     'multipart' => [
                         ['name' => 'notes', 'contents' => Str::substr($this->notes, 0, 4000)],
@@ -235,7 +234,7 @@ class SendFaxJob implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
     /**
      * @throws Exception
      */
-    private function getClientInfo(): array|null
+    private function getClientInfo(): ?array
     {
         $results = null;
 

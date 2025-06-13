@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Exception;
 use App\Models\Stats\Agents\Agent;
 use App\Models\Stats\BoardCheck\Activity;
+use Exception;
+use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -13,8 +15,6 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Foundation\Application;
-use Illuminate\Contracts\Routing\UrlGenerator;
 use stdClass;
 
 class User extends Authenticatable
@@ -32,7 +32,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password'
+        'name', 'email', 'password',
     ];
 
     /**
@@ -83,6 +83,7 @@ class User extends Authenticatable
             return $agent->results[0] ?? null;
         }
     }
+
     public function removeApplicationData(): void
     {
         Activity::where('user_id', $this->id)->delete();

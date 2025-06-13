@@ -12,9 +12,10 @@ use Mockery\Exception;
 class BetterEmailNew extends Component
 {
     public bool $isOpen = false;
+
     public array $state;
 
-    public function addBetterEmail():void
+    public function addBetterEmail(): void
     {
 
         $this->validate([
@@ -33,7 +34,7 @@ class BetterEmailNew extends Component
             'state.button_link' => 'required|string',
         ]);
 
-        $bem = new BetterEmailsModel();
+        $bem = new BetterEmailsModel;
         $bem->client_number = $this->state['client_number'];
         $bem->title = $this->state['title'];
         $bem->description = $this->state['description'];
@@ -49,15 +50,14 @@ class BetterEmailNew extends Component
         $bem->button_link = $this->state['button_link'];
 
         $saved = true;
-        try{
+        try {
             $bem->save();
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             $this->dispatch('saved', 'There was an error saving the better email');
             $saved = false;
         }
 
-        if($saved){
+        if ($saved) {
             Storage::makeDirectory("better-emails/{$bem->client_number}/{$bem->id}");
             $this->isOpen = false;
             $this->clearFields();

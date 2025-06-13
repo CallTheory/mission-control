@@ -14,6 +14,7 @@ class SendToAmtelcoSmtp extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public string $json;
+
     /**
      * Create a new message instance.
      */

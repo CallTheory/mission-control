@@ -11,6 +11,7 @@ use Symfony\Component\Console\Command\Command as CommandStatus;
 class ClearOldInboundEmails extends Command
 {
     public int $daysToKeep;
+
     /**
      * The name and signature of the console command.
      *
@@ -25,7 +26,8 @@ class ClearOldInboundEmails extends Command
      */
     protected $description = 'Removes inbond emails and their attachment folders from storage';
 
-    public function __construct(){
+    public function __construct()
+    {
 
         $this->daysToKeep = config('utilities.inbound-email.days_to_keep');
 
@@ -35,26 +37,24 @@ class ClearOldInboundEmails extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return int
      */
     public function handle(): int
     {
-        //Prune old inbound emails
-        $this->comment('Removing inbound emails older than ' . $this->daysToKeep . ' days');
+        // Prune old inbound emails
+        $this->comment('Removing inbound emails older than '.$this->daysToKeep.' days');
         $removeOldInboundEmails = InboundEmail::where('created_at', '<=', now()->subDays($this->daysToKeep))->get();
-        foreach($removeOldInboundEmails as $inboundEmail) {
+        foreach ($removeOldInboundEmails as $inboundEmail) {
             $inboundEmail->delete();
         }
 
-        //clear out all attachment folders that aren't in use anymore
+        // clear out all attachment folders that aren't in use anymore
         $allInboundEmailIds = Arr::flatten(InboundEmail::all(['id'])->toArray());
         $allInboundEmailAttachmentFolder = Storage::allDirectories('inbound-email');
 
-        foreach($allInboundEmailAttachmentFolder as $attachmentPath) {
+        foreach ($allInboundEmailAttachmentFolder as $attachmentPath) {
             $inbound_email_id = str_replace('inbound-email/', '', $attachmentPath);
-            if (!in_array($inbound_email_id, $allInboundEmailIds)) {
-                Storage::deleteDirectory('inbound-email/' . $inbound_email_id);
+            if (! in_array($inbound_email_id, $allInboundEmailIds)) {
+                Storage::deleteDirectory('inbound-email/'.$inbound_email_id);
             }
         }
 

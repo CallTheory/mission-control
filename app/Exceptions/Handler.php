@@ -3,7 +3,6 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -42,13 +41,11 @@ class Handler extends ExceptionHandler
 
     /**
      * Register the exception handling callbacks for the application.
-     *
-     * @return void
      */
     public function register(): void
     {
-        $this->renderable(function(Throwable $e, Request $request){
-            if ( $request->is('api/*') ) {
+        $this->renderable(function (Throwable $e, Request $request) {
+            if ($request->is('api/*')) {
                 if ($e instanceof NotFoundHttpException) {
                     $errorCode = 404;
                 } else {
@@ -56,7 +53,7 @@ class Handler extends ExceptionHandler
                 }
 
                 return response()->json([
-                    'error' => App::environment('local') ? get_class($e) . ': ' . $e->getMessage() : 'An unclassified error occurred.',
+                    'error' => App::environment('local') ? get_class($e).': '.$e->getMessage() : 'An unclassified error occurred.',
                 ], $errorCode);
             }
         });

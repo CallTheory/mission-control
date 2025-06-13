@@ -81,7 +81,7 @@ abstract class Stat
 
     abstract public function __isset($key);
 
-    //todo: abstract function storedProcedure(): string;
+    // todo: abstract function storedProcedure(): string;
     abstract public function tsql(): string;
 
     abstract public function validateParams(): bool;

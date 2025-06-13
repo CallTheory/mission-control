@@ -3,23 +3,23 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\Calls\Call;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use LivewireUI\Modal\ModalComponent;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardSupervisorReviewMessage extends ModalComponent
 {
     public int $msgId;
 
-    public int|null $isCallID = null;
+    public ?int $isCallID = null;
 
     public array $state = [];
 
-    public function mount(int $msgId, int $isCallID = null): void
+    public function mount(int $msgId, ?int $isCallID = null): void
     {
         $this->isCallID = $isCallID;
 
@@ -35,7 +35,7 @@ class BoardSupervisorReviewMessage extends ModalComponent
         $this->state['agtId'] = $item->agtId ?? null;
 
         BoardCheckActivity::create([
-            'activity_type' => "Opened",
+            'activity_type' => 'Opened',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -90,7 +90,7 @@ class BoardSupervisorReviewMessage extends ModalComponent
             $item->agtId = $this->state['agtId'];
             $item->save();
             BoardCheckActivity::create([
-                'activity_type' => "Supervisor Confirmed",
+                'activity_type' => 'Supervisor Confirmed',
                 'user_id' => Auth::user()->id,
                 'msgId' => $this->msgId,
             ]);
@@ -108,7 +108,7 @@ class BoardSupervisorReviewMessage extends ModalComponent
             $item->marked_ok_by = Auth::user()->email;
             $item->save();
             BoardCheckActivity::create([
-                'activity_type' => "Confirmed Message",
+                'activity_type' => 'Confirmed Message',
                 'user_id' => Auth::user()->id,
                 'msgId' => $this->msgId,
             ]);

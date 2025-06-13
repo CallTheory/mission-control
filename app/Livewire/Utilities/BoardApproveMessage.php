@@ -3,11 +3,11 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BoardCheckItem;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use LivewireUI\Modal\ModalComponent;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardApproveMessage extends ModalComponent
 {
@@ -22,7 +22,7 @@ class BoardApproveMessage extends ModalComponent
     {
         $this->msgId = $msgId;
         BoardCheckActivity::create([
-            'activity_type' => "Opened",
+            'activity_type' => 'Opened',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -38,7 +38,7 @@ class BoardApproveMessage extends ModalComponent
         }
 
         BoardCheckActivity::create([
-            'activity_type' => "Confirmed Message",
+            'activity_type' => 'Confirmed Message',
             'user_id' => Auth::user()->id,
             'msgId' => $this->msgId,
         ]);
@@ -46,6 +46,7 @@ class BoardApproveMessage extends ModalComponent
         $this->dispatch('boardCheckItemUpdated');
         $this->dispatch('closeModal');
     }
+
     public function render(): View
     {
         return view('livewire.utilities.board-approve-message');

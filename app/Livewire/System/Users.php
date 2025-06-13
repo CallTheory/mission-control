@@ -11,6 +11,7 @@ class Users extends Component
     public function render(): View
     {
         $users = User::paginate(100);
+
         return view('livewire.system.users')->with('users', $users);
     }
 }

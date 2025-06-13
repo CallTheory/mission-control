@@ -6,13 +6,13 @@ use App\Jobs\ExportBoardCheckForPeoplePraise;
 use App\Jobs\PeoplePraiseApi\ExportBoardCheckForPeoplePraiseApi;
 use App\Models\BoardCheckItem;
 use App\Models\DataSource;
+use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\System\Settings;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 
 class BoardReport extends Component
 {
@@ -23,29 +23,28 @@ class BoardReport extends Component
     public $listeners = ['boardCheckSupervisorItemUpdated' => 'render'];
 
     private DataSource $datasource;
+
     private Settings $settings;
 
     public function exportPeopleSoft(): void
     {
         $this->settings = Settings::first();
-        if($this->settings->board_check_people_praise_export_method === 'file'){
+        if ($this->settings->board_check_people_praise_export_method === 'file') {
             ExportBoardCheckForPeoplePraise::dispatch();
             BoardCheckActivity::create([
-                'activity_type' => "Exported to file",
-                'user_id' => Auth::user()->id
+                'activity_type' => 'Exported to file',
+                'user_id' => Auth::user()->id,
             ]);
-        }
-        elseif($this->settings->board_check_people_praise_export_method === 'api'){
+        } elseif ($this->settings->board_check_people_praise_export_method === 'api') {
             ExportBoardCheckForPeoplePraiseApi::dispatch();
             BoardCheckActivity::create([
-                'activity_type' => "Exported to People Praise API",
-                'user_id' => Auth::user()->id
+                'activity_type' => 'Exported to People Praise API',
+                'user_id' => Auth::user()->id,
             ]);
-        }
-        else{
+        } else {
             BoardCheckActivity::create([
                 'activity_type' => "Export Failed: Expected \"file\" or \"api\" but got {$this->settings->board_check_people_praise_export_method}",
-                'user_id' => Auth::user()->id
+                'user_id' => Auth::user()->id,
             ]);
         }
 
@@ -58,7 +57,7 @@ class BoardReport extends Component
         $item->marked_ok_at = Carbon::now();
         $item->marked_ok_by = Auth::user()->email;
         BoardCheckActivity::create([
-            'activity_type' => "Marked OK",
+            'activity_type' => 'Marked OK',
             'user_id' => Auth::user()->id,
             'msgId' => $item->msgId,
         ]);
@@ -72,7 +71,7 @@ class BoardReport extends Component
         $item->problem_verified_at = Carbon::now();
         $item->problem_verified_by = Auth::user()->email;
         BoardCheckActivity::create([
-            'activity_type' => "Confirmed Problem",
+            'activity_type' => 'Confirmed Problem',
             'user_id' => Auth::user()->id,
             'msgId' => $item->msgId,
         ]);
@@ -91,9 +90,10 @@ class BoardReport extends Component
     public function render(): View
     {
         BoardCheckActivity::create([
-            'activity_type' => "Viewed Board Report",
+            'activity_type' => 'Viewed Board Report',
             'user_id' => Auth::user()->id,
         ]);
+
         return view('livewire.utilities.board-report', [
             'boardChecks' => BoardCheckItem::whereNotNull('problem_verified_at')->orWhereNotNull('marked_ok_at')->paginate(25),
         ]);

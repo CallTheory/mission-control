@@ -4,17 +4,53 @@ namespace App\Livewire\System;
 
 use App\Models\System\Settings;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BetterEmails extends Component
 {
     public string $theme = 'standard';
+
     public string $preview_url;
+
     public string $message_history;
+
     public string $report_metadata;
-    public string $title, $description, $subject, $logo, $logo_alt, $logo_link, $button_text, $button_link;
-    public string $canspam_address, $canspam_address2, $canspam_city, $canspam_state, $canspam_postal, $canspam_country, $canspam_email, $canspam_phone, $canspam_company;
+
+    public string $title;
+
+    public string $description;
+
+    public string $subject;
+
+    public string $logo;
+
+    public string $logo_alt;
+
+    public string $logo_link;
+
+    public string $button_text;
+
+    public string $button_link;
+
+    public string $canspam_address;
+
+    public string $canspam_address2;
+
+    public string $canspam_city;
+
+    public string $canspam_state;
+
+    public string $canspam_postal;
+
+    public string $canspam_country;
+
+    public string $canspam_email;
+
+    public string $canspam_phone;
+
+    public string $canspam_company;
+
     public string $example_file;
 
     public function updatePreview(): void
@@ -44,6 +80,7 @@ class BetterEmails extends Component
     public function downloadThemeTemplate(): BinaryFileResponse
     {
         $theme = resource_path('views/emails/better-emails/theme_template.html');
+
         return response()->download($theme, 'mission_control_theme_template.html');
     }
 
@@ -78,17 +115,17 @@ class BetterEmails extends Component
     {
 
         $settings = Settings::first();
-        $this->message_history =  $settings->better_emails_message_history ?? false;
-        $this->report_metadata =  $settings->better_emails_report_metadata ?? false;
+        $this->message_history = $settings->better_emails_message_history ?? false;
+        $this->report_metadata = $settings->better_emails_report_metadata ?? false;
         $this->title = $settings->better_emails_title ?? 'Title';
-        $this->description =  $settings->better_emails_description ?? 'Description';
-        $this->subject =  $settings->better_emails_subject ?? 'Subject';
+        $this->description = $settings->better_emails_description ?? 'Description';
+        $this->subject = $settings->better_emails_subject ?? 'Subject';
         $this->logo = $settings->better_emails_logo ?? '/images/mission-control.png';
         $this->logo_alt = $settings->better_emails_logo_alt ?? 'Logo';
-        $this->logo_link =  $settings->better_emails_logo_link ?? 'https://example.com';
-        $this->button_text =  $settings->better_emails_button_text ?? 'Contact Support';
+        $this->logo_link = $settings->better_emails_logo_link ?? 'https://example.com';
+        $this->button_text = $settings->better_emails_button_text ?? 'Contact Support';
         $this->button_link = $settings->better_emails_button_link ?? 'mailto:support@example.com';
-        $this->theme =  $settings->better_emails_theme ?? 'standard';
+        $this->theme = $settings->better_emails_theme ?? 'standard';
         $this->canspam_address = $settings->better_emails_canspam_address ?? '123 Main Street';
         $this->canspam_address2 = $settings->better_emails_canspam_address2 ?? '';
         $this->canspam_city = $settings->better_emails_canspam_city ?? 'Grove City';
@@ -100,9 +137,11 @@ class BetterEmails extends Component
         $this->canspam_company = $settings->better_emails_canspam_company ?? 'Example Company';
         $this->example_file = 'messages 5520 06112024-070001.txt';
     }
+
     public function render(): View
     {
         $this->updatePreview();
+
         return view('livewire.system.better-emails');
     }
 }

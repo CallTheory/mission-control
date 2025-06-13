@@ -5,10 +5,10 @@ namespace App\Http\Controllers\API\Agents\InboundEmail;
 use App\Http\Controllers\Controller;
 use App\Mail\ForwardInboundEmail;
 use App\Models\InboundEmail;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Http\JsonResponse;
 
 class ForwardController extends Controller
 {

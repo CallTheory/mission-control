@@ -4,6 +4,7 @@ namespace App\Livewire\Accounts;
 
 use App\Models\Stats\Clients\Overview;
 use App\Models\Stats\Clients\Sources;
+use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
@@ -11,14 +12,15 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Exception;
 
 class Clients extends Component
 {
     use WithPagination;
 
     public string $client_number = '';
+
     public string $client_name = '';
+
     public string $billing_code = '';
 
     public string $account_setting = '';
@@ -28,6 +30,7 @@ class Clients extends Component
     public string $client_source = '';
 
     public string $order_by = 'ClientNumber';
+
     public string $order_direction = 'asc';
 
     #[Url]
@@ -59,7 +62,7 @@ class Clients extends Component
         }
 
         $per_page = 50;
-        $starting_point = ( $this->getPage()  * $per_page) - $per_page;
+        $starting_point = ($this->getPage() * $per_page) - $per_page;
 
         $clientPaginator = new LengthAwarePaginator(array_slice($clientsArray, $starting_point, $per_page), count($clientsArray), $per_page);
 
@@ -78,23 +81,21 @@ class Clients extends Component
         $this->account_setting_value = Session::get('client_list:filter:account_setting_value', '');
         $this->client_source = Session::get('client_list:filter:client_source', '');
         $this->order_by = Session::get('client_list:filter:order_by', 'ClientNumber');
-        $this->order_direction =  Session::get('client_list:filter:order_direction', 'asc');
+        $this->order_direction = Session::get('client_list:filter:order_direction', 'asc');
     }
 
     public function orderBy(string $field): void
     {
 
-        if($this->order_by !== $field){
-            //don't change the direction if we're already sorting by this field
-            if(!in_array($field, ['ClientNumber', 'ClientName', 'BillingCode'])){
+        if ($this->order_by !== $field) {
+            // don't change the direction if we're already sorting by this field
+            if (! in_array($field, ['ClientNumber', 'ClientName', 'BillingCode'])) {
                 $this->order_by = 'ClientNumber';
-            }
-            else{
+            } else {
                 $this->order_by = $field;
             }
-        }
-        else{
-            if($this->order_direction === 'asc'){
+        } else {
+            if ($this->order_direction === 'asc') {
                 $this->order_direction = 'desc';
             } else {
                 $this->order_direction = 'asc';
@@ -128,14 +129,14 @@ class Clients extends Component
 
     public function resetFilter(): void
     {
-        Session::put('client_list:filter:client_number','');
-        Session::put('client_list:filter:client_name','');
-        Session::put('client_list:filter:billing_code','');
-        Session::put('client_list:filter:account_setting','');
-        Session::put('client_list:filter:account_setting_value','');
-        Session::put('client_list:filter:client_source','');
-        Session::put('client_list:filter:order_by','ClientNumber');
-        Session::put('client_list:filter:order_direction','asc');
+        Session::put('client_list:filter:client_number', '');
+        Session::put('client_list:filter:client_name', '');
+        Session::put('client_list:filter:billing_code', '');
+        Session::put('client_list:filter:account_setting', '');
+        Session::put('client_list:filter:account_setting_value', '');
+        Session::put('client_list:filter:client_source', '');
+        Session::put('client_list:filter:order_by', 'ClientNumber');
+        Session::put('client_list:filter:order_direction', 'asc');
         $this->client_number = '';
         $this->client_name = '';
         $this->billing_code = '';
@@ -143,7 +144,7 @@ class Clients extends Component
         $this->account_setting_value = '';
         $this->client_source = '';
         $this->order_by = 'ClientNumber';
-        $this->order_direction =  'asc';
+        $this->order_direction = 'asc';
         $this->resetPage();
         $this->dispatch('saved');
         $this->dispatch('filtered');

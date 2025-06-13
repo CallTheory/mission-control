@@ -9,16 +9,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+
 class TextBetweenController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
         $settings = Settings::firstOrFail();
 
-        if($settings->api_whitelist){
+        if ($settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
-        if($settings->require_api_tokens){
+        if ($settings->require_api_tokens) {
             $this->middleware('auth:sanctum');
         }
     }
@@ -47,11 +49,11 @@ class TextBetweenController extends Controller
             abort(400, App::environment('local') ? $validator->messages()->first() : 'Failed validation of `string` values.');
         }
 
-        return response()->json( $this->string_between($string, $start, $end), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return response()->json($this->string_between($string, $start, $end), 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    private function string_between( string $string, string $start, string $end): string
+    private function string_between(string $string, string $start, string $end): string
     {
-        return  Str::betweenFirst($string, $start, $end);
+        return Str::betweenFirst($string, $start, $end);
     }
 }

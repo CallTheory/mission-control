@@ -18,12 +18,12 @@ class UpdatePasswordTest extends TestCase
         $this->actingAs($user = User::factory()->create());
 
         Livewire::test(UpdatePasswordForm::class)
-                ->set('state', [
-                    'current_password' => '0lq^V^g3CFk^',
-                    'password' => 'aR1Y8*ve8r^t',
-                    'password_confirmation' => 'aR1Y8*ve8r^t',
-                ])
-                ->call('updatePassword');
+            ->set('state', [
+                'current_password' => '0lq^V^g3CFk^',
+                'password' => 'aR1Y8*ve8r^t',
+                'password_confirmation' => 'aR1Y8*ve8r^t',
+            ])
+            ->call('updatePassword');
 
         $this->assertTrue(Hash::check('aR1Y8*ve8r^t', $user->fresh()->password));
     }
@@ -33,13 +33,13 @@ class UpdatePasswordTest extends TestCase
         $this->actingAs($user = User::factory()->create());
 
         Livewire::test(UpdatePasswordForm::class)
-                ->set('state', [
-                    'current_password' => '9kp^V^g3CFk^',
-                    'password' => 'aR1Y8*ve8r^t',
-                    'password_confirmation' => 'aR1Y8*ve8r^t',
-                ])
-                ->call('updatePassword')
-                ->assertHasErrors(['current_password']);
+            ->set('state', [
+                'current_password' => '9kp^V^g3CFk^',
+                'password' => 'aR1Y8*ve8r^t',
+                'password_confirmation' => 'aR1Y8*ve8r^t',
+            ])
+            ->call('updatePassword')
+            ->assertHasErrors(['current_password']);
 
         $this->assertTrue(Hash::check('0lq^V^g3CFk^', $user->fresh()->password));
     }
@@ -49,13 +49,13 @@ class UpdatePasswordTest extends TestCase
         $this->actingAs($user = User::factory()->create());
 
         Livewire::test(UpdatePasswordForm::class)
-                ->set('state', [
-                    'current_password' => '0lq^V^g3CFk^',
-                    'password' => 'aR1Y8*ve8r^t',
-                    'password_confirmation' => '9kp^V^g3CFk^',
-                ])
-                ->call('updatePassword')
-                ->assertHasErrors(['password']);
+            ->set('state', [
+                'current_password' => '0lq^V^g3CFk^',
+                'password' => 'aR1Y8*ve8r^t',
+                'password_confirmation' => '9kp^V^g3CFk^',
+            ])
+            ->call('updatePassword')
+            ->assertHasErrors(['password']);
 
         $this->assertTrue(Hash::check('0lq^V^g3CFk^', $user->fresh()->password));
     }

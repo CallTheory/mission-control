@@ -10,10 +10,11 @@ class McpServerController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Helpers::isSystemFeatureEnabled('mcp-server') && $request->user()->currentTeam->utility_mcp_server) {
-            if($request->user()->currentTeam->personal_team === true) {
+        if (Helpers::isSystemFeatureEnabled('mcp-server') && $request->user()->currentTeam->utility_mcp_server) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
+
             return view('utilities.mcp-server');
 
         }

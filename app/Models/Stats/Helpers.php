@@ -10,34 +10,35 @@ class Helpers
 {
     public static function ticksToSeconds($ticks): int
     {
-        if($ticks == 0){
+        if ($ticks == 0) {
             return 0;
         }
         // 1 tick = 100 nanoseconds
         // 1 second = 10,000,000 ticks
         $ticksPerSecond = 10000000;
+
         return $ticks / $ticksPerSecond;
     }
 
     public static array $knownMessageLabels = [
         'First Name:', 'For:', 'From:',
-        'Last Name:', 'Ptn:','Driver:',
-        'Name:','DOB:',
+        'Last Name:', 'Ptn:', 'Driver:',
+        'Name:', 'DOB:',
         'IsCompany:',
-        'Company:','PO Number:',
+        'Company:', 'PO Number:',
         'Provider:', 'Primary:',
-        'eMail:','Unit #:',
-        'Email:','Address:',
-        'Memo:','Msg:',
-        'Phone:','Dept/Flr:','Hosp/Ofc:',
-        'Regarding:','Consult?:',
-        'Date / Time:','Room #:',
+        'eMail:', 'Unit #:',
+        'Email:', 'Address:',
+        'Memo:', 'Msg:',
+        'Phone:', 'Dept/Flr:', 'Hosp/Ofc:',
+        'Regarding:', 'Consult?:',
+        'Date / Time:', 'Room #:',
         'Taken By:', 'Taken:',
-        'Caller ID:','Clr ID:',
-        'ACD ANI:','Source','Call Reason:',
+        'Caller ID:', 'Clr ID:',
+        'ACD ANI:', 'Source', 'Call Reason:',
         'Message History:',
         'No messages.',
-        'IS Rec #:','Msg ID:',
+        'IS Rec #:', 'Msg ID:',
     ];
 
     public static array $removeFromMessages = [
@@ -63,54 +64,50 @@ class Helpers
         $messageLines = [];
         $historyLines = [];
 
-        if(count($messages) === 1){
+        if (count($messages) === 1) {
             $messageLines[1] = Helpers::messageFiltering(explode("\n", str_replace(["\n\n\n\n\n", "\n\n\n\n", "\n\n\n"], "\n\n", $messages[0])));
             $historyLines[1] = [];
 
-            foreach($messageLines[1] as $i => $ml){
-                if(Str::startsWith($ml, '===========')){
+            foreach ($messageLines[1] as $i => $ml) {
+                if (Str::startsWith($ml, '===========')) {
                     unset($messageLines[1][$i]);
                 }
             }
-        }
-        elseif( count($messages) > 1 ){
+        } elseif (count($messages) > 1) {
             foreach ($messages as $key => $message) {
-                if ($key !== 0) { //ignore the header row of the file
+                if ($key !== 0) { // ignore the header row of the file
                     $details = explode("Message History:\n", trim($message));
 
                     $msgLines = explode("\n", str_replace(["\n\n\n\n\n", "\n\n\n\n", "\n\n\n"], "\n\n", $details[0]));
 
-                    if(isset($details[1])){
+                    if (isset($details[1])) {
                         $hisLines = explode("\n", str_replace(["\n\n\n\n\n", "\n\n\n\n", "\n\n\n"], "\n\n", $details[1]));
-                    }
-                    else{
+                    } else {
                         $hisLines = [];
                     }
 
-                    foreach($hisLines as $j => $hl){
-                        if(Str::startsWith($hl, '=======') && Str::endsWith($hl, '=======')){
+                    foreach ($hisLines as $j => $hl) {
+                        if (Str::startsWith($hl, '=======') && Str::endsWith($hl, '=======')) {
                             unset($hisLines[$j]);
                         }
                     }
 
                     $messageLines[$key] = Helpers::messageFiltering($msgLines);
-                    if(count($hisLines)){
+                    if (count($hisLines)) {
                         $historyLines[$key] = Helpers::messageFiltering($hisLines);
-                    }
-                    else{
+                    } else {
                         $historyLines[$key] = [];
                     }
                 }
             }
         }
 
-
         $envelope = [
             'messages' => $messageLines,
             'history' => $historyLines,
         ];
 
-        return ['log' => $log, 'envelope' => $envelope ];
+        return ['log' => $log, 'envelope' => $envelope];
     }
 
     public static function messageFiltering(array $arr): array
@@ -125,9 +122,9 @@ class Helpers
                 $reassemble[$i] = str_replace($item, '', $reassemble[$i]);
             }
 
-            //format our labels
+            // format our labels
             foreach (Helpers::$knownMessageLabels as $label) {
-                if(Str::startsWith($line, $label)){
+                if (Str::startsWith($line, $label)) {
                     $reassemble[$i] = str_replace($label, "<strong>{$label}</strong>", $reassemble[$i]);
                 }
             }
@@ -141,18 +138,18 @@ class Helpers
         $featureFlagLocation = "feature-flags/{$feature}.flag";
 
         // our feature flag file must exist
-        if( Storage::fileExists($featureFlagLocation) )
-        {
+        if (Storage::fileExists($featureFlagLocation)) {
             // the file contents must be encrypted using our key
-            try{
+            try {
                 $contents = Storage::get($featureFlagLocation);
                 $decrypted = decrypt($contents);
+
                 return $decrypted === $feature;
-            }
-            catch(Exception $e){
+            } catch (Exception $e) {
                 return false;
             }
         }
+
         return false;
     }
 
@@ -163,6 +160,7 @@ class Helpers
         $vf[1] = 'Wav';
         $vf[2] = 'Gsm';
         $vf[3] = 'Wav16';
+
         return $vf;
     }
 
@@ -173,6 +171,7 @@ class Helpers
         $rt[2] = 'Daily';
         $rt[3] = 'Weekly';
         $rt[4] = 'Monthly';
+
         return $rt;
     }
 
@@ -221,7 +220,7 @@ class Helpers
 
     public static function callTypes(): array
     {
-        $ck[0] = 'Unknown'; //does not appear to be used?
+        $ck[0] = 'Unknown'; // does not appear to be used?
         $ck[1] = 'Secretarial';
         $ck[2] = 'Checkin';
         $ck[3] = 'Fetch';
@@ -344,6 +343,7 @@ class Helpers
         $ct[37] = 'Future6';
         $ct[38] = 'Future7';
         $ct[39] = 'Future8';
+
         return $ct;
     }
 
@@ -433,7 +433,8 @@ class Helpers
         $filteredLabeled = Helpers::messageFiltering(explode("\n", $summary));
         $summary = implode("\n", $filteredLabeled);
         $summary = str_replace("\r\n", "\n", $summary);
-        //$summary = str_replace("\n\n", "\n", $summary);
+
+        // $summary = str_replace("\n\n", "\n", $summary);
         return str_replace("\n", '<br>', $summary);
     }
 
@@ -443,96 +444,88 @@ class Helpers
         string $system_allowed_accounts = '',
         string $system_allowed_billings = '',
 
-    ): bool
-    {
+    ): bool {
 
         $allowed_account = false;
         $allowed_billing = false;
 
-        if(strlen($system_allowed_accounts) === 0 && strlen($system_allowed_billings) === 0){
+        if (strlen($system_allowed_accounts) === 0 && strlen($system_allowed_billings) === 0) {
             // no restrictions, this is only called by trusted code,
             // so checking a user's personal team happens before items are submitted...
             $allowed_account = true;
             $allowed_billing = true;
-        }
-        elseif(strlen($system_allowed_accounts) === 0 && strlen($system_allowed_billings) > 0 ){
+        } elseif (strlen($system_allowed_accounts) === 0 && strlen($system_allowed_billings) > 0) {
 
             // any account is fine, but it will also have to match the billing code
             $allowed_account = true;
 
-            $billing_items = explode(",", implode(",", explode("\n", trim($system_allowed_billings))));
+            $billing_items = explode(',', implode(',', explode("\n", trim($system_allowed_billings))));
 
-            foreach($billing_items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
-                    if($billing >= $parts[0] && $billing <= $parts[1]){
+            foreach ($billing_items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
+                    if ($billing >= $parts[0] && $billing <= $parts[1]) {
                         $allowed_billing = true;
                     }
-                }
-                else{
-                    if($billing == $item){
+                } else {
+                    if ($billing == $item) {
                         $allowed_billing = true;
                     }
                 }
             }
 
-        }
-        elseif(strlen($system_allowed_accounts) > 0 && strlen($system_allowed_billings) === 0){
+        } elseif (strlen($system_allowed_accounts) > 0 && strlen($system_allowed_billings) === 0) {
 
             $allowed_billing = true;
 
-            $account_items = explode(",", implode(",", explode("\n", trim($system_allowed_accounts))));
+            $account_items = explode(',', implode(',', explode("\n", trim($system_allowed_accounts))));
 
-            foreach($account_items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
-                    if($account >= $parts[0] && $account <= $parts[1]){
+            foreach ($account_items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
+                    if ($account >= $parts[0] && $account <= $parts[1]) {
                         $allowed_account = true;
                     }
-                }
-                else{
-                    if($account == $item){
+                } else {
+                    if ($account == $item) {
                         $allowed_account = true;
                     }
                 }
             }
-        }
-        else{
+        } else {
 
-            $account_items = explode(",", implode(",", explode("\n", trim($system_allowed_accounts))));
+            $account_items = explode(',', implode(',', explode("\n", trim($system_allowed_accounts))));
 
-            foreach($account_items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
-                    if($account >= $parts[0] && $account <= $parts[1]){
+            foreach ($account_items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
+                    if ($account >= $parts[0] && $account <= $parts[1]) {
                         $allowed_account = true;
                     }
-                }
-                else{
-                    if($account == $item){
+                } else {
+                    if ($account == $item) {
                         $allowed_account = true;
                     }
                 }
             }
 
-            $billing_items = explode(",", implode(",", explode("\n", trim($system_allowed_billings))));
+            $billing_items = explode(',', implode(',', explode("\n", trim($system_allowed_billings))));
 
-            foreach($billing_items as $item){
-                if(Str::contains($item, '-')){
-                    $parts = explode("-", $item);
-                    if($billing >= $parts[0] && $billing <= $parts[1]){
+            foreach ($billing_items as $item) {
+                if (Str::contains($item, '-')) {
+                    $parts = explode('-', $item);
+                    if ($billing >= $parts[0] && $billing <= $parts[1]) {
                         $allowed_billing = true;
                     }
-                }
-                else{
-                    if($billing == $item){
+                } else {
+                    if ($billing == $item) {
                         $allowed_billing = true;
                     }
                 }
             }
         }
 
-        return ($allowed_account && $allowed_billing);
+        return $allowed_account && $allowed_billing;
     }
 
     public static function parseXmlMessage(string $xml): array
@@ -543,7 +536,7 @@ class Helpers
         $messages = [];
         $fields = [];
 
-        foreach($totalXml->revision as $revision) {
+        foreach ($totalXml->revision as $revision) {
             $annotations[] = $revision->annotations->annotation;
             $messages[] = $revision->attributes();
             $fields[] = $revision->fields;
@@ -552,7 +545,7 @@ class Helpers
         return [
             'annotations' => json_decode(json_encode($annotations), true),
             'messages' => json_decode(json_encode($messages), true),
-            'fields' => json_decode(json_encode($fields), true)
+            'fields' => json_decode(json_encode($fields), true),
         ];
     }
 }

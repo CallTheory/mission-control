@@ -11,9 +11,9 @@ class BoardActivityController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if(Helpers::isSystemFeatureEnabled('board-check') && $request->user()->currentTeam->utility_board_check) {
+        if (Helpers::isSystemFeatureEnabled('board-check') && $request->user()->currentTeam->utility_board_check) {
 
-            if($request->user()->currentTeam->personal_team === true) {
+            if ($request->user()->currentTeam->personal_team === true) {
                 abort(403);
             }
 

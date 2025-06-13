@@ -21,7 +21,7 @@ class InboundRuleMatchTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function testFindMatchingRule(): void
+    public function test_find_matching_rule(): void
     {
         // Create a sample InboundEmail
         $email = InboundEmail::factory()->create([
@@ -46,10 +46,10 @@ X-Received: by 2002:a05:6808:1587:b0:3f4:9ae:cd60 with SMTP id 5614622812f47-3f4
             'content_ids' => '{"f_m7fasuah0":"attachment1"}',
             'to' => 'Call Theory Answering Service CSV File <1234JobList@inbound.calltheory.com>',
             'from' => 'Client Dispatch <Dispatch@calltheory.com>',
-            'sender_ip' => "209.85.161.42",
+            'sender_ip' => '209.85.161.42',
             'envelope' => '{"to":["1234JobList@inbound.calltheory.com"],"from":"chris@calltheory.com"}',
-            'attachments' =>  "1",
-            'subject' => "Client worksheet",
+            'attachments' => '1',
+            'subject' => 'Client worksheet',
             'spam_report' => null,
             'spam_score' => null,
             'attachment_info' => '{"attachment1":{"filename":"Worksheet 250221.csv","name":"Worksheet 250221.csv","charset":"US-ASCII","type":"text/csv","content-id":"f_m7fasuah0"}}',
@@ -58,22 +58,22 @@ X-Received: by 2002:a05:6808:1587:b0:3f4:9ae:cd60 with SMTP id 5614622812f47-3f4
             'text' => null,
             'html' => '<div dir="ltr"><br></div>',
             'processed_at' => null,
-            'ignored_at' => "2025-02-21 21:44:40",
+            'ignored_at' => '2025-02-21 21:44:40',
             'inbound_email_rules_id' => null,
-            'created_at' => "2025-02-21 21:44:37",
-            'updated_at' => "2025-02-21 21:44:40",
+            'created_at' => '2025-02-21 21:44:37',
+            'updated_at' => '2025-02-21 21:44:40',
         ]);
 
         // Create a sample InboundEmailRules
         $rule = InboundEmailRules::factory()->create([
-            'name' => "1234 Job Listing",
+            'name' => '1234 Job Listing',
             'rules' => '{"to": {"contains": ["1234JobList@inbound.calltheory.com"]}, "attachment": {"ends_with": [".csv"]}}',
             'enabled' => 1,
             'mergecomm_trigger_id' => null,
-            'category' => "database:replace:1234ClientJobList",
-            'created_at' => "2024-11-07 23:13:32",
-            'updated_at' => "2024-11-07 23:13:32",
-            'account' => "1234",
+            'category' => 'database:replace:1234ClientJobList',
+            'created_at' => '2024-11-07 23:13:32',
+            'updated_at' => '2024-11-07 23:13:32',
+            'account' => '1234',
         ]);
 
         // Create an instance of the job

@@ -18,11 +18,10 @@ class Stripe extends Component
     public function mount(): void
     {
         $this->datasource = DataSource::firstOrNew();
-        try{
+        try {
             $this->state['stripe_secret_test_key'] = decrypt($this->datasource->stripe_test_secret_key ?? null);
             $this->state['stripe_secret_prod_key'] = decrypt($this->datasource->stripe_prod_secret_key ?? null);
-        }
-        catch(Exception $e){
+        } catch (Exception $e) {
             $this->state['stripe_secret_test_key'] = '';
             $this->state['stripe_secret_prod_key'] = '';
         }

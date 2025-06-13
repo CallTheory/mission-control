@@ -7,15 +7,15 @@ use StdClass;
 
 class Keywords extends Stat
 {
-
     public function validateParams(): bool
     {
-        if (!isset($this->parameters['ISCallId'])) {
+        if (! isset($this->parameters['ISCallId'])) {
             return false;
         }
-        if (!isset($this->parameters['savedCallId'])) {
+        if (! isset($this->parameters['savedCallId'])) {
             return false;
         }
+
         return true;
     }
 

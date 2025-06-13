@@ -20,17 +20,18 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
     /**
      * Create a new message instance.
      *
-     * @throws InvalidArgumentException
      * @return void
+     *
+     * @throws InvalidArgumentException
      */
     public function __construct(array $paths)
     {
         $this->datasource = DataSource::firstOrFail();
-        
+
         if (empty($this->datasource->fax_buildup_notification_email)) {
             throw new InvalidArgumentException('Fax buildup notification email is not configured.');
         }
-        
+
         $this->paths = $paths;
         $this->queue = 'outbound-email';
     }
@@ -45,6 +46,6 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
         return $this->to($this->datasource->fax_buildup_notification_email)
             ->subject('Fax Buildup Warning')
             ->markdown('emails.faxes.buildup');
-            //->text('emails.faxes.buildup-text');
+        // ->text('emails.faxes.buildup-text');
     }
 }

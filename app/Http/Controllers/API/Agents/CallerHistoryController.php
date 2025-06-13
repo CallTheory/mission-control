@@ -13,14 +13,15 @@ use Illuminate\Support\Str;
 
 class CallerHistoryController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
         $settings = Settings::firstOrFail();
 
-        if($settings->api_whitelist){
+        if ($settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
-        if($settings->require_api_tokens){
+        if ($settings->require_api_tokens) {
             $this->middleware('auth:sanctum');
         }
 
@@ -31,13 +32,13 @@ class CallerHistoryController extends Controller
      */
     public function __invoke(Request $request, int $clientNumber): JsonResponse
     {
-        //allows us to use a formatting phone field to look up instead of unformatted 10-digit ANI only
+        // allows us to use a formatting phone field to look up instead of unformatted 10-digit ANI only
         $ani = Str::replace(['-', '(', ')', '.', '+', ' '], '', $request->input('ANI'));
 
         $validator = Validator::make([
             'ClientNumber' => $clientNumber,
             'ANI' => $ani,
-            'ResultCount' => $request->input('ResultCount')
+            'ResultCount' => $request->input('ResultCount'),
         ], [
             'ClientNumber' => 'required|integer',
             'ANI' => 'required|string|size:10',
@@ -63,7 +64,7 @@ class CallerHistoryController extends Controller
         return response()->json($deduplicated, 200, [], JSON_OBJECT_AS_ARRAY | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     }
 
-    protected function deduplicate_array($array, $key):array
+    protected function deduplicate_array($array, $key): array
     {
         $result = [];
         $seen = [];
@@ -71,7 +72,7 @@ class CallerHistoryController extends Controller
         foreach ($array as $item) {
             if (isset($item[$key])) {
                 $value = $item[$key];
-                if (!isset($seen[$value])) {
+                if (! isset($seen[$value])) {
                     $seen[$value] = true;
                     $result[$key] = $item;
                 }

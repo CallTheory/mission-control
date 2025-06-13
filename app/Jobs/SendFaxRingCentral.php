@@ -2,10 +2,10 @@
 
 namespace App\Jobs;
 
-
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\Stats\Helpers;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -16,13 +16,13 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Exception;
-use RingCentral\SDK\SDK as RingCentralSDK;
 use RingCentral\SDK\Http\ApiException;
+use RingCentral\SDK\SDK as RingCentralSDK;
 
-class SendFaxRingCentral implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypted
+class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public int $jobID;
 
     public string $client_id;
@@ -63,21 +63,19 @@ class SendFaxRingCentral implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
         $this->status = $fax['status'];
         $this->fsFileName = $fax['fsFileName'];
 
-        if( $this->datasource->ringcentral_client_id !== null ){
+        if ($this->datasource->ringcentral_client_id !== null) {
             $this->client_id = $this->datasource->ringcentral_client_id;
-            $this->api_endpoint =  $this->datasource->ringcentral_api_endpoint;
-            try{
-                $this->client_secret =  decrypt($this->datasource->ringcentral_client_secret);
-                $this->jwtToken =  decrypt($this->datasource->ringcentral_jwt_token);
+            $this->api_endpoint = $this->datasource->ringcentral_api_endpoint;
+            try {
+                $this->client_secret = decrypt($this->datasource->ringcentral_client_secret);
+                $this->jwtToken = decrypt($this->datasource->ringcentral_jwt_token);
 
-            }
-            catch( Exception $e){
+            } catch (Exception $e) {
                 Log::error($e->getMessage(), $fax);
                 exit();
             }
-        }
-        else{
-            Log::error("Empty ringcentral client details", $fax);
+        } else {
+            Log::error('Empty ringcentral client details', $fax);
             exit();
         }
 
@@ -85,7 +83,7 @@ class SendFaxRingCentral implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
 
     public function handle(): void
     {
-        if(Helpers::isSystemFeatureEnabled('cloud-faxing')){
+        if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
 
             if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
                 $toNumber = "+1{$this->phone}";
@@ -108,19 +106,20 @@ class SendFaxRingCentral implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
             try {
 
                 // Instantiate the SDK and get the platform instance
-                $rcsdk = new RingCentralSDK( $this->client_id, $this->client_secret, $this->api_endpoint );
+                $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
                 $platform = $rcsdk->platform();
-                $platform->login(["jwt" => $this->jwtToken]);
-            }
-            catch (ApiException $e) {
+                $platform->login(['jwt' => $this->jwtToken]);
+            } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+
                 return;
             } catch (Exception $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+
                 return;
             }
 
@@ -128,24 +127,22 @@ class SendFaxRingCentral implements ShouldQueue, ShouldBeUnique, ShouldBeEncrypt
                 $bodyParams = $rcsdk->createMultipartBuilder()
                     ->setBody([
                         'to' => [
-                            ['phoneNumber' => $this->phone ]
+                            ['phoneNumber' => $this->phone],
                         ],
-                        'faxResolution' => "High",
-                        'coverIndex' => 0, //no fax cover page, otherwise uses default from the account
+                        'faxResolution' => 'High',
+                        'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
                     ])
                     ->add(file_get_contents(storage_path('app/ringcentral/tosend/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
                     ->request('/restapi/v1.0/account/~/extension/~/fax');
 
                 $resp = $platform->sendRequest($bodyParams);
 
-                MoveSuccessfulFaxFiles::dispatch($faxFsDetails, 'ringcentral');;
-            }
-            catch (ApiException $e) {
+                MoveSuccessfulFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+            } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
-            }
-            catch( Exception $e ){
+            } catch (Exception $e) {
                 Log::error($e->getMessage());
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');

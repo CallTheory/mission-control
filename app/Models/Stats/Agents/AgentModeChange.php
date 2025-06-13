@@ -6,12 +6,11 @@ use App\Models\Stats\Stat;
 
 class AgentModeChange extends Stat
 {
-
     public function validateParams(): bool
     {
         if (
-            array_key_exists('agtId', $this->parameters) //agtId must be included
-            && strlen($this->parameters['agtId']) > 0 //the length of agent_name must be greater than 0
+            array_key_exists('agtId', $this->parameters) // agtId must be included
+            && strlen($this->parameters['agtId']) > 0 // the length of agent_name must be greater than 0
         ) {
             return true;
         }
@@ -45,6 +44,7 @@ class AgentModeChange extends Stat
         if (isset($this->results[0])) {
             return isset($this->results[0]->{$key});
         }
+
         return false;
     }
 }

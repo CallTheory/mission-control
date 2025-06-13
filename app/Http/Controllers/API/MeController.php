@@ -9,14 +9,16 @@ use Illuminate\Http\Request;
 
 class MeController extends Controller
 {
-    public function __construct(){
+    public function __construct()
+    {
         $settings = Settings::firstOrFail();
 
-        if($settings->api_whitelist){
+        if ($settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
     }
+
     /**
      * Handle the incoming request.
      */

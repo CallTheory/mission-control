@@ -2,9 +2,9 @@
 
 namespace App\Actions\Jetstream;
 
-use Closure;
 use App\Models\Team;
 use App\Models\User;
+use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
@@ -20,14 +20,12 @@ class AddTeamMember implements AddsTeamMembers
     /**
      * Add a new team member to the given team.
      *
-     * @param mixed $user
-     * @param mixed $team
-     * @param string $email
-     * @param string|null $role
-     * @return void
+     * @param  mixed  $user
+     * @param  mixed  $team
+     *
      * @throws AuthorizationException|ValidationException
      */
-    public function add(User $user, Team $team, string $email, string $role = null): void
+    public function add(User $user, Team $team, string $email, ?string $role = null): void
     {
         Gate::forUser($user)->authorize('addTeamMember', $team);
 
@@ -47,10 +45,6 @@ class AddTeamMember implements AddsTeamMembers
     /**
      * Validate the add member operation.
      *
-     * @param Team $team
-     * @param string $email
-     * @param string|null $role
-     * @return void
      * @throws ValidationException
      */
     protected function validate(Team $team, string $email, ?string $role): void
@@ -67,8 +61,6 @@ class AddTeamMember implements AddsTeamMembers
 
     /**
      * Get the validation rules for adding a team member.
-     *
-     * @return array
      */
     protected function rules(): array
     {
@@ -82,10 +74,6 @@ class AddTeamMember implements AddsTeamMembers
 
     /**
      * Ensure that the user is not already on the team.
-     *
-     * @param  Team  $team
-     * @param  string  $email
-     * @return Closure
      */
     protected function ensureUserIsNotAlreadyOnTeam(Team $team, string $email): Closure
     {

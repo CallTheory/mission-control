@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
-class SendEmailToAmtelcoSMTP implements ShouldQueue, ShouldBeEncrypted
+class SendEmailToAmtelcoSMTP implements ShouldBeEncrypted, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -30,8 +30,6 @@ class SendEmailToAmtelcoSMTP implements ShouldQueue, ShouldBeEncrypted
 
     /**
      * Delete the job if its models no longer exist.
-     *
-     * @var bool
      */
     public bool $deleteWhenMissingModels = true;
 
@@ -70,17 +68,16 @@ class SendEmailToAmtelcoSMTP implements ShouldQueue, ShouldBeEncrypted
             'host' => $this->datasource->amtelco_inbound_smtp_host,
             'port' => $this->datasource->amtelco_inbound_smtp_port ?? 25,
             // No amtelco support for basic security
-            'encryption' => false
+            'encryption' => false,
         ]);
 
-       try{
-           Mail::mailer('is-smtp')->to($this->email->to)->send(new SendToAmtelcoSmtp($this->email->subject, $params));
-       }
-       catch(Exception $e){
-           Log::error($e->getMessage());
-       }
+        try {
+            Mail::mailer('is-smtp')->to($this->email->to)->send(new SendToAmtelcoSmtp($this->email->subject, $params));
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+        }
 
-       $this->email->processed_at = Carbon::now();
-       $this->email->save();
+        $this->email->processed_at = Carbon::now();
+        $this->email->save();
     }
 }

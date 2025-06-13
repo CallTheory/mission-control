@@ -10,10 +10,12 @@ use Livewire\Component;
 class EditUserProfile extends Component
 {
     public bool $editingProfile = false;
+
     public array $state;
 
     #[Locked]
     public int $user_id;
+
     public function updateProfile(): void
     {
         $this->validate([
@@ -25,7 +27,7 @@ class EditUserProfile extends Component
         $user = User::find($this->user_id);
         $user->name = $this->state['name'];
         $user->email = $this->state['email'];
-        $user->agtId = strlen($this->state['agtId'] ?? '') > 0 ? $this->state['agtId']: null;
+        $user->agtId = strlen($this->state['agtId'] ?? '') > 0 ? $this->state['agtId'] : null;
         $user->save();
 
         $this->editingProfile = false;

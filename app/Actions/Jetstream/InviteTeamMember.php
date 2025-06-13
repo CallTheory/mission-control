@@ -2,9 +2,9 @@
 
 namespace App\Actions\Jetstream;
 
-use Closure;
 use App\Models\Team;
 use App\Models\User;
+use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
@@ -25,17 +25,12 @@ class InviteTeamMember implements InvitesTeamMembers
     /**
      * Invite a new team member to the given team.
      *
-     * @param User $user
-     * @param Team $team
-     * @param string $email
-     * @param string|null $role
-     * @return void
      * @throws AuthorizationException
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws RandomException|ValidationException
      */
-    public function invite(User $user, Team $team, string $email, string $role = null): void
+    public function invite(User $user, Team $team, string $email, ?string $role = null): void
     {
         Gate::forUser($user)->authorize('addTeamMember', $team);
 
@@ -46,7 +41,7 @@ class InviteTeamMember implements InvitesTeamMembers
         $newUser = User::where('email', $email)->first();
 
         if (is_null($newUser)) {
-            $newUser = new User();
+            $newUser = new User;
             $newUser->name = $email;
             $newUser->email = $email;
             $newUser->agtId = $agtId;
@@ -75,10 +70,6 @@ class InviteTeamMember implements InvitesTeamMembers
     /**
      * Validate the invite member operation.
      *
-     * @param Team $team
-     * @param string $email
-     * @param string|null $role
-     * @return void
      * @throws ValidationException
      */
     protected function validate(Team $team, string $email, ?string $role): void
@@ -95,9 +86,6 @@ class InviteTeamMember implements InvitesTeamMembers
 
     /**
      * Get the validation rules for inviting a team member.
-     *
-     * @param  Team  $team
-     * @return array
      */
     protected function rules(Team $team): array
     {
@@ -113,10 +101,6 @@ class InviteTeamMember implements InvitesTeamMembers
 
     /**
      * Ensure that the user is not already on the team.
-     *
-     * @param  Team  $team
-     * @param  string  $email
-     * @return Closure
      */
     protected function ensureUserIsNotAlreadyOnTeam(Team $team, string $email): Closure
     {

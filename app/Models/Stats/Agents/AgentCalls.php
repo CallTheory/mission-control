@@ -6,12 +6,11 @@ use App\Models\Stats\Stat;
 
 class AgentCalls extends Stat
 {
-
     public function validateParams(): bool
     {
         if (
-            array_key_exists('agtId', $this->parameters) //agtId must be included
-            && strlen($this->parameters['agtId']) > 0 //the length of agent_name must be greater than 0
+            array_key_exists('agtId', $this->parameters) // agtId must be included
+            && strlen($this->parameters['agtId']) > 0 // the length of agent_name must be greater than 0
         ) {
             return true;
         }
@@ -27,7 +26,7 @@ class AgentCalls extends Stat
     public function tsql(): string
     {
 
-        //technically this breaks down if they change stations mid-call - it might not show that?
+        // technically this breaks down if they change stations mid-call - it might not show that?
         return trim(<<<'TSQL'
            select
             sac.id,
@@ -59,6 +58,7 @@ class AgentCalls extends Stat
         if (isset($this->results[0])) {
             return isset($this->results[0]->{$key});
         }
+
         return false;
     }
 }

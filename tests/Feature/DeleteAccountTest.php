@@ -22,8 +22,8 @@ class DeleteAccountTest extends TestCase
         $this->actingAs($user = User::factory()->create());
 
         $component = Livewire::test(DeleteUserForm::class)
-                        ->set('password', '0lq^V^g3CFk^')
-                        ->call('deleteUser');
+            ->set('password', '0lq^V^g3CFk^')
+            ->call('deleteUser');
 
         $this->assertNull($user->fresh());
     }
@@ -31,15 +31,15 @@ class DeleteAccountTest extends TestCase
     public function test_correct_password_must_be_provided_before_account_can_be_deleted()
     {
         if (! Features::hasAccountDeletionFeatures()) {
-           $this->markTestSkipped('Account deletion is not enabled.');
+            $this->markTestSkipped('Account deletion is not enabled.');
         }
 
         $this->actingAs($user = User::factory()->create());
 
         Livewire::test(DeleteUserForm::class)
-                        ->set('password', '9kp^V^g3CFk^')
-                        ->call('deleteUser')
-                        ->assertHasErrors(['password']);
+            ->set('password', '9kp^V^g3CFk^')
+            ->call('deleteUser')
+            ->assertHasErrors(['password']);
 
         $this->assertNotNull($user->fresh());
     }

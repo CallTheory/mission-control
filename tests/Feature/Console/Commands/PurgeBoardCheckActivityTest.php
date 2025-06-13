@@ -16,11 +16,11 @@ class PurgeBoardCheckActivityTest extends TestCase
     {
         // Create old and new activities
         $oldActivity = BoardCheckActivity::factory()->create([
-            'created_at' => Carbon::now()->subDays(15)
+            'created_at' => Carbon::now()->subDays(15),
         ]);
 
         $newActivity = BoardCheckActivity::factory()->create([
-            'created_at' => Carbon::now()->subDays(13)
+            'created_at' => Carbon::now()->subDays(13),
         ]);
 
         $this->artisan('board-check:purge-activity')
@@ -29,12 +29,12 @@ class PurgeBoardCheckActivityTest extends TestCase
 
         // Assert old activity was deleted
         $this->assertDatabaseMissing('board_check_activities', [
-            'id' => $oldActivity->id
+            'id' => $oldActivity->id,
         ]);
 
         // Assert new activity was preserved
         $this->assertDatabaseHas('board_check_activities', [
-            'id' => $newActivity->id
+            'id' => $newActivity->id,
         ]);
     }
 
@@ -54,7 +54,7 @@ class PurgeBoardCheckActivityTest extends TestCase
     {
         // Create an activity exactly 14 days old
         $activity = BoardCheckActivity::factory()->create([
-            'created_at' => Carbon::now()->subDays(14)
+            'created_at' => Carbon::now()->subDays(14),
         ]);
 
         $this->artisan('board-check:purge-activity')
@@ -63,7 +63,7 @@ class PurgeBoardCheckActivityTest extends TestCase
 
         // Assert activity was preserved
         $this->assertDatabaseHas('board_check_activities', [
-            'id' => $activity->id
+            'id' => $activity->id,
         ]);
     }
-} 
+}
