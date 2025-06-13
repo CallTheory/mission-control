@@ -15,6 +15,7 @@ use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use stdClass;
 
 class User extends Authenticatable
 {
@@ -72,7 +73,7 @@ class User extends Authenticatable
     /**
      * @throws Exception
      */
-    public function getIntelligentAgent(): array|null
+    public function getIntelligentAgent(): array|null|stdClass
     {
         if (is_null($this->agtId)) {
             return null;
