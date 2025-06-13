@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-
-class MergeCommISWebTrigger
+use Illuminate\Database\Eloquent\Model;
+class MergeCommISWebTrigger extends Model
 {
 
 

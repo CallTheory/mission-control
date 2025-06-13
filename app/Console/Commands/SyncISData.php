@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\SyncMergeCommWebHooks;
+//use App\Jobs\SyncMergeCommWebHooks;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Command\Command as CommandStatus;
 
@@ -39,7 +39,7 @@ class SyncISData extends Command
      */
     public function handle(): int
     {
-        SyncMergeCommWebHooks::dispatch();
+        //SyncMergeCommWebHooks::dispatch();
 
         return CommandStatus::SUCCESS;
     }
