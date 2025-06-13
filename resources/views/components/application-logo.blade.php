@@ -1,1 +1,1 @@
-<img src="/images/mission-control.png" alt="Mission Control" title="Mission Control">
+<img src="{{ asset('images/mission-control.png') }}" alt="Mission Control" title="Mission Control">
