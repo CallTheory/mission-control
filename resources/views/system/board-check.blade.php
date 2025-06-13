@@ -1,3 +1,4 @@
+@section('title', 'Board Check')
 @php
 use Illuminate\Support\Facades\Auth;
 @endphp

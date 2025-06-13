@@ -1,4 +1,4 @@
-@section('title', 'MCP Server')
+@section('title', 'CSV Export')
 
 <x-app-layout>
     <x-slot name="header">
@@ -17,7 +17,7 @@
             </div>
 
             <div class="w-full min-w-full p-4 mx-auto mb-4">
-                <livewire:system.csv-export lazy />
+                <livewire:system.csv-export lazy="lazy" />
             </div>
         </div>
     </div>

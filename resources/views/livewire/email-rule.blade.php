@@ -161,7 +161,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                                     @foreach($items as $k => $item )
 
                                                                         <div  class="flex-row mt-1 block w-full ">
-                                                                            <code class="bg-indigo-500 rounded px-2">{{ $field }}</code> <span class="italic font-semibold text-indigo-400">{{ $modifier }}</span> {{ $item }}
+                                                                            <code class="bg-indigo-500 text-white rounded px-2">{{ $field }}</code> <span class="italic font-semibold text-indigo-400">{{ $modifier }}</span> {{ $item }}
                                                                             <input type="hidden" name="rules[{{$field}}][{{ $modifier }}][]" value="{{ $item }}" wire:mode.defer="state.rules.{{$field}}.{{$modifier}}.{{ $k }}.{{ $item }}">
                                                                             <a wire:click="removeRule('{{$field}}', '{{$modifier}}', '{{$k}}','{{$item}}');" href="#" class="text-indigo-500 hover:text-red-500 transform transition duration-700 ease-in-out">
                                                                                 <svg class="w-4 h-4 inline-flex align-text-bottom" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -181,14 +181,11 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                 <div class="flex items-center justify-end px-4 py-3 bg-gray-50    text-right
                                                 sm:px-6 shadow sm:rounded-md sm:rounded-md">
 
-
-                                                    @if($state['id'] ?? null)
+                                                    @if(isset($state['id']))
                                                         <div class="mr-3">
-
-                                                                <x-danger-button wire:loading.attr="disabled" wire:click="$toggle('deleteRuleModal');">
-                                                                    {{ __('Delete') }}
-                                                                </x-danger-button>
-
+                                                            <x-danger-button wire:loading.attr="disabled" wire:click="$toggle('deleteRuleModal');">
+                                                                {{ __('Delete') }}
+                                                            </x-danger-button>
                                                         </div>
                                                     @endif
 

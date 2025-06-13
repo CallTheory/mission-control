@@ -25,21 +25,30 @@ class CallLog extends Component
     #[Url]
     public int $page;
 
-    public array $ck, $st, $agents;
+    public array $ck = [], $st = [], $agents = [];
 
     public array $sql_params = [];
     public string $sql_code = '';
 
-    public string|null $start_date, $end_date, $client_number, $ani,
-        $call_type, $agent, $min_duration, $max_duration,
-        $keyword, $keyword_search;
+    public ?string $start_date = null;
+    public ?string $end_date = null;
+    public ?string $client_number = null;
+    public ?string $ani = null;
+    public ?string $call_type = null;
+    public ?string $agent = null;
+    public ?string $min_duration = null;
+    public ?string $max_duration = null;
+    public ?string $keyword = null;
+    public ?string $keyword_search = null;
 
-    public bool $has_any, $has_messages,
-        $has_recordings, $has_video;
-
+    public bool $has_any = true;
+    public bool $has_messages = false;
+    public bool $has_recordings = false;
+    public bool $has_video = false;
 
     #[Locked]
-    public string $sort_by = 'statCallStart.Stamp', $sort_direction = 'desc';
+    public string $sort_by = 'statCallStart.Stamp';
+    public string $sort_direction = 'desc';
 
     public string $timezone = 'UTC';
 

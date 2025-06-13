@@ -1,3 +1,4 @@
+@section('title', 'Cloud Faxing')
 @php
 use Illuminate\Support\Facades\Auth;
 @endphp

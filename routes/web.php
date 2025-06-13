@@ -37,11 +37,7 @@ use App\Http\Controllers\System\BetterEmailController as BetterEmailSettingsCont
 use App\Http\Controllers\System\PreviewBetterEmailsThemeController;
 use App\Http\Controllers\Utilities\DirectorySearchController;
 use App\Http\Controllers\EmailUnsubscribeController;
-use App\Http\Controllers\System\CallLookupController as CallLookupSettingsController;
-use App\Http\Controllers\System\CardProcessingController as CardProcessingSettingsController;
 use App\Http\Controllers\System\BoardCheckController as BoardCheckSettingsController;
-use App\Http\Controllers\System\InboundEmailController as InboundEmailSettingsController;
-use App\Http\Controllers\System\DatabaseHealthController as DatabaseHealthSettingsController;
 use App\Http\Controllers\System\CloudFaxingController as CloudFaxingSettingsController;
 use App\Http\Controllers\System\McpServerController as McpServerSettingsController;
 use App\Http\Controllers\System\ScriptSearchController as ScriptSearchSettingsController;
@@ -96,12 +92,8 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/data-sources', DataSourcesController::class)->name('system.data-sources');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/integrations', IntegrationsController::class)->name('system.integrations');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/permissions', PermissionsController::class)->name('system.permissions');
-Route::middleware(['auth:sanctum', 'verified'])->get('/system/call-lookup', CallLookupSettingsController::class)->name('system.all-lookup');
-Route::middleware(['auth:sanctum', 'verified'])->get('/system/card-processing', CardProcessingSettingsController::class)->name('system.card-processing');
-Route::middleware(['auth:sanctum', 'verified'])->get('/system/inbound-email', InboundEmailSettingsController::class)->name('system.inbound-email');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/board-check', BoardCheckSettingsController::class)->name('system.board-check');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/cloud-faxing', CloudFaxingSettingsController::class)->name('system.cloud-faxing');
-Route::middleware(['auth:sanctum', 'verified'])->get('/system/database-health', DatabaseHealthSettingsController::class)->name('system.database-health');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/script-search', ScriptSearchSettingsController::class)->name('system.script-search');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/wctp-gateway', WctpGatewaySettingsController::class)->name('system.wctp-gateway');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/api-gateway', ApiGatewaySettingsController::class)->name('system.api-gateway');

@@ -7,7 +7,7 @@
             @if($searchTerm)
                 <div class="absolute right-0 flex py-1.5 pr-1.5">
                     <button wire:click="clearSearchTerm"
-                            class="hover:text-red-500 inline-flex items-center rounded
+                            class="cursor-pointer hover:text-red-500 inline-flex items-center rounded
                             border border-gray-300 px-1 font-sans text-xs text-gray-400
                             my-auto mr-2">&times;</button>
                 </div>

@@ -48,12 +48,12 @@
             <div id="waveform-container-utils" class="block w-full flex place-content-end ml-auto mr-0 hidden">
                 @if(Helpers::isSystemFeatureEnabled('screencaptures'))
                     @if($screencapture > 0 )
-                        <button id="linkPlaybackButton" class="text-xs text-gray-300 hover:text-gray-500 mx-2">Link Playback</button>
-                        <button id="unlinkPlaybackButton" class="text-xs text-gray-300 hover:text-gray-500 mx-2 hidden">Unlink Playback</button>
+                        <button id="linkPlaybackButton" class="cursor-pointer text-xs text-gray-300 hover:text-gray-500 mx-2">Link Playback</button>
+                        <button id="unlinkPlaybackButton" class="cursor-pointer text-xs text-gray-300 hover:text-gray-500 mx-2 hidden">Unlink Playback</button>
                     @endif
                 @endif
 
-                <button class="text-xs text-gray-300 hover:text-gray-500 mx-2" wire:click="clearCallCache">Clear Cache</button>
+                <button class="cursor-pointer text-xs text-gray-300 hover:text-gray-500 mx-2" wire:click="clearCallCache">Clear Cache</button>
 
             </div>
         </div>

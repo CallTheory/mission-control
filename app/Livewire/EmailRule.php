@@ -79,6 +79,7 @@ class EmailRule extends Component
     public function openPanel(InboundEmailRules $r): void
     {
         $this->r = $r;
+        $this->state['id'] = $this->r->id;
         $this->state['name'] = $this->r->name;
         $this->state['category'] = $this->r->category;
         $this->state['rules'] = json_decode($this->r->rules, true);

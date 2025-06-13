@@ -14,7 +14,7 @@
     )
         <div class="inline my-2">
             <form wire:target="exportPeopleSoft" wire:submit="exportPeopleSoft" class="mx-4 my-4">
-                <button class="px-2 py-1 bg-gray-800 hover:bg-gray-600 text-white shadow rounded transition transform duration-700 ease-in-out" type="submit">
+                <button class="cursor-pointer px-3 py-2 bg-gray-800 hover:bg-gray-600 text-white shadow rounded-lg transition transform duration-700 ease-in-out" type="submit">
                     <div class="" wire:loading>Exporting...</div>
                     <div wire:loading.remove>Export To PeoplePraise</div>
                 </button>

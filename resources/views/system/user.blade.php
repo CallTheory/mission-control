@@ -1,4 +1,4 @@
-@section('title', 'User')
+@section('title', 'Manage User')
 <x-app-layout>
     <x-slot name="header">
 
@@ -11,7 +11,7 @@
     <div class="p-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 w-full">
 
-          <livewire:system.user :user="$user" lazy />
+          <livewire:system.user :user="$user" lay="lazy" />
 
         </div>
     </div>

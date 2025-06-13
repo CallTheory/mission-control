@@ -1,3 +1,4 @@
+@section('title', 'Data Sources')
 <x-app-layout>
     <x-slot name="header">
 

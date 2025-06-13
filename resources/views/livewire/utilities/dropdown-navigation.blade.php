@@ -2,12 +2,12 @@
     use Illuminate\Support\Str;
     use App\Models\Stats\Helpers;
 @endphp
-<div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left z-100 font-semibold">
+<div x-data="{ open: false }" @click.away="open = false" class="relative inline-block text-left z-100">
 
     <button
             @click="open = !open"
             type="button"
-            class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white p-2 text-xs text-gray-500 shadow ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            class="cursor-pointer font-semibold inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white p-2 text-xs text-gray-500 shadow ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             id="menu-button"
             aria-expanded="true"
             aria-haspopup="true">

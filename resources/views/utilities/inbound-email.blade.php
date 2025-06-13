@@ -136,7 +136,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 da
                                                 @elseif($r->account)
                                                     <div class="flex dark:text-white">
                                                         <code class="shadow text-xs text-white bg-indigo-700 px-2 py-1 rounded-l-lg border border-none"> {{ $r->account ?? '' }}</code>
-                                                        <code class="shadow text-xs border border-none  bg-steel-900 px-2 py-1 rounded-r-lg">Inbound SMTP</code>
+                                                        <code class="shadow text-xs border border-none text-indigo-700  bg-steel-900 px-2 py-1 rounded-r-lg">Inbound SMTP</code>
                                                     </div>
                                                 @else
                                                     {!!  $warning_icon  !!} Unknown

@@ -30,7 +30,7 @@
             <nav class="-mb-px flex space-x-8">
                 @php
                     $current = "border-indigo-500 text-indigo-600";
-                    $default = "order-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700";
+                    $default = "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700";
                     $aria_current = 'aria-current="page"';
                 @endphp
 
@@ -41,7 +41,7 @@
                             Check</a>
                     @else
                         <a href="/utilities/board-check"
-                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Board Check</a>
+                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $default }}">Board Check</a>
                     @endif
                 @endif
 
@@ -53,7 +53,7 @@
                             Review</a>
                     @else
                         <a href="/utilities/board-review"
-                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Board Review</a>
+                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{$default}}">Board Review</a>
                     @endif
 
                     @if($boardReportActive)
@@ -62,7 +62,7 @@
                             Report</a>
                     @else
                         <a href="/utilities/board-report"
-                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Board Report</a>
+                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $default }}">Board Report</a>
                     @endif
 
                     @if($boardActivityActive)
@@ -71,7 +71,7 @@
                             Activity</a>
                     @else
                         <a href="/utilities/board-activity"
-                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">Board Activity</a>
+                           class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $default }}">Board Activity</a>
                     @endif
                 @endif
 

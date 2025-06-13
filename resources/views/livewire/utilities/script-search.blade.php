@@ -1,5 +1,5 @@
 <div>
-    <div class="block w-full max-w-sm">
+    <div class="flex">
         <form wire:submit="searchScriptElements" class="bg-white border border-gray-300 shadow rounded">
             <div class="px-4 py-5 sm:p-6 ">
                 <div class="block w-100">

@@ -2,8 +2,8 @@
 use Illuminate\Support\Str;
 @endphp
 <div>
-    <div class="flex  space-x-4">
-        <div class="mt-6 w-full max-w-sm">
+    <div class="flex space-x-4">
+        <div class="mt-6 w-full">
             <form wire:submit="searchDirectoryContacts" class="bg-white border border-gray-300 shadow rounded">
                 <div class="px-4 py-5 sm:p-6">
                     <div class="block w-100">

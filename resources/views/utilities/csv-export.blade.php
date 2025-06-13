@@ -1,4 +1,4 @@
-@section('title', 'MCP Server')
+@section('title', 'CSV Export')
 
 <x-app-layout>
     <x-slot name="header">
@@ -10,12 +10,17 @@
     </x-slot>
 
     <div class="p-4">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 flex ">
-            <div>
-                <livewire:utilities.csv-export lazy="lazy" />
+        <div id="toggleScreenWidthContent"
+             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded-sm border bg-white shadow border-gray-300">
+            <div class="m-2">
+                @include('layouts.width-toggle')
             </div>
 
+            <div class="w-full min-w-full p-4 mx-auto mb-4">
+                <livewire:utilities.csv-export lazy="lazy" />
+            </div>
         </div>
     </div>
+
 
 </x-app-layout>

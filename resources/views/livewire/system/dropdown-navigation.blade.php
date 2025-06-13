@@ -7,7 +7,7 @@
     <button
         @click="open = !open"
         type="button"
-        class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white p-2 text-xs text-gray-500 shadow ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        class="cursor-pointer inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white p-2 text-xs text-gray-500 shadow ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
         id="menu-button"
         aria-expanded="true"
         aria-haspopup="true">
@@ -43,48 +43,50 @@
 
             <a href="/system/" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-0">General</a>
 
-            <a href="/system/data-sources" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-10">Data Sources</a>
+            <a href="/system/data-sources" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-1">Data Sources</a>
 
-            <a href="/system/integrations" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-11">Integrations</a>
+            <a href="/system/integrations" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-2">Integrations</a>
 
-            <a href="/system/users" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-13332">Users & Teams</a>
+            <a href="/system/users" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-3">Users & Teams</a>
 
-            <a href="/system/saml-settings" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-12">SAML Settings</a>
+            <a href="/system/saml-settings" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-4">SAML Settings</a>
+
+            <a href="/system/permissions" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-5">Permissions</a>
 
             <a class="text-gray-400 font-normal block px-4 py-2 text-xs border-b border-t border-gray-300 mt-4">
                 Utility-Specific Settings
             </a>
 
             @if(Helpers::isSystemFeatureEnabled('api-gateway'))
-                <a href="/system/api-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-333">API Gateway</a>
+                <a href="/system/api-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-6">API Gateway</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('better-emails'))
-                <a href="/system/better-emails" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-33">Better Emails</a>
+                <a href="/system/better-emails" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-7">Better Emails</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('board-check'))
-                <a href="/system/board-check" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-3">Board Check</a>
+                <a href="/system/board-check" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-8">Board Check</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('cloud-faxing'))
-                <a href="/system/cloud-faxing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-5">Cloud Faxing</a>
+                <a href="/system/cloud-faxing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-9">Cloud Faxing</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('csv-export'))
-                <a href="/system/csv-export" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-53">CSV Export</a>
+                <a href="/system/csv-export" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-10">CSV Export</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('mcp-server'))
-                <a href="/system/mcp-server" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-9">MCP Server</a>
+                <a href="/system/mcp-server" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-11">MCP Server</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('script-search'))
-                <a href="/system/script-search" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-91">Script Search</a>
+                <a href="/system/script-search" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-12">Script Search</a>
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('wctp-gateway'))
-                <a href="/system/wctp-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-19">WCTP Gateway</a>
+                <a href="/system/wctp-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-13">WCTP Gateway</a>
             @endif
 
         </div>

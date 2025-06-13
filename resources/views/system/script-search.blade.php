@@ -1,3 +1,4 @@
+@section('title', 'Script Search')
 <x-app-layout>
     <x-slot name="header">
 
@@ -12,7 +13,7 @@
             <div class="overflow-hidden  sm:rounded-lg  flex">
 
                 <div class="inline-flex w-full p-2 border border-gray-300 border-double bg-gray-50  shadow   mx-auto rounded-lg  mb-4">
-                    <livewire:system.script-search lazy />
+                    <livewire:system.script-search lazy="lazy" />
 
                 </div>
 

@@ -1,3 +1,4 @@
+@section('title', 'Integrations')
 <x-app-layout>
     <x-slot name="header">
 

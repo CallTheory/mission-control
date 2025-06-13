@@ -12,11 +12,10 @@ use Illuminate\Support\Str;
             <div x-data="{ currentMessageRevision: -1 }">
                 <div class="flex px-2  py-2 my-2 align-middle border-b border-gray-300">
                     <svg class="w-5 h-5 mx-0 inline-flex text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <strong>Message <code class="font-normal ml-2 border rounded px-1 py-0.5 bg-gray-100 text-xs">msgId&middot;{{ $message->msgId }}</code></strong>
+                    <strong>Message <code class="font-normal ml-2 border rounded px-1 py-0.5 bg-gray-100 border-gray-300 text-xs">msgId&middot;{{ $message->msgId }}</code></strong>
 
                     @if(count($revisions) > 0)
                         <select x-model="currentMessageRevision" class="border rounded border-gray-300 shadow text-xs my-0 ml-2">
-                            <option value="-1" selected>Summary</option>
                             @foreach(new ArrayIterator(array_reverse($revisions, true)) as $order => $revision)
                                 <option value="{{ $order }}">Revision {{ $order+1 }} - {{ $revision['timestamp'] }}</option>
                             @endforeach
@@ -26,14 +25,10 @@ use Illuminate\Support\Str;
 
                 <div x-show="currentMessageRevision == -1" class="block text-black rounded px-2 py-2">
 
-                    @if(count($revisions) > 0)
-                        <h3 class="text-sm font-semibold text-indigo-500 text-left mb-4">Viewing &rarr; Summary</h3>
-                    @endif
-
                     @if(strlen(trim($message->Summary)) > 0)
-                        <code class="block p-4 border rounded shadow bg-gray-100 text-sans break-words">{!! Helpers::formatMessageSummary($message->Summary) !!}</code>
+                        <code class="block p-4 border rounded shadow bg-gray-100 border-gray-300 text-sans break-words">{!! Helpers::formatMessageSummary($message->Summary) !!}</code>
                     @else
-                        <code class="block p-4 border rounded shadow bg-gray-100 text-sans break-words">{{ $message->Index }}</code>
+                        <code class="block p-4 border rounded shadow bg-gray-100 border-gray-300 text-sans break-words">{{ $message->Index }}</code>
                     @endif
 
                     <div class="flex flex-wrap mt-4">
