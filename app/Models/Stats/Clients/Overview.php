@@ -141,7 +141,7 @@ class Overview extends Stat
             $full_filter = 'where '.substr($full_filter, 3);
         }
 
-        return  <<<TSQL
+        return <<<TSQL
                 select
                 cltClients.cltId, cltClients.Stamp, cltClients.ClientNumber, cltClients.ClientName,
                 cltClients.BillingCode, subjects.[Name] as Directory

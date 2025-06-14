@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
+use Throwable;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -19,7 +20,7 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Create a newly registered user.
      *
-     * @throws ValidationException
+     * @throws ValidationException|Throwable
      */
     public function create(array $input): User
     {

@@ -26,6 +26,7 @@ class DeleteUser implements DeletesUsers
 
     /**
      * Delete the given user.
+     * @throws \Throwable
      */
     public function delete(User $user): void
     {

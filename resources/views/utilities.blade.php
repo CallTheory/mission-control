@@ -71,8 +71,8 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                         @endif
 
                         @if(Helpers::isSystemFeatureEnabled('card-processing') && request()->user()->currentTeam->utility_card_processing)
-                            <a class="group" title="Board Check" href="/utilities/card-processing">
-                                <div class="bg-white px-4 py-8  transition transform duration-700 ease-in-out group-hover:bg-gray-700rounded-sm shadow border border-gray-300 text-center">
+                            <a class="group" title="Card Processing" href="/utilities/card-processing">
+                                <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Card Processing</small>
                                 </div>
@@ -80,7 +80,7 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                         @endif
 
                         @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing)
-                            <a class="group" title="Outbound Faxing" href="/utilities/cloud-faxing">
+                            <a class="group" title="Cloud Faxing" href="/utilities/cloud-faxing">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Cloud Faxing</small>
@@ -109,7 +109,7 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                         @endif
 
                         @if(Helpers::isSystemFeatureEnabled('directory-search') && request()->user()->currentTeam->utility_directory_search)
-                            <a class="group" title="Database Health" href="/utilities/directory-search">
+                            <a class="group" title="Directory Search" href="/utilities/directory-search">
                                 <div class="bg-white px-4 py-8  transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Zm3.75 11.625a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -132,7 +132,10 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                         @if(Helpers::isSystemFeatureEnabled('mcp-server') && request()->user()->currentTeam->utility_mcp_server)
                             <a class="group" title="MCP Server" href="/utilities/mcp-server">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
-                                    <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20"></path></svg>
+                                    <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />
+                                    </svg>
+
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">MCP Server</small>
                                 </div>
                             </a>
@@ -148,7 +151,7 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                         @endif
 
                         @if(Helpers::isSystemFeatureEnabled('wctp-gateway') && request()->user()->currentTeam->utility_wctp_gateway)
-                            <a class="group" title="Script Search" href="/utilities/wctp-gateway">
+                            <a class="group" title="WCTP Gateway" href="/utilities/wctp-gateway">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />

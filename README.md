@@ -54,11 +54,11 @@ npm run build
 # Copy the environment file
 cp .env.example .env
 
-# You should probably modify the .env file 
-# for your environment at this point
-
 # Generate application key
 php artisan key:generate
+
+# You should probably modify the .env file 
+# for your environment at this point
 
 # Run migrations
 php artisan migrate
@@ -96,7 +96,7 @@ Run the test suite:
 
 ```bash
 # Sail/docker environments
-vendor/bin/sail artisan test
+sail artisan test
 
 # Non-sail/docker environments
 # php artisan test
@@ -108,7 +108,7 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 
 ## Security
 
-Please report any security-related issues to [support@calltheory.com](mailto:support@calltheory.com) instead of using the issue tracker. See [SECURITY.md](SECURITY.md) for additional information.
+Please report any security-related issues to [security@calltheory.com](mailto:security@calltheory.com) instead of using the issue tracker. See [SECURITY.md](SECURITY.md) for additional information.
 
 ## License
 
