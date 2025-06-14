@@ -28,7 +28,7 @@ class ScreenCaptureController extends Controller
         }
 
         if (Helpers::allowedAccountAccess(
-            $call->ClientNumber,
+            $call->ClientNumber ?? '',
             $call->BillingCode ?? '',
             $request->user()->currentTeam->allowed_accounts ?? '',
             $request->user()->currentTeam->allowed_billing ?? ''
