@@ -14,7 +14,7 @@ Mission Control is an unofficial community project and is not endorsed, sponsore
 
 Based on the [Laravel Framework](https://laravel.com), you'll need:
 
-- PHP 8.3+
+- PHP 8.4+
 - Composer 2+
 - Node.js 18+
 - A [compatible database](https://laravel.com/docs/12.x/database)
