@@ -57,6 +57,7 @@ class Handler extends ExceptionHandler
                     'error' => App::environment('local') ? get_class($e).': '.$e->getMessage() : 'An unclassified error occurred.',
                 ], $errorCode);
             }
+            return null;
         });
     }
 }
