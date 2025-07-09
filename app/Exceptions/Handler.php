@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
+use Illuminate\Http\JsonResponse;
 
 class Handler extends ExceptionHandler
 {
@@ -44,7 +45,7 @@ class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->renderable(function (Throwable $e, Request $request): null {
+        $this->renderable(function (Throwable $e, Request $request): null|JsonResponse {
             if ($request->is('api/*')) {
                 if ($e instanceof NotFoundHttpException) {
                     $errorCode = 404;
