@@ -1,6 +1,40 @@
-* text eol=crlf
+# Text files - convert to CRLF on checkout and LF on commit
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.blade.php text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+
+# Binary files - don't modify line endings
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.rar binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# Vendor files
 *.css linguist-vendored
 *.scss linguist-vendored
 *.js linguist-vendored
+
+# Export ignore
 CHANGELOG.md export-ignore
-*.sh text eol=crlf
