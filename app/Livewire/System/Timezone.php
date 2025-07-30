@@ -21,10 +21,9 @@ class Timezone extends Component
 
     public function mount(): void
     {
-        $this->settings = Settings::first();
+        $this->settings = Settings::first() ?? new Settings;
 
         if (is_null($this->settings->id)) {
-            $this->settings = new Settings;
             $this->settings->switch_data_timezone = 'UTC';
             $this->settings->save();
         }
