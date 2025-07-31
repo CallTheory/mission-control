@@ -54,13 +54,15 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
         if(config('app.switch_engine') == 'infinity')
         {
             $capFile = storage_path("app/{$this->fax_provider}/messages/{$this->capfile}");
+            $sentCapFile = storage_path("app/{$this->fax_provider}/messages/{$this->capfile}");
         }
         else {
             $capFile = storage_path("app/{$this->fax_provider}/tosend/{$this->capfile}");
+            $sentCapFile = storage_path("app/{$this->fax_provider}/sent/{$this->capfile}");
         }
 
         $sentFsFile = storage_path("app/{$this->fax_provider}/sent/{$this->fsFileName}");
-        $sentCapFile = storage_path("app/{$this->fax_provider}/sent/{$this->capfile}");
+
 
         $capFileContents = file_get_contents($capFile);
         $fsFileContents = file_get_contents($fsFile);
