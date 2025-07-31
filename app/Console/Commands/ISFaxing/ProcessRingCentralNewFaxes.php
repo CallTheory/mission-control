@@ -177,7 +177,7 @@ class ProcessRingCentralNewFaxes extends Command
                 ]);
 
                 if ($validator->fails()) {
-                    $this->error("Missing expected fax details...\n\n" . implode('. ' , $validator->errors()->toArray()) . "\n\n".print_r($isfax, true));
+                    $this->error("Missing expected fax details...\n\n" . $validator->errors()->all()->implode('. ') . "\n\n".print_r($isfax, true));
                 } else {
                     $this->info("Submitting fax job {$isfax['jobID']}");
                     $this->info(print_r($isfax, true));
