@@ -133,7 +133,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                     $bodyParams = $rcsdk->createMultipartBuilder()
                         ->setBody([
                             'to' => [
-                                ['phoneNumber' => $this->phone],
+                                ['phoneNumber' => $toNumber],
                             ],
                             'faxResolution' => 'High',
                             'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
@@ -145,7 +145,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                     $bodyParams = $rcsdk->createMultipartBuilder()
                         ->setBody([
                             'to' => [
-                                ['phoneNumber' => $this->phone],
+                                ['phoneNumber' => $toNumber],
                             ],
                             'faxResolution' => 'High',
                             'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
