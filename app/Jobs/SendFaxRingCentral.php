@@ -87,7 +87,10 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
                 $toNumber = "+1{$this->phone}";
-            } elseif (! Str::startsWith($this->phone, '+')) {
+            }elseif ( Str::startsWith($this->phone, '9') && strlen($this->phone) === 11 ) {
+                $toNumber = "+1" . Str::after($this->phone, '9');
+            }
+            elseif (! Str::startsWith($this->phone, '+')) {
                 $toNumber = "+{$this->phone}";
             } else {
                 $toNumber = "{$this->phone}";
