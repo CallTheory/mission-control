@@ -103,7 +103,6 @@ class ProcessRingCentralNewFaxes extends Command
                      */
                     foreach ($lines as $line) {
 
-                        $isfax['filename'] = $isfax['fsFileName'];
                         if (Str::startsWith($line, '$var_def DATA5')) {
                             $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
                             $isfax['jobID'] = str_replace('"', '', $exploded[0] ?? '') ?? null;
@@ -116,6 +115,7 @@ class ProcessRingCentralNewFaxes extends Command
                             } else {
                                 $isfax['capfile'] = end($filename);
                             }
+                            $isfax['filename'] = $isfax['capfile'];
                         } elseif (Str::startsWith($line, '$fax_phone')) {
                             $exploded = array_values(array_filter(explode('$fax_phone ', $line)));
                             $isfax['phone'] = $exploded[0] ?? null;
