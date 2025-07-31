@@ -86,35 +86,83 @@ class ProcessRingCentralNewFaxes extends Command
 
                 $this->warn(print_r($lines, true));
 
-                foreach ($lines as $line) {
-                    if (Str::startsWith($line, '$var_def DATA5')) {
-                        $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
-                        $isfax['jobID'] = str_replace('"', '', $exploded[0] ?? '') ?? null;
-                    } elseif (Str::startsWith($line, '$var_def DATA6')) {
-                        $exploded = array_values(array_filter(explode('$var_def DATA6 ', $line)));
-                        $capfile = explode('\\', $exploded[0]);
-                        $isfax['capfile'] = str_replace('"', '', end($capfile));
-                    } elseif (Str::startsWith($line, '$fax_filename')) {
-                        $exploded = array_values(array_filter(explode('$fax_filename ', $line)));
-                        $filename = explode('\\', $exploded[0]);
-                        if (Str::contains(end($filename), '"')) {
-                            $filetemp = explode('"', end($filename));
-                            $isfax['filename'] = reset($filetemp);
-                        } else {
-                            $isfax['filename'] = end($filename);
-                        }
-                    } elseif (Str::startsWith($line, '$fax_phone')) {
-                        $exploded = array_values(array_filter(explode('$fax_phone ', $line)));
-                        $isfax['phone'] = $exploded[0] ?? null;
-                        $isfax['phone'] = str_replace('"', '', $isfax['phone'] ?? '');
-                    } elseif (Str::startsWith($line, '$fax_status1')) {
-                        $exploded = array_values(array_filter(explode('$fax_status1 ', $line)));
+                if(config('app.switch_engine') === 'infinity'){
 
-                        if (Str::contains($exploded[0] ?? '', ' ')) {
-                            $statustemp = explode(' ', $exploded[0]);
-                            $isfax['status'] = reset($statustemp);
-                        } else {
-                            $isfax['status'] = $exploded[0] ?? null;
+                    /**
+                     * $var_def DATA5 "58735"
+                     * $var_def ASCII_TEMPLATE C:\Copia\FaxFacts\STANDARD.GTT
+                     * $fax_filename C:\Copia\FaxFacts\callback\messages\00006101.cap
+                     * $fax_phone "95551234567"
+                     * $fax_status1 2
+                     * $fax_origin user_request
+                     * $fax_user C:\Copia\FaxFacts\fax.usr
+                     * $fax_receiver "Patrick's Heating & A/C     95551234567"
+                     * $fax_header "Patrick's Heating & A/C  Message's from your service"
+                     * $fax_request_date 07/03/25
+                     * $fax_request_time 14:11:28
+                     */
+                    foreach ($lines as $line) {
+                        if (Str::startsWith($line, '$var_def DATA5')) {
+                            $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
+                            $isfax['jobID'] = str_replace('"', '', $exploded[0] ?? '') ?? null;
+                        } elseif (Str::startsWith($line, '$fax_filename')) {
+                            $exploded = array_values(array_filter(explode('$fax_filename ', $line)));
+                            $filename = explode('\\', $exploded[0]);
+                            if (Str::contains(end($filename), '"')) {
+                                $filetemp = explode('"', end($filename));
+                                $isfax['capfile'] = reset($filetemp);
+                                $isfax['filename'] = reset($filetemp);
+                            } else {
+                                $isfax['capfile'] = end($filename);
+                                $isfax['filename'] = end($filename);
+                            }
+                        } elseif (Str::startsWith($line, '$fax_phone')) {
+                            $exploded = array_values(array_filter(explode('$fax_phone ', $line)));
+                            $isfax['phone'] = $exploded[0] ?? null;
+                            $isfax['phone'] = str_replace('"', '', $isfax['phone'] ?? '');
+                        } elseif (Str::startsWith($line, '$fax_status1')) {
+                            $exploded = array_values(array_filter(explode('$fax_status1 ', $line)));
+
+                            if (Str::contains($exploded[0] ?? '', ' ')) {
+                                $statustemp = explode(' ', $exploded[0]);
+                                $isfax['status'] = reset($statustemp);
+                            } else {
+                                $isfax['status'] = $exploded[0] ?? null;
+                            }
+                        }
+                    }
+                }
+                else{
+                    foreach ($lines as $line) {
+                        if (Str::startsWith($line, '$var_def DATA5')) {
+                            $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
+                            $isfax['jobID'] = str_replace('"', '', $exploded[0] ?? '') ?? null;
+                        } elseif (Str::startsWith($line, '$var_def DATA6')) {
+                            $exploded = array_values(array_filter(explode('$var_def DATA6 ', $line)));
+                            $capfile = explode('\\', $exploded[0]);
+                            $isfax['capfile'] = str_replace('"', '', end($capfile));
+                        } elseif (Str::startsWith($line, '$fax_filename')) {
+                            $exploded = array_values(array_filter(explode('$fax_filename ', $line)));
+                            $filename = explode('\\', $exploded[0]);
+                            if (Str::contains(end($filename), '"')) {
+                                $filetemp = explode('"', end($filename));
+                                $isfax['filename'] = reset($filetemp);
+                            } else {
+                                $isfax['filename'] = end($filename);
+                            }
+                        } elseif (Str::startsWith($line, '$fax_phone')) {
+                            $exploded = array_values(array_filter(explode('$fax_phone ', $line)));
+                            $isfax['phone'] = $exploded[0] ?? null;
+                            $isfax['phone'] = str_replace('"', '', $isfax['phone'] ?? '');
+                        } elseif (Str::startsWith($line, '$fax_status1')) {
+                            $exploded = array_values(array_filter(explode('$fax_status1 ', $line)));
+
+                            if (Str::contains($exploded[0] ?? '', ' ')) {
+                                $statustemp = explode(' ', $exploded[0]);
+                                $isfax['status'] = reset($statustemp);
+                            } else {
+                                $isfax['status'] = $exploded[0] ?? null;
+                            }
                         }
                     }
                 }
