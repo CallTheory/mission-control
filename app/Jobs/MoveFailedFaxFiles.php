@@ -50,10 +50,17 @@ class MoveFailedFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public function handle(): void
     {
         $fsFile = storage_path("app/{$this->fax_provider}/tosend/{$this->fsFileName}");
-        $capFile = storage_path("app/{$this->fax_provider}/tosend/{$this->capfile}");
-
         $failedFsFile = storage_path("app/{$this->fax_provider}/fail/{$this->fsFileName}");
         $failedCapFile = storage_path("app/{$this->fax_provider}/fail/{$this->capfile}");
+
+        if(config('app.switch_engine') == 'infinity')
+        {
+            $capFile = storage_path("app/{$this->fax_provider}/messages/{$this->capfile}");
+        }
+        else{
+            $capFile = storage_path("app/{$this->fax_provider}/tosend/{$this->capfile}");
+
+        }
 
         $capFileContents = file_get_contents($capFile);
         $fsFileContents = file_get_contents($fsFile);
