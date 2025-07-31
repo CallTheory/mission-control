@@ -124,16 +124,32 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             }
 
             try {
-                $bodyParams = $rcsdk->createMultipartBuilder()
-                    ->setBody([
-                        'to' => [
-                            ['phoneNumber' => $this->phone],
-                        ],
-                        'faxResolution' => 'High',
-                        'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
-                    ])
-                    ->add(file_get_contents(storage_path('app/ringcentral/tosend/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
-                    ->request('/restapi/v1.0/account/~/extension/~/fax');
+
+                if(config('app.switch_engine') == 'infinity')
+                {
+                    $bodyParams = $rcsdk->createMultipartBuilder()
+                        ->setBody([
+                            'to' => [
+                                ['phoneNumber' => $this->phone],
+                            ],
+                            'faxResolution' => 'High',
+                            'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
+                        ])
+                        ->add(file_get_contents(storage_path('app/ringcentral/messages/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
+                        ->request('/restapi/v1.0/account/~/extension/~/fax');
+                }
+                else{
+                    $bodyParams = $rcsdk->createMultipartBuilder()
+                        ->setBody([
+                            'to' => [
+                                ['phoneNumber' => $this->phone],
+                            ],
+                            'faxResolution' => 'High',
+                            'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
+                        ])
+                        ->add(file_get_contents(storage_path('app/ringcentral/tosend/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
+                        ->request('/restapi/v1.0/account/~/extension/~/fax');
+                }
 
                 $resp = $platform->sendRequest($bodyParams);
 

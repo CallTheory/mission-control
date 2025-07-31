@@ -65,7 +65,7 @@ class ProcessRingCentralNewFaxes extends Command
 
         // check to see if Ring Central is even set up...
         if (! $this->isFaxEnabled()) {
-            return CommandStatus::FAILURE;
+            return CommandStatus::SUCCESS;
         }
 
         $toSendPath = storage_path('app/ringcentral/tosend/');
@@ -87,20 +87,6 @@ class ProcessRingCentralNewFaxes extends Command
                 $this->warn(print_r($lines, true));
 
                 if(config('app.switch_engine') === 'infinity'){
-
-                    /**
-                     * $var_def DATA5 "4234"
-                     * $var_def ASCII_TEMPLATE C:\Copia\FaxFacts\STANDARD.GTT
-                     * $fax_filename C:\Copia\FaxFacts\callback\messages\00006101.cap
-                     * $fax_phone "95551234567"
-                     * $fax_status1 2
-                     * $fax_origin user_request
-                     * $fax_user C:\Copia\FaxFacts\fax.usr
-                     * $fax_receiver "Patrick's Heating & A/C     95551234567"
-                     * $fax_header "Patrick's Heating & A/C  Message's from your service"
-                     * $fax_request_date 07/03/25
-                     * $fax_request_time 13:11:28
-                     */
                     foreach ($lines as $line) {
 
                         if (Str::startsWith($line, '$var_def DATA5')) {
