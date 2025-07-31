@@ -89,7 +89,7 @@ class ProcessRingCentralNewFaxes extends Command
                 if(config('app.switch_engine') === 'infinity'){
 
                     /**
-                     * $var_def DATA5 "58735"
+                     * $var_def DATA5 "4234"
                      * $var_def ASCII_TEMPLATE C:\Copia\FaxFacts\STANDARD.GTT
                      * $fax_filename C:\Copia\FaxFacts\callback\messages\00006101.cap
                      * $fax_phone "95551234567"
@@ -99,9 +99,11 @@ class ProcessRingCentralNewFaxes extends Command
                      * $fax_receiver "Patrick's Heating & A/C     95551234567"
                      * $fax_header "Patrick's Heating & A/C  Message's from your service"
                      * $fax_request_date 07/03/25
-                     * $fax_request_time 14:11:28
+                     * $fax_request_time 13:11:28
                      */
                     foreach ($lines as $line) {
+
+                        $isfax['filename'] = $isfax['fsFileName'];
                         if (Str::startsWith($line, '$var_def DATA5')) {
                             $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
                             $isfax['jobID'] = str_replace('"', '', $exploded[0] ?? '') ?? null;
@@ -111,10 +113,8 @@ class ProcessRingCentralNewFaxes extends Command
                             if (Str::contains(end($filename), '"')) {
                                 $filetemp = explode('"', end($filename));
                                 $isfax['capfile'] = reset($filetemp);
-                                $isfax['filename'] = reset($filetemp);
                             } else {
                                 $isfax['capfile'] = end($filename);
-                                $isfax['filename'] = end($filename);
                             }
                         } elseif (Str::startsWith($line, '$fax_phone')) {
                             $exploded = array_values(array_filter(explode('$fax_phone ', $line)));
