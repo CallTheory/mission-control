@@ -61,7 +61,7 @@ class ProcessNewFaxes extends Command
 
         // check to see if mFax is even setup...
         if (! $this->isFaxEnabled()) {
-            return CommandStatus::FAILURE;
+            return CommandStatus::SUCCESS;
         }
 
         $toSendPath = storage_path('app/mfax/tosend/');
