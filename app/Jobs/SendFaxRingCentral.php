@@ -56,7 +56,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     {
         $this->datasource = DataSource::firstOrFail();
 
-        $this->phone = str_ireplace(['-', '.', ' ', '(', ')'], '', $fax['phone']);
+        $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
         $this->jobID = $fax['jobID'];
         $this->capfile = $fax['capfile'];
         $this->filename = $fax['filename'];
@@ -87,12 +87,11 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
                 $toNumber = "+1{$this->phone}";
-            }elseif ( Str::startsWith($this->phone, '9') && strlen($this->phone) === 11 ) {
-                $toNumber = "+1" . Str::after($this->phone, '9');
-            }elseif ( Str::startsWith($this->phone, '91') && strlen($this->phone) === 12 ) {
-                $toNumber = "+1" . Str::after($this->phone, '91');
-            }
-            elseif (! Str::startsWith($this->phone, '+')) {
+            } elseif (Str::startsWith($this->phone, '9') && strlen($this->phone) === 11) {
+                $toNumber = '+1'.Str::after($this->phone, '9');
+            } elseif (Str::startsWith($this->phone, '91') && strlen($this->phone) === 12) {
+                $toNumber = '+1'.Str::after($this->phone, '91');
+            } elseif (! Str::startsWith($this->phone, '+')) {
                 $toNumber = "+{$this->phone}";
             } else {
                 $toNumber = "{$this->phone}";
@@ -130,8 +129,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             try {
 
-                if(config('app.switch_engine') == 'infinity')
-                {
+                if (config('app.switch_engine') == 'infinity') {
                     $bodyParams = $rcsdk->createMultipartBuilder()
                         ->setBody([
                             'to' => [
@@ -142,8 +140,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                         ])
                         ->add(file_get_contents(storage_path('app/ringcentral/messages/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
                         ->request('/restapi/v1.0/account/~/extension/~/fax');
-                }
-                else{
+                } else {
                     $bodyParams = $rcsdk->createMultipartBuilder()
                         ->setBody([
                             'to' => [

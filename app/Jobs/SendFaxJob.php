@@ -61,7 +61,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $this->jobID = $fax['jobID'];
         $this->capfile = $fax['capfile'];
         $this->filename = $fax['filename'];
-        $this->phone = str_ireplace(['-', '.', ' ', '(', ')'], '', $fax['phone']);
+        $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
         $this->status = $fax['status'];
         $this->fsFileName = $fax['fsFileName'];
 
