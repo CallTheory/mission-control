@@ -13,7 +13,11 @@ Mission Control is a Laravel 12.x web application serving as a utility dashboard
 # Install dependencies
 composer install
 npm install
+
+# Install Chrome for screenshot generation (required for board check exports)
 npx puppeteer browsers install chrome-headless-shell
+# Or if using Sail:
+./vendor/bin/sail exec -u sail mission-control.test npx puppeteer browsers install chrome-headless-shell
 
 # Build frontend assets
 npm run build

@@ -5,6 +5,7 @@ namespace App\Jobs\PeoplePraiseApi;
 use App\Models\DataSource;
 use App\Models\Stats\Calls\Call;
 use App\Models\Stats\Helpers;
+use App\Models\System\Settings;
 use App\Utilities\RenderMessageSummary;
 use Carbon\Carbon;
 use Exception;
@@ -80,6 +81,10 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             return;
         }
 
+        // Get timezone from Settings model
+        $settings = Settings::first();
+        $timezone = $settings->switch_data_timezone ?? 'UTC';
+
         $callData = new Call(['ISCallId' => $this->call_id]);
         $call = $callData->results[0];
         $messageData = $call->messages[0] ?? null;
@@ -96,8 +101,8 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 'initial' => $this->initial,
                 'client_id' => $this->client_id,
                 'event_type' => $this->event_type,
-                'event_datetime' => Carbon::parse($this->event_datetime, $datasource->timezone)->format('Y-m-d H:i:s'),
-                'create_datetime' => Carbon::parse($this->create_datetime, $datasource->timezone)->format('Y-m-d H:i:s'),
+                'event_datetime' => Carbon::parse($this->event_datetime, $timezone)->format('Y-m-d H:i:s'),
+                'create_datetime' => Carbon::parse($this->create_datetime, $timezone)->format('Y-m-d H:i:s'),
                 'notes' => $this->notes,
                 'reporter_initial' => $this->reporter_initial,
                 'object_id' => $this->call_id,
