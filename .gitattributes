@@ -12,6 +12,11 @@
 *.md text eol=lf
 *.txt text eol=lf
 *.sh text eol=lf
+*.env text eol=lf
+.env text eol=lf
+.env.example text eol=lf
+sail text eol=lf
+vendor/bin/sail text eol=lf
 
 # Binary files - don't modify line endings
 *.png binary

@@ -1,11 +1,12 @@
 services:
-    laravel.test:
+    mission-control.test:
         build:
             context: './docker/8.4'
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: 'sail-8.3/app'
+        image: 'sail-8.4/app'
+        container_name: mission-control.test
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:

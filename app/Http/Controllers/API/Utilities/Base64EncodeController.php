@@ -14,13 +14,13 @@ class Base64EncodeController extends Controller
 {
     public function __construct()
     {
-        $settings = Settings::firstOrFail();
+        $settings = Settings::first();
 
-        if ($settings->api_whitelist) {
+        if ($settings && isset($settings->api_whitelist) && $settings->api_whitelist) {
             $this->middleware('api_whitelist');
         }
 
-        if ($settings->require_api_tokens) {
+        if ($settings && isset($settings->require_api_tokens) && $settings->require_api_tokens) {
             $this->middleware('auth:sanctum');
         }
 

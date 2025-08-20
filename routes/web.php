@@ -86,6 +86,9 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/screencapture/{
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/better-emails', BetterEmailController::class)->name('utilities.better-emails');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/directory-search', DirectorySearchController::class)->name('utilities.directory-search');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-server', McpServerController::class)->name('utilities.mcp-server');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-test', function () {
+    return view('livewire.utilities.mcp-protocol-test');
+})->name('utilities.mcp-protocol-test');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', CsvExportController::class)->name('utilities.csv-export');
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController::class)->name('system');
