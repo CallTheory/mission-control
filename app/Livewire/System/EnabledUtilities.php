@@ -27,8 +27,6 @@ class EnabledUtilities extends Component
 
     public bool $script_search = false;
 
-    public bool $wctp_gateway = false;
-
     public bool $better_emails = false;
 
     public bool $csv_export = false;
@@ -124,19 +122,6 @@ class EnabledUtilities extends Component
         $this->dispatch('saved');
     }
 
-    public function toggleWctpGatewayUtility(): void
-    {
-        if (Storage::fileExists('feature-flags/wctp-gateway.flag')) {
-            Storage::delete('feature-flags/wctp-gateway.flag');
-            $this->script_search = false;
-        } else {
-            Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
-            $this->script_search = true;
-        }
-
-        $this->dispatch('saved');
-    }
-
     public function toggleBetterEmailsUtility(): void
     {
         if (Storage::fileExists('feature-flags/better-emails.flag')) {
@@ -197,7 +182,6 @@ class EnabledUtilities extends Component
         $this->cloud_faxing = Helpers::isSystemFeatureEnabled('cloud-faxing');
         $this->inbound_email = Helpers::isSystemFeatureEnabled('inbound-email');
         $this->script_search = Helpers::isSystemFeatureEnabled('script-search');
-        $this->wctp_gateway = Helpers::isSystemFeatureEnabled('wctp-gateway');
         $this->better_emails = Helpers::isSystemFeatureEnabled('better-emails');
         $this->call_lookup = Helpers::isSystemFeatureEnabled('call-lookup');
         $this->database_health = Helpers::isSystemFeatureEnabled('database-health');

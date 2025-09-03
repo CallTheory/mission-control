@@ -13,11 +13,6 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->app->register(JetstreamServiceProvider::class)->boot();
-    }
 
     public function test_registration_screen_can_be_rendered_when_no_users_exist()
     {

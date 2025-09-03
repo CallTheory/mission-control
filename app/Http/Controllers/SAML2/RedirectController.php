@@ -10,13 +10,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
 class RedirectController extends Controller
 {
     /**
      * @throws Exception
      */
-    public function __invoke(Request $request): Socialite|RedirectResponse
+    public function __invoke(Request $request): RedirectResponse|SymfonyRedirectResponse
     {
 
         // Send to IdP to verify they are who they are

@@ -31,7 +31,9 @@ use App\Http\Controllers\System\SystemController;
 use App\Http\Controllers\System\UserController as UserDetailController;
 use App\Http\Controllers\System\UsersController as UsersAndGroupsController;
 use App\Http\Controllers\System\WctpGatewayController as WctpGatewaySettingsController;
+use App\Http\Controllers\Api\WctpController;
 use App\Http\Controllers\TermsOfServiceController;
+use App\Models\Stats\Helpers;
 use App\Http\Controllers\Utilities\ApiGatewayController;
 use App\Http\Controllers\Utilities\BetterEmailController;
 use App\Http\Controllers\Utilities\BoardActivityController;
@@ -77,6 +79,12 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/script-search',
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-report', BoardReportController::class)->name('utilities.board-report');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-activity', BoardActivityController::class)->name('utilities.board-activity');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-gateway', WctpGatewayController::class)->name('utilities.wctp-gateway');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', function () {
+    return view('utilities.enterprise-hosts');
+})->name('utilities.enterprise-hosts');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', function () {
+    return view('utilities.wctp-messages');
+})->name('utilities.wctp-messages');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/cloud-faxing/{provider?}', CloudFaxingController::class)->name('utilities.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing', CardProcessingController::class)->name('utilities.card-processing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing/download-tbs-import', DownloadTBSReport::class)->name('utilities.card-processing.download-tbs-import');
@@ -118,6 +126,19 @@ Route::get('/privacy', [PrivacyPolicyController::class, 'show'])->name('policy.s
 
 Route::post('/webhooks/sendgrid/parse/{api_key}', ParseController::class);
 Route::get('/email-unsubscribe', EmailUnsubscribeController::class)->name('email-unsubscribe');
+
+// WCTP Enterprise Host endpoint (public, no auth required)
+if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
+    Route::post('/wctp', [WctpController::class, 'handle'])
+        ->name('wctp');
+    
+    Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
+        ->name('wctp.callback');
+    
+    // Twilio incoming SMS webhook
+    Route::post('/wctp/sms/incoming', [WctpController::class, 'handleIncomingSms'])
+        ->name('wctp.sms.incoming');
+}
 
 // Support SAML2 get/post, but default to POST (see services.php)
 Route::match(['get', 'post'], '/sso/saml2/redirect', SAMLRedirectController::class)->name('sso.saml2.redirect');

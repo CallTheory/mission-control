@@ -24,6 +24,7 @@
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.23.0",
         "livewire/livewire": "^3.6.3",
+        "notifius/php-wctp": "dev-main",
         "onelogin/php-saml": "^4.2.0",
         "predis/predis": "^3.0.1",
         "ringcentral/ringcentral-php": "^3.0.4",
@@ -32,6 +33,7 @@
         "stripe/stripe-php": "^17.2.1",
         "symfony/mailer": "^7.2.5",
         "symfony/process": "^v7.2.5",
+        "twilio/sdk": "^8.7",
         "wire-elements/modal": "^3.0.1"
     },
     "require-dev": {

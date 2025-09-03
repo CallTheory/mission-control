@@ -9,15 +9,11 @@
     </x-slot>
 
     <div class="p-4">
-        <div id="toggleScreenWidthContent"
-             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded border bg-white shadow border-gray-300">
-            <div class="m-2">
+        <div id="toggleScreenWidthContent" class="max-w-7xl mx-auto">
+            <div class="mb-4">
                 @include('layouts.width-toggle')
             </div>
-
-            <div class="w-full min-w-full p-4 mx-auto mb-4">
-                <livewire:system.wctp-gateway lazy="lazy" />
-            </div>
+            <livewire:system.wctp-gateway lazy="lazy" />
         </div>
     </div>
 

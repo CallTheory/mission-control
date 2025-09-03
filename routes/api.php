@@ -19,6 +19,7 @@ use App\Http\Controllers\API\Utilities\TextBetweenController;
 use App\Http\Controllers\API\Utilities\TitleCaseController;
 use App\Http\Controllers\API\Utilities\TransliterateAsciiController;
 use App\Http\Controllers\Api\McpSseController;
+use App\Http\Controllers\Api\WctpController;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
 
@@ -116,3 +117,4 @@ if (Helpers::isSystemFeatureEnabled('inbound-email')) {
     Route::post('/agents/inbound-email/forward/{email}', ForwardInboundEmail::class)
         ->name('api.agents.inbound-email.forward');
 }
+

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fef179a966e6ecfe5b7ab3cda50b2518",
+    "content-hash": "e5e582690e7b18f2e31cfa2fb4ae64a6",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -3772,6 +3772,60 @@
                 "source": "https://github.com/nikic/PHP-Parser/tree/v5.5.0"
             },
             "time": "2025-05-31T08:24:38+00:00"
+        },
+        {
+            "name": "notifius/php-wctp",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NotifiUs/php-wctp.git",
+                "reference": "0b8ad4ac056a1e9a4f10be0760a307ab3df1b868"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NotifiUs/php-wctp/zipball/0b8ad4ac056a1e9a4f10be0760a307ab3df1b868",
+                "reference": "0b8ad4ac056a1e9a4f10be0760a307ab3df1b868",
+                "shasum": ""
+            },
+            "require": {
+                "ext-simplexml": "*",
+                "nesbot/carbon": "^2.57.0|^3.0",
+                "php": "^7.3|^8.0|^8.1|^8.2|^8.3|^8.4"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.5.20"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "NotifiUs\\": "src/notifius/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Patrick Labbett",
+                    "email": "patrick@labbett.net",
+                    "homepage": "https://labbett.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A PHP library for creating and handling XML request/response objects for the WCTP v1.3r1 specification.",
+            "homepage": "https://github.com/notifius/php-wctp",
+            "keywords": [
+                "php",
+                "wctp",
+                "xml"
+            ],
+            "support": {
+                "issues": "https://github.com/NotifiUs/php-wctp/issues",
+                "source": "https://github.com/NotifiUs/php-wctp/tree/main"
+            },
+            "time": "2025-08-20T06:46:00+00:00"
         },
         {
             "name": "nunomaduro/termwind",
@@ -8577,6 +8631,56 @@
             "time": "2024-12-21T16:25:41+00:00"
         },
         {
+            "name": "twilio/sdk",
+            "version": "8.7.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/twilio/twilio-php",
+                "reference": "fa2c08f15c6f212de0ec007c175edf5eff7c7d7b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/twilio/twilio-php/zipball/fa2c08f15c6f212de0ec007c175edf5eff7c7d7b",
+                "reference": "fa2c08f15c6f212de0ec007c175edf5eff7c7d7b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "guzzlehttp/guzzle": "^6.3 || ^7.0",
+                "phpunit/phpunit": ">=7.0 < 10"
+            },
+            "suggest": {
+                "guzzlehttp/guzzle": "An HTTP client to execute the API requests"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Twilio\\": "src/Twilio/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Twilio API Team",
+                    "email": "api@twilio.com"
+                }
+            ],
+            "description": "A PHP wrapper for Twilio's API",
+            "homepage": "https://github.com/twilio/twilio-php",
+            "keywords": [
+                "api",
+                "sms",
+                "twilio"
+            ],
+            "time": "2025-08-18T09:05:26+00:00"
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.2",
             "source": {
@@ -11514,7 +11618,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "notifius/php-wctp": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
@@ -11526,6 +11632,6 @@
         "ext-pdo": "*",
         "ext-simplexml": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

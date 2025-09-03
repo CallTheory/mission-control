@@ -90,6 +90,56 @@ sail artisan horizon
 # etc...
 ```
 
+## Production Deployment
+
+### Chrome/Puppeteer Requirements
+
+Mission Control uses Chrome/Puppeteer for screenshot generation features (People Praise API, board check exports). You must install Chrome in your production environment:
+
+#### Docker/Container Deployments
+
+Add to your production Dockerfile:
+
+```dockerfile
+# Option 1: Install Google Chrome
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
+    && apt-get clean
+
+# Option 2: Use Puppeteer's Chrome (recommended)
+RUN npx puppeteer browsers install chrome-headless-shell
+```
+
+#### Traditional Server Deployments
+
+```bash
+# Option 1: Install Google Chrome
+sudo apt-get update
+sudo apt-get install -y google-chrome-stable
+
+# Option 2: Use Puppeteer's Chrome (recommended)
+npx puppeteer browsers install chrome-headless-shell
+```
+
+#### Environment Configuration
+
+If Chrome isn't auto-detected, set the path in your `.env` file:
+
+```env
+# For Google Chrome
+BROWSERSHOT_CHROME_PATH=/usr/bin/google-chrome-stable
+
+# For Puppeteer's Chrome (path varies by system)
+BROWSERSHOT_CHROME_PATH=/home/user/.cache/puppeteer/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell
+```
+
+Without Chrome installed, screenshot generation features will fail in production.
+
 ## Testing
 
 Run the test suite:
