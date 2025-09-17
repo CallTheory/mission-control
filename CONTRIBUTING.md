@@ -51,6 +51,10 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 * Use Laravel's built-in features and helpers
 * Follow Laravel's directory structure and naming conventions
 
+## AI Code Generation
+
+Parts of the codebase are generated using AI code agents. You are free to contribute code that AI has generated, but we ask that you follow the same testing/quality standards as any normal human contribution.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under its MIT License. 

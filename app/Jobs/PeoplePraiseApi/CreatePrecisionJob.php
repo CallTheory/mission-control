@@ -18,6 +18,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
@@ -94,6 +95,21 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             $message = $messageData->Summary ?? 'No Message';
         }
 
+        // Generate screenshot and validate it's not empty
+        $screenshotBase64 = RenderMessageSummary::htmlToImage(Helpers::formatMessageSummary($message));
+
+        // If screenshot generation fails, log and retry
+        if (empty($screenshotBase64)) {
+            Log::error('PeoplePraise API: Screenshot generation failed for call ID '.$this->call_id.', returning empty base64 data');
+            throw new Exception('Screenshot generation failed - received empty base64 data');
+        }
+
+        // Validate the base64 data is actually an image
+        if (! preg_match('/^[a-zA-Z0-9\/\+]+=*$/', $screenshotBase64)) {
+            Log::error('PeoplePraise API: Invalid base64 data for call ID '.$this->call_id);
+            throw new Exception('Screenshot generation failed - invalid base64 format');
+        }
+
         $response = $client->request('POST', $this->api_endpoint, [
             'auth' => [$username, $password],
             'timeout' => $this->api_timeout,
@@ -109,7 +125,7 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 'files' => [
                     [
                         'filename' => "{$this->call_id}.png",
-                        'filedata' => RenderMessageSummary::htmlToImage(Helpers::formatMessageSummary($message)),
+                        'filedata' => $screenshotBase64,
                     ],
                 ],
             ],
