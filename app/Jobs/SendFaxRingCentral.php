@@ -156,6 +156,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 $resp = $platform->sendRequest($bodyParams);
 
                 MoveSuccessfulFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+                Log::info('ringCentralSuccess ' . $toNumber, $faxFsDetails);
             } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));

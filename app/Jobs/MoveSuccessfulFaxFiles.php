@@ -9,6 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
@@ -50,6 +51,7 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
     public function handle(): void
     {
         $fsFile = storage_path("app/{$this->fax_provider}/tosend/{$this->fsFileName}");
+        Log::info('MoveSuccessfulFaxFiles fsFile ' . $fsFile);
 
         if(config('app.switch_engine') == 'infinity')
         {
@@ -70,8 +72,13 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
         $fsFileContents = str_replace('$fax_status1 '.$this->status, '$fax_status2 0', $fsFileContents);
         file_put_contents($sentFsFile, $fsFileContents);
         file_put_contents($sentCapFile, $capFileContents);
+        Log::info('MoveSuccessfulFaxFiles sentFsFile ' . $sentFsFile);
+        Log::info('MoveSuccessfulFaxFiles sentCapFile ' . $sentCapFile);
+        Log::info('MoveSuccessfulFaxFiles fsFile ' . $fsFile);
+        Log::info('MoveSuccessfulFaxFiles capFile ' . $capFile);
         unlink($fsFile);
         unlink($capFile);
+
     }
 
     public function uniqueId()
