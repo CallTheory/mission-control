@@ -167,6 +167,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
             }
         }
+        else{
+            Log::info('SendFaxringCentral Feature Turned Off');
+        }
     }
 
     public function uniqueId()

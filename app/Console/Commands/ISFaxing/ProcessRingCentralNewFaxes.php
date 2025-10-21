@@ -6,6 +6,7 @@ use App\Jobs\SendFaxRingCentral;
 use App\Models\DataSource;
 use App\Models\Stats\Helpers;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as CommandStatus;
@@ -65,6 +66,7 @@ class ProcessRingCentralNewFaxes extends Command
 
         // check to see if Ring Central is even set up...
         if (! $this->isFaxEnabled()) {
+            Log::info('ProcessRingCentralNewFaxes system disabled');
             return CommandStatus::SUCCESS;
         }
 
@@ -164,13 +166,16 @@ class ProcessRingCentralNewFaxes extends Command
 
                 if ($validator->fails()) {
                     $this->error("Missing expected fax details...\n\n" . implode('. ', $validator->errors()->all()) . "\n\n".print_r($isfax, true));
+                    Log::error("Missing expected fax details...\n\n" . implode('. ', $validator->errors()->all()) . "\n\n".print_r($isfax, true));
                 } else {
                     $this->info("Submitting fax job {$isfax['jobID']}");
+                    Log::info("Submitting fax job {$isfax['jobID']}");
                     $this->info(print_r($isfax, true));
                     SendFaxRingCentral::dispatch($isfax);
                 }
             } else {
                 $this->comment("[IGNORE] {$fax}");
+                Log::info("[IGNORE] {$fax}");
             }
         }
 
