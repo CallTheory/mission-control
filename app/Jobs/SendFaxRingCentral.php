@@ -72,7 +72,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     {
         Log::info('SendFaxRingCentral dispatch handler triggered');
 
-        $this->datasource = DataSource::firstOrFail();
+        $this->datasource = DataSource::first();
         if ($this->datasource->ringcentral_client_id !== null) {
             $this->client_id = $this->datasource->ringcentral_client_id;
             $this->api_endpoint = $this->datasource->ringcentral_api_endpoint;
