@@ -45,6 +45,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public string $notes;
 
+    private array $fax;
+
     public DataSource $datasource;
 
     /**
@@ -55,8 +57,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public function __construct(array $fax)
     {
         Log::info('SendFaxRingCentral constructer');
-        $this->datasource = DataSource::firstOrFail();
 
+        $this->fax = $fax;
         $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
         $this->jobID = $fax['jobID'];
         $this->capfile = $fax['capfile'];
@@ -64,6 +66,13 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $this->status = $fax['status'];
         $this->fsFileName = $fax['fsFileName'];
 
+    }
+
+    public function handle(): void
+    {
+        Log::info('SendFaxRingCentral dispatch handler triggered');
+
+        $this->datasource = DataSource::firstOrFail();
         if ($this->datasource->ringcentral_client_id !== null) {
             $this->client_id = $this->datasource->ringcentral_client_id;
             $this->api_endpoint = $this->datasource->ringcentral_api_endpoint;
@@ -73,19 +82,14 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 Log::info('SendFaxRingCentral Successfully Decrypt');
 
             } catch (Exception $e) {
-                Log::error($e->getMessage(), $fax);
-                exit();
+                Log::error($e->getMessage(), $this->fax);
+                return;
+
             }
         } else {
-            Log::error('Empty ringcentral client details', $fax);
-            exit();
+            Log::error('Empty ringcentral client details', $this->fax);
+            return;
         }
-
-    }
-
-    public function handle(): void
-    {
-        Log::info('SendFaxRingCentral dispatch handler triggered');
 
         if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
 
@@ -176,8 +180,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         }
     }
 
-    public function uniqueId()
+    /*public function uniqueId()
     {
         return $this->jobID;
-    }
+    }*/
 }
