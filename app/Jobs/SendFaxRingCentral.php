@@ -54,6 +54,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      */
     public function __construct(array $fax)
     {
+        Log::info('SendFaxRingCentral constructer');
         $this->datasource = DataSource::firstOrFail();
 
         $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
@@ -83,6 +84,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public function handle(): void
     {
+        Log::info('SendFaxRingCentral dispatch handler triggered');
+
         if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
 
             if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
