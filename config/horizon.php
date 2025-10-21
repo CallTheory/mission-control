@@ -173,8 +173,8 @@ return [
             'memory' => 128,
             'tries' => 5,
             'nice' => 0,
-            'timeout' => 1800,
-            'retry_after' => 1800,
+            'timeout' => 90,
+            'retry_after' => 90,
         ],
     ],
 
