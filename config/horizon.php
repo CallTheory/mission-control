@@ -167,7 +167,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'transcriptions', 'inbound-email', 'outbound-email', 'ringcentral', 'mfax', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia'],
+            'queue' => ['default', 'transcriptions', 'inbound-email', 'outbound-email', 'ringcentral', 'mfax', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia', 'genesis'],
             'balance' => 'auto',
             'maxProcesses' => 1,
             'memory' => 128,
