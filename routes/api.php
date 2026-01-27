@@ -4,6 +4,7 @@ use App\Http\Controllers\API\Agents\CallerHistoryController as CallerHistory;
 use App\Http\Controllers\API\Agents\InboundEmail\ForwardController as ForwardInboundEmail;
 use App\Http\Controllers\API\Agents\InboundEmail\ViewController as ViewInboundEmail;
 use App\Http\Controllers\API\Integrations\StripeFillOutController as StripeFillOut;
+use App\Http\Controllers\Api\McpSseController;
 use App\Http\Controllers\API\MeController;
 use App\Http\Controllers\API\Utilities\ApaCaseController;
 use App\Http\Controllers\API\Utilities\Base64DecodeController;
@@ -18,8 +19,6 @@ use App\Http\Controllers\API\Utilities\StudlyCaseController;
 use App\Http\Controllers\API\Utilities\TextBetweenController;
 use App\Http\Controllers\API\Utilities\TitleCaseController;
 use App\Http\Controllers\API\Utilities\TransliterateAsciiController;
-use App\Http\Controllers\Api\McpSseController;
-use App\Http\Controllers\Api\WctpController;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
 
@@ -88,21 +87,12 @@ if (Helpers::isSystemFeatureEnabled('api-gateway')) {
     Route::post('/agents/recent-caller/{clientNumber}', CallerHistory::class)
         ->name('api.agents.recent-caller')
         ->middleware('auth:sanctum');
-    
-    // MCP Server SSE endpoints - requires API authentication
+
+    // MCP Streamable HTTP Transport (protocol version 2025-03-26)
+    // POST: JSON-RPC requests, GET: 405 (server-initiated messages not supported)
     Route::prefix('mcp')->middleware('auth:sanctum')->group(function () {
-        // MCP Protocol endpoint with JSON-RPC support
         Route::match(['get', 'post'], '/protocol', [McpSseController::class, 'protocol'])
             ->name('api.mcp.protocol');
-        
-        // Specific endpoints
-        Route::get('/user-info', [McpSseController::class, 'userInfo'])
-            ->name('api.mcp.user-info');
-        
-        // Generic endpoint for custom MCP servers
-        Route::get('/{type}', [McpSseController::class, 'custom'])
-            ->name('api.mcp.custom')
-            ->where('type', '[a-z0-9\-]+');
     });
 }
 
@@ -117,4 +107,3 @@ if (Helpers::isSystemFeatureEnabled('inbound-email')) {
     Route::post('/agents/inbound-email/forward/{email}', ForwardInboundEmail::class)
         ->name('api.agents.inbound-email.forward');
 }
-

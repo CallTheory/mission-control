@@ -141,6 +141,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                             </a>
                         @endif
 
+                        @if(Helpers::isSystemFeatureEnabled('voicemail-digest') && request()->user()->currentTeam->utility_voicemail_digest)
+                            <a class="group" title="Voicemail Digest" href="/utilities/voicemail-digest">
+                                <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
+                                    <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                                    </svg>
+
+                                    <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Voicemail Digest</small>
+                                </div>
+                            </a>
+                        @endif
+
                         @if(Helpers::isSystemFeatureEnabled('script-search') && request()->user()->currentTeam->utility_script_search)
                             <a class="group" title="Script Search" href="/utilities/script-search">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">

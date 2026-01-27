@@ -24,9 +24,20 @@
     </x-slot>
 
     <x-slot name="actions">
-        <x-action-message class="mr-3 " on="saved">
+        @if ($connectionStatus === 'success')
+            <span class="mr-3 text-sm text-green-600">{{ $connectionMessage }}</span>
+        @elseif ($connectionStatus === 'failed')
+            <span class="mr-3 text-sm text-red-600">{{ $connectionMessage }}</span>
+        @endif
+
+        <x-action-message class="mr-3" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
+
+        <x-secondary-button wire:click="testConnection" wire:loading.attr="disabled" class="mr-3">
+            <span wire:loading.remove wire:target="testConnection">{{ __('Test Connection') }}</span>
+            <span wire:loading wire:target="testConnection">{{ __('Testing...') }}</span>
+        </x-secondary-button>
 
         <x-button>
             {{ __('Save') }}

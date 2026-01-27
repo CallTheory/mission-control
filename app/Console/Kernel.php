@@ -12,6 +12,7 @@ use App\Console\Commands\ISFaxing\ProcessRingCentralNewFaxes;
 use App\Console\Commands\ProcessingCleanup;
 use App\Console\Commands\PurgeBoardCheckActivity;
 use App\Console\Commands\SyncISData;
+use App\Console\Commands\VoicemailDigests\ProcessScheduledVoicemailDigests;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -33,6 +34,7 @@ class Kernel extends ConsoleKernel
         ProcessingCleanup::class,
         ProcessFilesToEmail::class,
         ClearOldInboundEmails::class,
+        ProcessScheduledVoicemailDigests::class,
     ];
 
     /**
@@ -52,6 +54,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:processing-cleanup')->everyFifteenMinutes();
         $schedule->command('better-emails:process')->everyMinute()->withoutOverlapping();
         $schedule->command('app:clear-old-inbound-emails')->hourly();
+        $schedule->command('voicemail-digest:process')->everyMinute()->withoutOverlapping();
     }
 
     /**

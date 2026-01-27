@@ -32,6 +32,8 @@ class EnabledUtilities extends Component
 
     public bool $mcp_server = false;
 
+    public bool $voicemail_digest = false;
+
     public bool $script_search = false;
 
     public bool $wctp_gateway = false;
@@ -75,6 +77,9 @@ class EnabledUtilities extends Component
                 break;
             case 'mcp_server':
                 $team->utility_mcp_server = $this->mcp_server;
+                break;
+            case 'voicemail_digest':
+                $team->utility_voicemail_digest = $this->voicemail_digest;
                 break;
             case 'script_search':
                 $team->utility_script_search = $this->script_search;
@@ -156,6 +161,12 @@ class EnabledUtilities extends Component
             $this->mcp_server = $team->utility_mcp_server ?? false;
         } else {
             $this->mcp_server = false;
+        }
+
+        if (Helpers::isSystemFeatureEnabled('voicemail-digest')) {
+            $this->voicemail_digest = $team->utility_voicemail_digest ?? false;
+        } else {
+            $this->voicemail_digest = false;
         }
 
         if (Helpers::isSystemFeatureEnabled('csv-export')) {

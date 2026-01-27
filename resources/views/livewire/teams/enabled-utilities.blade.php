@@ -356,6 +356,37 @@ use App\Models\Stats\Helpers;
             <!-- End mcp-server -->
         @endif
 
+        @if(Helpers::isSystemFeatureEnabled('voicemail-digest'))
+            <!-- voicemail-digest -->
+            <div class="col-span-6 sm:col-span-4">
+                <div x-data="{ isEnabled: $wire.voicemail_digest }" class="flex items-center justify-between">
+            <span class="flex flex-grow flex-col">
+                <span class="text-md font-semibold leading-6 text-gray-900" id="voicemail-digest-enabled-label">Voicemail Digest <span class="text-white text-xs font-normal bg-indigo-500 rounded-lg px-2 py-0.5">beta</span></span>
+                <span class="text-sm text-gray-500 pr-2" id="voicemail-digest-description">
+                    Schedule automated emails with <strong>call recordings</strong> and transcriptions
+                </span>
+            </span>
+                    <button
+                        type="button"
+                        :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        role="switch"
+                        :aria-checked="isEnabled.toString()"
+                        aria-labelledby="voicemail-digest-enabled-label"
+                        aria-describedby="voicemail-digest-description"
+                        @click="$wire.toggleSetting('voicemail_digest'); isEnabled = !isEnabled"
+                    >
+                <span
+                    aria-hidden="true"
+                    :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
+                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                ></span>
+                    </button>
+                </div>
+            </div>
+            <!-- End voicemail-digest -->
+        @endif
+
         @if(Helpers::isSystemFeatureEnabled('script-search'))
         <!-- script-search -->
         <div class="col-span-6 sm:col-span-4">

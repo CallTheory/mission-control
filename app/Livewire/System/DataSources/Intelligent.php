@@ -4,6 +4,8 @@ namespace App\Livewire\System\DataSources;
 
 use App\Models\DataSource;
 use Exception;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -12,6 +14,10 @@ class Intelligent extends Component
     public array $state;
 
     public DataSource $datasource;
+
+    public string $connectionStatus = '';
+
+    public string $connectionMessage = '';
 
     public function mount(): void
     {
@@ -60,6 +66,46 @@ class Intelligent extends Component
             $this->datasource->save();
             $this->dispatch('saved');
         } catch (Exception $e) {
+        }
+    }
+
+    public function testConnection(): void
+    {
+        $host = $this->state['is_db_host'] ?: $this->datasource->is_db_host;
+        $port = $this->state['is_db_port'] ?: $this->datasource->is_db_port;
+        $database = $this->state['is_db_data'] ?: $this->datasource->is_db_data;
+        $username = $this->state['is_db_user'] ?: $this->datasource->is_db_user;
+        $password = $this->state['is_db_pass']
+            ?: ($this->datasource->is_db_pass ? decrypt($this->datasource->is_db_pass) : '');
+
+        if (empty($host) || empty($port) || empty($database) || empty($username) || empty($password)) {
+            $this->connectionStatus = 'failed';
+            $this->connectionMessage = 'Please fill in all connection fields.';
+
+            return;
+        }
+
+        Config::set('database.connections.test_connection', [
+            'driver' => 'sqlsrv',
+            'host' => $host,
+            'port' => $port,
+            'database' => $database,
+            'username' => $username,
+            'password' => $password,
+            'encrypt' => true,
+            'trust_server_certificate' => true,
+            'login_timeout' => 5,
+        ]);
+
+        try {
+            DB::connection('test_connection')->getPdo();
+            DB::purge('test_connection');
+            $this->connectionStatus = 'success';
+            $this->connectionMessage = 'Connection successful!';
+        } catch (Exception $e) {
+            DB::purge('test_connection');
+            $this->connectionStatus = 'failed';
+            $this->connectionMessage = 'Connection failed: '.$e->getMessage();
         }
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Accounts\ClientAccountsController;
 use App\Http\Controllers\Accounts\ClientDetailController;
 use App\Http\Controllers\Accounts\ClientGreetingController;
 // use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
+use App\Http\Controllers\Api\WctpController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailUnsubscribeController;
 use App\Http\Controllers\PrivacyPolicyController;
@@ -31,9 +32,7 @@ use App\Http\Controllers\System\SystemController;
 use App\Http\Controllers\System\UserController as UserDetailController;
 use App\Http\Controllers\System\UsersController as UsersAndGroupsController;
 use App\Http\Controllers\System\WctpGatewayController as WctpGatewaySettingsController;
-use App\Http\Controllers\Api\WctpController;
 use App\Http\Controllers\TermsOfServiceController;
-use App\Models\Stats\Helpers;
 use App\Http\Controllers\Utilities\ApiGatewayController;
 use App\Http\Controllers\Utilities\BetterEmailController;
 use App\Http\Controllers\Utilities\BoardActivityController;
@@ -50,8 +49,10 @@ use App\Http\Controllers\Utilities\DownloadTBSReport;
 use App\Http\Controllers\Utilities\InboundEmailController;
 use App\Http\Controllers\Utilities\McpServerController;
 use App\Http\Controllers\Utilities\ScriptSearchController;
+use App\Http\Controllers\Utilities\VoicemailDigestController;
 use App\Http\Controllers\Utilities\WctpGatewayController;
 use App\Http\Controllers\UtilitiesController;
+use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -98,6 +99,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-te
     return view('livewire.utilities.mcp-protocol-test');
 })->name('utilities.mcp-protocol-test');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', CsvExportController::class)->name('utilities.csv-export');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest', VoicemailDigestController::class)->name('utilities.voicemail-digest');
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController::class)->name('system');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/data-sources', DataSourcesController::class)->name('system.data-sources');
@@ -131,10 +133,10 @@ Route::get('/email-unsubscribe', EmailUnsubscribeController::class)->name('email
 if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
     Route::post('/wctp', [WctpController::class, 'handle'])
         ->name('wctp');
-    
+
     Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
         ->name('wctp.callback');
-    
+
     // Twilio incoming SMS webhook
     Route::post('/wctp/sms/incoming', [WctpController::class, 'handleIncomingSms'])
         ->name('wctp.sms.incoming');

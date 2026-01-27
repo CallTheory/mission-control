@@ -31,6 +31,21 @@ class EnabledUtilities extends Component
 
     public bool $csv_export = false;
 
+    public bool $voicemail_digest = false;
+
+    public function toggleVoicemailDigestUtility(): void
+    {
+        if (Storage::fileExists('feature-flags/voicemail-digest.flag')) {
+            Storage::delete('feature-flags/voicemail-digest.flag');
+            $this->voicemail_digest = false;
+        } else {
+            Storage::put('feature-flags/voicemail-digest.flag', encrypt('voicemail-digest'));
+            $this->voicemail_digest = true;
+        }
+
+        $this->dispatch('saved');
+    }
+
     public function toggleCsvExportUtility(): void
     {
         if (Storage::fileExists('feature-flags/csv-export.flag')) {
@@ -187,6 +202,7 @@ class EnabledUtilities extends Component
         $this->database_health = Helpers::isSystemFeatureEnabled('database-health');
         $this->directory_search = Helpers::isSystemFeatureEnabled('directory-search');
         $this->csv_export = Helpers::isSystemFeatureEnabled('csv-export');
+        $this->voicemail_digest = Helpers::isSystemFeatureEnabled('voicemail-digest');
     }
 
     public function render(): View
