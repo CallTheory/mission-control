@@ -19,6 +19,7 @@ use App\Http\Controllers\API\Utilities\StudlyCaseController;
 use App\Http\Controllers\API\Utilities\TextBetweenController;
 use App\Http\Controllers\API\Utilities\TitleCaseController;
 use App\Http\Controllers\API\Utilities\TransliterateAsciiController;
+use App\Http\Controllers\API\Webhooks\FaxWebhookController;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
 
@@ -94,6 +95,14 @@ if (Helpers::isSystemFeatureEnabled('api-gateway')) {
         Route::match(['get', 'post'], '/protocol', [McpSseController::class, 'protocol'])
             ->name('api.mcp.protocol');
     });
+}
+
+if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+    Route::post('/webhooks/fax/mfax', [FaxWebhookController::class, 'mfax'])
+        ->name('api.webhooks.fax.mfax');
+
+    Route::post('/webhooks/fax/ringcentral', [FaxWebhookController::class, 'ringcentral'])
+        ->name('api.webhooks.fax.ringcentral');
 }
 
 if (Helpers::isSystemFeatureEnabled('inbound-email')) {

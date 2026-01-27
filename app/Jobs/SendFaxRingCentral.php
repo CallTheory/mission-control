@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -83,11 +84,13 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             } catch (Exception $e) {
                 Log::error($e->getMessage(), $this->fax);
+
                 return;
 
             }
         } else {
             Log::error('Empty ringcentral client details', $this->fax);
+
             return;
         }
 
@@ -162,9 +165,23 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 }
 
                 $resp = $platform->sendRequest($bodyParams);
+                $respData = $resp->json();
+                $apiMessageId = (string) ($respData['id'] ?? '');
 
-                MoveSuccessfulFaxFiles::dispatch($faxFsDetails, 'ringcentral');
-                Log::info('ringCentralSuccess ' . $toNumber, $faxFsDetails);
+                PendingFax::create([
+                    'api_fax_id' => $apiMessageId,
+                    'fax_provider' => 'ringcentral',
+                    'job_id' => $this->jobID,
+                    'fs_file_name' => $this->fsFileName,
+                    'cap_file' => $this->capfile,
+                    'filename' => $this->filename,
+                    'phone' => $this->phone,
+                    'original_status' => $this->status,
+                    'delivery_status' => 'pending',
+                    'submitted_at' => now(),
+                ]);
+
+                Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails);
             } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
@@ -174,8 +191,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
                 MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
             }
-        }
-        else{
+        } else {
             Log::info('SendFaxringCentral Feature Turned Off');
         }
     }

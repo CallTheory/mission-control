@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
@@ -215,7 +216,21 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             }
 
             if ($response->getStatusCode() === 200) {
-                MoveSuccessfulFaxFiles::dispatch($faxFsDetails);
+                $responseBody = json_decode((string) $response->getBody(), true);
+                $apiFaxId = $responseBody['uuid'] ?? $responseBody['id'] ?? '';
+
+                PendingFax::create([
+                    'api_fax_id' => $apiFaxId,
+                    'fax_provider' => 'mfax',
+                    'job_id' => $this->jobID,
+                    'fs_file_name' => $this->fsFileName,
+                    'cap_file' => $this->capfile,
+                    'filename' => $this->filename,
+                    'phone' => $this->phone,
+                    'original_status' => $this->status,
+                    'delivery_status' => 'pending',
+                    'submitted_at' => now(),
+                ]);
 
                 return;
             }

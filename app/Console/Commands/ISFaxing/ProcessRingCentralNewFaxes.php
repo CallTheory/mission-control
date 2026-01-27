@@ -4,6 +4,7 @@ namespace App\Console\Commands\ISFaxing;
 
 use App\Jobs\SendFaxRingCentral;
 use App\Models\DataSource;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +68,7 @@ class ProcessRingCentralNewFaxes extends Command
         // check to see if Ring Central is even set up...
         if (! $this->isFaxEnabled()) {
             Log::info('ProcessRingCentralNewFaxes system disabled');
+
             return CommandStatus::SUCCESS;
         }
 
@@ -88,7 +90,7 @@ class ProcessRingCentralNewFaxes extends Command
 
                 $this->warn(print_r($lines, true));
 
-                if(config('app.switch_engine') === 'infinity'){
+                if (config('app.switch_engine') === 'infinity') {
                     foreach ($lines as $line) {
 
                         if (Str::startsWith($line, '$var_def DATA5')) {
@@ -119,8 +121,7 @@ class ProcessRingCentralNewFaxes extends Command
                             }
                         }
                     }
-                }
-                else{
+                } else {
                     foreach ($lines as $line) {
                         if (Str::startsWith($line, '$var_def DATA5')) {
                             $exploded = array_values(array_filter(explode('$var_def DATA5 ', $line)));
@@ -165,9 +166,15 @@ class ProcessRingCentralNewFaxes extends Command
                 ]);
 
                 if ($validator->fails()) {
-                    $this->error("Missing expected fax details...\n\n" . implode('. ', $validator->errors()->all()) . "\n\n".print_r($isfax, true));
-                    Log::error("Missing expected fax details...\n\n" . implode('. ', $validator->errors()->all()) . "\n\n".print_r($isfax, true));
+                    $this->error("Missing expected fax details...\n\n".implode('. ', $validator->errors()->all())."\n\n".print_r($isfax, true));
+                    Log::error("Missing expected fax details...\n\n".implode('. ', $validator->errors()->all())."\n\n".print_r($isfax, true));
                 } else {
+                    if (PendingFax::where('job_id', $isfax['jobID'])->where('fax_provider', 'ringcentral')->where('delivery_status', 'pending')->exists()) {
+                        $this->comment("Skipping job {$isfax['jobID']} — already pending delivery confirmation.");
+
+                        continue;
+                    }
+
                     $this->info("Submitting fax job {$isfax['jobID']}");
                     Log::info("Submitting fax job {$isfax['jobID']}");
                     $this->info(print_r($isfax, true));

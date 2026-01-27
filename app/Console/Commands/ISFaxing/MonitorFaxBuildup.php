@@ -3,6 +3,7 @@
 namespace App\Console\Commands\ISFaxing;
 
 use App\Mail\FaxBuildupAlert;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -52,6 +53,15 @@ class MonitorFaxBuildup extends Command
 
         if ($this->hasSittingFiles($sentPath)) {
             $paths[] = $sentPath;
+        }
+
+        $stalePendingCount = PendingFax::where('delivery_status', 'pending')
+            ->where('created_at', '<', Carbon::now()->subMinutes(30))
+            ->count();
+
+        if ($stalePendingCount > 0) {
+            $this->info("Found {$stalePendingCount} pending faxes older than 30 minutes");
+            $paths[] = "pending_faxes table: {$stalePendingCount} records older than 30 minutes";
         }
 
         if ($paths !== null) {

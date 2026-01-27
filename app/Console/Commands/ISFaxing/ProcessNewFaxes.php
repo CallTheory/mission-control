@@ -4,6 +4,7 @@ namespace App\Console\Commands\ISFaxing;
 
 use App\Jobs\SendFaxJob;
 use App\Models\DataSource;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
@@ -146,6 +147,12 @@ class ProcessNewFaxes extends Command
                     $this->error("Missing expected fax details...\n".print_r($isfax, true));
 
                 } else {
+
+                    if (PendingFax::where('job_id', $isfax['jobID'])->where('fax_provider', 'mfax')->where('delivery_status', 'pending')->exists()) {
+                        $this->comment("Skipping job {$isfax['jobID']} — already pending delivery confirmation.");
+
+                        continue;
+                    }
 
                     $this->info("Submitting fax job {$isfax['jobID']}");
                     $this->info(print_r($isfax, true));
