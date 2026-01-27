@@ -13,7 +13,7 @@
         <div class="px-4">
             <h1 class="text-base font-semibold leading-6 text-gray-900">Amtelco Config Editor</h1>
             <p class="mt-2 text-sm text-gray-700">
-                Decrypt and encrypt Amtelco TripleDES XML configuration data.
+                Decrypt and encrypt Amtelco configuration data and encrypted schedules using TripleDES.
             </p>
         </div>
 
@@ -105,7 +105,7 @@
             </div>
 
             {{-- Editor Tab --}}
-            <div x-show="activeTab === 'editor'" x-cloak>
+            <div x-show="activeTab === 'editor'">
                 <div wire:ignore>
                     <div
                         x-data="{
