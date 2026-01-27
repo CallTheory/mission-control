@@ -31,7 +31,22 @@ class EnabledUtilities extends Component
 
     public bool $csv_export = false;
 
+    public bool $config_editor = false;
+
     public bool $voicemail_digest = false;
+
+    public function toggleConfigEditorUtility(): void
+    {
+        if (Storage::fileExists('feature-flags/config-editor.flag')) {
+            Storage::delete('feature-flags/config-editor.flag');
+            $this->config_editor = false;
+        } else {
+            Storage::put('feature-flags/config-editor.flag', encrypt('config-editor'));
+            $this->config_editor = true;
+        }
+
+        $this->dispatch('saved');
+    }
 
     public function toggleVoicemailDigestUtility(): void
     {
@@ -201,6 +216,7 @@ class EnabledUtilities extends Component
         $this->call_lookup = Helpers::isSystemFeatureEnabled('call-lookup');
         $this->database_health = Helpers::isSystemFeatureEnabled('database-health');
         $this->directory_search = Helpers::isSystemFeatureEnabled('directory-search');
+        $this->config_editor = Helpers::isSystemFeatureEnabled('config-editor');
         $this->csv_export = Helpers::isSystemFeatureEnabled('csv-export');
         $this->voicemail_digest = Helpers::isSystemFeatureEnabled('voicemail-digest');
     }

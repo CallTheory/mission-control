@@ -79,6 +79,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                             </a>
                         @endif
 
+                        @if(Helpers::isSystemFeatureEnabled('config-editor') && request()->user()->currentTeam->utility_config_editor)
+                            <a class="group" title="Config Editor" href="/utilities/config-editor">
+                                <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
+                                    <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                    </svg>
+
+                                    <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Config Editor</small>
+                                </div>
+                            </a>
+                        @endif
+
                         @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing)
                             <a class="group" title="Cloud Faxing" href="/utilities/cloud-faxing">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">

@@ -22,6 +22,8 @@ class EnabledUtilities extends Component
 
     public bool $cloud_faxing = false;
 
+    public bool $config_editor = false;
+
     public bool $csv_export = false;
 
     public bool $database_health = false;
@@ -62,6 +64,9 @@ class EnabledUtilities extends Component
                 break;
             case 'cloud_faxing':
                 $team->utility_cloud_faxing = $this->cloud_faxing;
+                break;
+            case 'config_editor':
+                $team->utility_config_editor = $this->config_editor;
                 break;
             case 'csv_export':
                 $team->utility_csv_export = $this->csv_export;
@@ -137,6 +142,12 @@ class EnabledUtilities extends Component
             $this->cloud_faxing = $team->utility_cloud_faxing ?? false;
         } else {
             $this->cloud_faxing = false;
+        }
+
+        if (Helpers::isSystemFeatureEnabled('config-editor')) {
+            $this->config_editor = $team->utility_config_editor ?? false;
+        } else {
+            $this->config_editor = false;
         }
 
         if (Helpers::isSystemFeatureEnabled('database-health')) {
