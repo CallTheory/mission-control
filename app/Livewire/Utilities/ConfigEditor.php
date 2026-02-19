@@ -24,9 +24,13 @@ class ConfigEditor extends Component
 
     public array $scheduleRecords = [];
 
+    public array $emailAccounts = [];
+
     public string $activeSource = '';
 
     public ?int $activeSchId = null;
+
+    public ?int $activeEmailAccountId = null;
 
     public bool $databaseLoaded = false;
 
@@ -39,6 +43,7 @@ class ConfigEditor extends Component
     {
         $this->sysConfigs = [];
         $this->scheduleRecords = [];
+        $this->emailAccounts = [];
         $this->databaseLoaded = false;
 
         try {
@@ -75,6 +80,14 @@ class ConfigEditor extends Component
                 'Action' => $row->Action,
             ], $schRows);
 
+            $emailRows = DB::connection('intelligent')->select('SELECT ID, cltID, Name, Description FROM cltEmailAccounts WHERE Account IS NOT NULL');
+            $this->emailAccounts = array_map(fn ($row) => [
+                'ID' => $row->ID,
+                'cltID' => $row->cltID,
+                'Name' => $row->Name,
+                'Description' => $row->Description,
+            ], $emailRows);
+
             $this->databaseLoaded = true;
         } catch (\Exception) {
             // Silently fail on mount — database may not be configured
@@ -94,6 +107,7 @@ class ConfigEditor extends Component
         $this->encryptedInput = $this->sysConfigs[$field];
         $this->activeSource = 'sysConfig-'.$field;
         $this->activeSchId = null;
+        $this->activeEmailAccountId = null;
         $this->decrypt();
     }
 
@@ -126,6 +140,7 @@ class ConfigEditor extends Component
             $this->encryptedInput = $rows[0]->RecordJSON;
             $this->activeSource = 'schedule-'.$schId;
             $this->activeSchId = $schId;
+            $this->activeEmailAccountId = null;
             $this->decrypt();
         } catch (\Exception $e) {
             $this->errorMessage = 'Load error: '.$e->getMessage();
@@ -171,6 +186,90 @@ class ConfigEditor extends Component
             DB::connection('intelligent')->update('UPDATE schSchedule SET RecordJSON = ? WHERE schId = ?', [
                 $this->encryptedOutput,
                 $this->activeSchId,
+            ]);
+
+            $this->errorMessage = '';
+            $this->dispatch('savedToDatabase');
+        } catch (\Exception $e) {
+            $this->errorMessage = 'Save error: '.$e->getMessage();
+        }
+    }
+
+    public function loadEmailAccount(int $id): void
+    {
+        $this->errorMessage = '';
+
+        try {
+            $datasource = DataSource::firstOrFail();
+
+            Config::set('database.connections.intelligent', [
+                'driver' => 'sqlsrv',
+                'host' => $datasource->is_db_host,
+                'port' => $datasource->is_db_port,
+                'database' => $datasource->is_db_data,
+                'username' => $datasource->is_db_user,
+                'password' => decrypt($datasource->is_db_pass),
+                'encrypt' => true,
+                'trust_server_certificate' => true,
+            ]);
+
+            $rows = DB::connection('intelligent')->select('SELECT Account FROM cltEmailAccounts WHERE ID = ?', [$id]);
+
+            if (empty($rows) || empty($rows[0]->Account)) {
+                $this->errorMessage = "No Account data found for ID {$id}.";
+
+                return;
+            }
+
+            $this->encryptedInput = $rows[0]->Account;
+            $this->activeSource = 'emailAccount-'.$id;
+            $this->activeEmailAccountId = $id;
+            $this->activeSchId = null;
+            $this->decrypt();
+        } catch (\Exception $e) {
+            $this->errorMessage = 'Load error: '.$e->getMessage();
+        }
+    }
+
+    public function saveToEmailAccount(): void
+    {
+        $this->errorMessage = '';
+
+        if ($this->activeEmailAccountId === null) {
+            $this->errorMessage = 'No email account is currently active.';
+
+            return;
+        }
+
+        if (empty($this->xmlContent)) {
+            $this->errorMessage = 'No content to save.';
+
+            return;
+        }
+
+        try {
+            $this->encrypt();
+
+            if (empty($this->encryptedOutput)) {
+                return;
+            }
+
+            $datasource = DataSource::firstOrFail();
+
+            Config::set('database.connections.intelligent', [
+                'driver' => 'sqlsrv',
+                'host' => $datasource->is_db_host,
+                'port' => $datasource->is_db_port,
+                'database' => $datasource->is_db_data,
+                'username' => $datasource->is_db_user,
+                'password' => decrypt($datasource->is_db_pass),
+                'encrypt' => true,
+                'trust_server_certificate' => true,
+            ]);
+
+            DB::connection('intelligent')->update('UPDATE cltEmailAccounts SET Account = ? WHERE ID = ?', [
+                $this->encryptedOutput,
+                $this->activeEmailAccountId,
             ]);
 
             $this->errorMessage = '';

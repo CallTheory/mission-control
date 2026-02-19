@@ -78,6 +78,46 @@
                             </div>
                         </div>
                     @endif
+
+                    {{-- cltEmailAccounts --}}
+                    @if (!empty($emailAccounts))
+                        <div class="border border-gray-200 rounded p-3" x-data="{ open: false }">
+                            <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-left">
+                                <h3 class="text-sm font-semibold text-gray-700">cltEmailAccounts ({{ count($emailAccounts) }})</h3>
+                                <svg :class="open ? 'rotate-180' : ''" class="w-4 h-4 text-gray-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <div x-show="open" x-collapse x-cloak class="mt-2">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="px-3 py-2 text-left font-medium text-gray-600">ID</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-600">cltID</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Name</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-600">Description</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-600"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($emailAccounts as $account)
+                                            <tr class="border-t border-gray-100 {{ $activeEmailAccountId === $account['ID'] ? 'bg-blue-50' : '' }}">
+                                                <td class="px-3 py-2">{{ $account['ID'] }}</td>
+                                                <td class="px-3 py-2">{{ $account['cltID'] }}</td>
+                                                <td class="px-3 py-2">{{ $account['Name'] }}</td>
+                                                <td class="px-3 py-2">{{ $account['Description'] }}</td>
+                                                <td class="px-3 py-2">
+                                                    <x-button wire:click="loadEmailAccount({{ $account['ID'] }})" wire:loading.attr="disabled" class="text-xs">
+                                                        Load
+                                                    </x-button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </div>
+                    @endif
             </div>
         </div>
         @endif
@@ -142,6 +182,18 @@
                         >
                             <span wire:loading wire:target="saveToSchedule">Saving...</span>
                             <span wire:loading.remove wire:target="saveToSchedule">Save Back to Database (schId: {{ $activeSchId }})</span>
+                        </x-button>
+                    @endif
+
+                    @if ($activeEmailAccountId !== null)
+                        <x-button
+                            wire:click="saveToEmailAccount"
+                            wire:loading.attr="disabled"
+                            wire:confirm="Are you sure you want to save back to cltEmailAccounts record #{{ $activeEmailAccountId }}?"
+                            class="bg-green-600 hover:bg-green-700"
+                        >
+                            <span wire:loading wire:target="saveToEmailAccount">Saving...</span>
+                            <span wire:loading.remove wire:target="saveToEmailAccount">Save Back to Database (ID: {{ $activeEmailAccountId }})</span>
                         </x-button>
                     @endif
                 </div>
