@@ -78,8 +78,6 @@ class TeamPolicy
 
     /**
      * Determine whether the user can update team member permissions.
-     *
-     * @return mixed
      */
     public function updateTeamMember(User $user, Team $team): bool
     {

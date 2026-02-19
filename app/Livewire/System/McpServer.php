@@ -43,12 +43,12 @@ class McpServer extends Component
         $this->mcp_enabled = $settings->mcp_enabled ?? false;
         $this->mcp_rate_limit = $settings->mcp_rate_limit ?? 100;
         $this->mcp_timeout = $settings->mcp_timeout ?? 30;
-        $this->mcp_allowed_tools = $settings->mcp_allowed_tools ? json_decode($settings->mcp_allowed_tools, true) : [];
+        $this->mcp_allowed_tools = $settings->mcp_allowed_tools ?: [];
         $this->mcp_logging_enabled = $settings->mcp_logging_enabled ?? false;
         $this->mcp_log_level = $settings->mcp_log_level ?? 'error';
         $this->mcp_max_response_size = $settings->mcp_max_response_size ?? 1048576;
         $this->mcp_require_team_context = $settings->mcp_require_team_context ?? true;
-        $this->mcp_cors_origins = $settings->mcp_cors_origins ? implode("\n", json_decode($settings->mcp_cors_origins, true)) : '';
+        $this->mcp_cors_origins = $settings->mcp_cors_origins ? implode("\n", $settings->mcp_cors_origins) : '';
         
         // Get available tools from the MCP server
         $mcpServer = new McpServerService();

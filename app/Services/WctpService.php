@@ -209,9 +209,9 @@ class WctpService
         $messageReply = $xml->{'wctp-MessageReply'};
         
         return [
-            'response_to_message_id' => (string) $messageReply['responseToMessageID'] ?? '',
-            'response_text' => (string) $messageReply['responseText'] ?? '',
-            'submit_time_stamp' => (string) $messageReply['submitTimestamp'] ?? '',
+            'response_to_message_id' => (string) ($messageReply['responseToMessageID'] ?? ''),
+            'response_text' => (string) ($messageReply['responseText'] ?? ''),
+            'submit_time_stamp' => (string) ($messageReply['submitTimestamp'] ?? ''),
         ];
     }
 

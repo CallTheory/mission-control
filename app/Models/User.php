@@ -17,6 +17,15 @@ use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 use stdClass;
 
+/**
+ * @property Team|null $currentTeam
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string|null $agtId
+ * @property string|null $timezone
+ * @property string|null $saml_linked_id
+ */
 class User extends Authenticatable
 {
     use HasApiTokens;
@@ -29,7 +38,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var list<string>
      */
     protected $fillable = [
         'name', 'email', 'password',
@@ -38,7 +47,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for arrays.
      *
-     * @var array
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -50,7 +59,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -59,7 +68,7 @@ class User extends Authenticatable
     /**
      * The accessors to append to the model's array form.
      *
-     * @var array
+     * @var list<string>
      */
     protected $appends = [
         'profile_photo_url',

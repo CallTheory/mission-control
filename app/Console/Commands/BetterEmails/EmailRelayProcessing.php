@@ -4,7 +4,6 @@ namespace App\Console\Commands\BetterEmails;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use JetBrains\PhpStorm\NoReturn;
 
 class EmailRelayProcessing extends Command
 {
@@ -25,7 +24,6 @@ class EmailRelayProcessing extends Command
     /**
      * Execute the console command.
      */
-    #[NoReturn]
     public function handle(): void
     {
         $raw_email = file_get_contents('php://stdin');

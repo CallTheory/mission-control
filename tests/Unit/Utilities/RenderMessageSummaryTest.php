@@ -11,11 +11,44 @@ class RenderMessageSummaryTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function chromeIsAvailable(): bool
+    {
+        $possiblePaths = [
+            '/home/sail/.cache/puppeteer/chrome-headless-shell/linux-139.0.7258.68/chrome-headless-shell-linux64/chrome-headless-shell',
+            '/root/.cache/puppeteer/chrome-headless-shell/linux-139.0.7258.68/chrome-headless-shell-linux64/chrome-headless-shell',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+        ];
+
+        $homeDir = getenv('HOME') ?: '/home/sail';
+        $puppeteerCache = $homeDir . '/.cache/puppeteer';
+        if (is_dir($puppeteerCache)) {
+            $chromeHeadlessDir = glob($puppeteerCache . '/chrome-headless-shell/*/chrome-headless-shell-linux64/chrome-headless-shell');
+            if (!empty($chromeHeadlessDir)) {
+                array_unshift($possiblePaths, $chromeHeadlessDir[0]);
+            }
+        }
+
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path) && is_executable($path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Test that screenshot generation returns a base64 encoded PNG image
      */
     public function test_html_to_image_generates_base64_png(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $testContent = '<h1>Test Screenshot</h1><p>This is a test message</p>';
         
         $result = RenderMessageSummary::htmlToImage($testContent);
@@ -41,6 +74,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_html_to_image_respects_custom_dimensions(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $testContent = '<h1>Custom Size Test</h1>';
         
         $result = RenderMessageSummary::htmlToImage($testContent, [
@@ -61,6 +98,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_html_to_image_can_generate_jpeg(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $testContent = '<h1>JPEG Test</h1>';
         
         $result = RenderMessageSummary::htmlToImage($testContent, [
@@ -83,6 +124,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_html_to_image_handles_complex_html(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $complexContent = '
             <div style="padding: 20px; font-family: Arial, sans-serif;">
                 <h1 style="color: #333;">Board Check Report</h1>
@@ -120,6 +165,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_html_to_image_handles_special_characters(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $contentWithSpecialChars = '
             <div>
                 <h1>Special Characters Test</h1>
@@ -144,6 +193,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_chrome_binary_is_accessible(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         // Check possible Chrome binary locations
         $possiblePaths = [
             '/home/sail/.cache/puppeteer/chrome-headless-shell/linux-139.0.7258.68/chrome-headless-shell-linux64/chrome-headless-shell',
@@ -176,6 +229,10 @@ class RenderMessageSummaryTest extends TestCase
      */
     public function test_html_to_image_respects_timeout(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $testContent = '<h1>Timeout Test</h1>';
         
         // Test with very short timeout (should still work for simple content)

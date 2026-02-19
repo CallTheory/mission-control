@@ -10,6 +10,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property int $team_id
+ * @property Team $team
+ * @property string|null $name
+ * @property string|null $client_number
+ * @property string|null $billing_code
+ * @property array|null $recipients
+ * @property string|null $subject
+ * @property string|null $schedule_type
+ * @property string|null $schedule_time
+ * @property int|null $schedule_day_of_week
+ * @property int|null $schedule_day_of_month
+ * @property bool $include_transcription
+ * @property bool $include_call_metadata
+ * @property bool $enabled
+ * @property \Carbon\Carbon|null $last_run_at
+ * @property \Carbon\Carbon|null $next_run_at
+ * @property string|null $timezone
+ */
 class VoicemailDigest extends Model
 {
     use HasFactory, SoftDeletes;

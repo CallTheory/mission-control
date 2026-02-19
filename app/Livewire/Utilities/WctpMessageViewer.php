@@ -128,27 +128,27 @@ class WctpMessageViewer extends Component
         session()->flash('message', 'Export feature coming soon.');
     }
 
-    public function updatedSearch()
+    public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    public function updatedFilterStatus()
+    public function updatingFilterStatus()
     {
         $this->resetPage();
     }
 
-    public function updatedFilterDirection()
+    public function updatingFilterDirection()
     {
         $this->resetPage();
     }
 
-    public function updatedFilterCarrier()
+    public function updatingFilterCarrier()
     {
         $this->resetPage();
     }
 
-    public function updatedHost()
+    public function updatingHost()
     {
         $this->resetPage();
     }

@@ -23,7 +23,7 @@ class McpServerTest extends TestCase
 
         // Create a settings record with all tools enabled (including the default tools)
         Settings::create([
-            'mcp_allowed_tools' => json_encode(['get_vcon_record', 'get_call_recording', 'test_tool', 'failing_tool']),
+            'mcp_allowed_tools' => ['get_vcon_record', 'get_call_recording', 'test_tool', 'failing_tool'],
         ]);
 
         $this->server = new McpServer;

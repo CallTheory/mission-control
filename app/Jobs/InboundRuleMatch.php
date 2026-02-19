@@ -32,7 +32,7 @@ class InboundRuleMatch implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $this->email = $email;
     }
 
-    public function uniqueId(): string
+    public function uniqueId(): int
     {
         return $this->email->id;
     }

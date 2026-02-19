@@ -6,6 +6,13 @@ use App\Models\Stats\Stat;
 use Exception;
 use stdClass;
 
+/**
+ * @property string|null $ClientNumber
+ * @property string|null $ClientName
+ * @property string|null $BillingCode
+ * @property int|null $agtId
+ * @property int|null $CallId
+ */
 class Call extends Stat
 {
     /**
@@ -112,7 +119,6 @@ class Call extends Stat
     {
         if (
             array_key_exists('ISCallId', $this->parameters) // ISCallId must be included
-            && is_int((int) $this->parameters['ISCallId'])  // ISCallId must be an integer value
             && (int) $this->parameters['ISCallId'] > 0) { // ISCallId must be greater than 0
             return true;
         }

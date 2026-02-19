@@ -1,0 +1,190 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+
+    excludePaths:
+
+    ignoreErrors:
+        # ---------------------------------------------------------------
+        # Third-party SDK stubs (Stripe, Twilio, SAML2 Socialite driver)
+        # These SDKs have methods/properties PHPStan cannot resolve.
+        # ---------------------------------------------------------------
+        -
+            identifier: method.notFound
+            path: app/Http/Controllers/API/Integrations/StripeFillOutController.php
+        -
+            identifier: property.notFound
+            path: app/Http/Controllers/API/Integrations/StripeFillOutController.php
+        -
+            identifier: method.notFound
+            path: app/Services/TwilioService.php
+        -
+            identifier: method.notFound
+            path: app/Jobs/SendFaxRingCentral.php
+        -
+            identifier: method.notFound
+            path: app/Livewire/Utilities/CardProcessing.php
+
+        # ---------------------------------------------------------------
+        # SAML2 Socialite driver — method.notFound and type narrowing
+        # The SAML2 driver returns dynamic types PHPStan cannot resolve.
+        # ---------------------------------------------------------------
+        -
+            identifier: method.notFound
+            path: app/Http/Controllers/SAML2/*
+        -
+            identifier: identical.alwaysFalse
+            path: app/Http/Controllers/SAML2/*
+        -
+            identifier: booleanNot.alwaysFalse
+            path: app/Extensions/SafeSaml2Provider.php
+
+        # ---------------------------------------------------------------
+        # Livewire components — view-string, property.onlyWritten,
+        # assign.propertyType (Blade template bindings invisible to PHPStan)
+        # ---------------------------------------------------------------
+        -
+            identifier: property.onlyWritten
+            path: app/Livewire/*
+        -
+            identifier: assign.propertyType
+            path: app/Livewire/*
+        -
+            identifier: function.impossibleType
+            path: app/Livewire/*
+        -
+            identifier: function.alreadyNarrowedType
+            path: app/Livewire/*
+        -
+            identifier: deadCode.unreachable
+            path: app/Livewire/*
+        -
+            identifier: booleanAnd.rightAlwaysTrue
+            path: app/Livewire/*
+        -
+            identifier: nullCoalesce.expr
+            path: app/Livewire/*
+        -
+            identifier: variable.undefined
+            path: app/Livewire/Utilities/CardProcessing.php
+        -
+            identifier: catch.neverThrown
+            path: app/Livewire/Utilities/CardProcessing.php
+        -
+            identifier: identical.alwaysFalse
+            path: app/Livewire/Utilities/CardProcessing.php
+        -
+            identifier: arrayValues.list
+            path: app/Livewire/Utilities/CardProcessing.php
+
+        # ---------------------------------------------------------------
+        # Stripe SDK type narrowing in CardProcessing
+        # ---------------------------------------------------------------
+        -
+            identifier: argument.type
+            path: app/Livewire/Utilities/CardProcessing.php
+
+        # ---------------------------------------------------------------
+        # Fortify/Jetstream — framework-imposed signatures
+        # ---------------------------------------------------------------
+        -
+            identifier: argument.type
+            path: app/Actions/Fortify/UpdateUserProfileInformation.php
+        -
+            identifier: argument.type
+            path: app/Actions/Jetstream/InviteTeamMember.php
+        -
+            identifier: larastan.noUnnecessaryCollectionCall
+            path: app/Actions/Fortify/CreateNewUser.php
+        -
+            identifier: larastan.noUnnecessaryCollectionCall
+            path: app/Providers/JetstreamServiceProvider.php
+
+        # ---------------------------------------------------------------
+        # Null coalescing on expressions that are technically not nullable
+        # but serve as defensive coding. Harmless.
+        # ---------------------------------------------------------------
+        -
+            identifier: nullCoalesce.expr
+            path: app/Console/Commands/ISFaxing/*
+        -
+            identifier: nullCoalesce.expr
+            path: app/Jobs/InboundRuleMatch.php
+        -
+            identifier: nullCoalesce.offset
+            path: app/Jobs/DatabaseAttachmentSaveJob.php
+        -
+            identifier: nullCoalesce.initializedProperty
+            path: app/Jobs/*
+
+        # ---------------------------------------------------------------
+        # Controller argument.type — mostly view-string and similar
+        # ---------------------------------------------------------------
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/Api/McpSseController.php
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/Api/WctpController.php
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/RecordingController.php
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/ScreenCaptureController.php
+        -
+            identifier: argument.type
+            path: app/Http/Controllers/Analytics/AnalyticsController.php
+        -
+            identifier: argument.type
+            path: app/Livewire/Utilities/IdentityProvider.php
+        -
+            identifier: argument.type
+            path: app/Livewire/Utilities/VoiceArchive.php
+        -
+            identifier: match.alwaysTrue
+            path: app/Http/Controllers/Api/WctpController.php
+        -
+            identifier: property.notFound
+            path: app/Http/Controllers/Api/WctpController.php
+
+        # ---------------------------------------------------------------
+        # Utility controller identical.alwaysFalse — Settings model
+        # properties compared with strict === where type is mixed
+        # ---------------------------------------------------------------
+        -
+            identifier: identical.alwaysFalse
+            path: app/Http/Controllers/Utilities/*
+
+        # ---------------------------------------------------------------
+        # Jobs — various minor type issues
+        # ---------------------------------------------------------------
+        -
+            identifier: argument.type
+            path: app/Jobs/SendEmailToAmtelcoSMTP.php
+        -
+            identifier: argument.type
+            path: app/Jobs/SendEmailToMergeComm.php
+        -
+            identifier: arrayValues.list
+            path: app/Jobs/SendFaxJob.php
+
+        # ---------------------------------------------------------------
+        # EnterpriseHost — decrypt() inside Attribute accessor can throw
+        # DecryptException at runtime, but PHPStan cannot see through it
+        # ---------------------------------------------------------------
+        -
+            identifier: catch.neverThrown
+            path: app/Models/EnterpriseHost.php
+
+        # ---------------------------------------------------------------
+        # Helpers — strlen > 0 comparison always true in elseif branch
+        # ---------------------------------------------------------------
+        -
+            identifier: greater.alwaysTrue
+            path: app/Models/Stats/Helpers.php

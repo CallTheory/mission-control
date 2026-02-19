@@ -178,7 +178,7 @@ class ProcessRingCentralNewFaxes extends Command
                     $this->info("Submitting fax job {$isfax['jobID']}");
                     Log::info("Submitting fax job {$isfax['jobID']}");
                     $this->info(print_r($isfax, true));
-                    SendFaxRingCentral::dispatch($isfax, 'ringcentral');
+                    SendFaxRingCentral::dispatch($isfax);
                 }
             } else {
                 $this->comment("[IGNORE] {$fax}");

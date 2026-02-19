@@ -20,9 +20,6 @@ class AddTeamMember implements AddsTeamMembers
     /**
      * Add a new team member to the given team.
      *
-     * @param  mixed  $user
-     * @param  mixed  $team
-     *
      * @throws AuthorizationException|ValidationException
      */
     public function add(User $user, Team $team, string $email, ?string $role = null): void

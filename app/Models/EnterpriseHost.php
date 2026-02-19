@@ -10,6 +10,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string|null $name
+ * @property string|null $senderID
+ * @property string|null $securityCode
+ * @property bool $enabled
+ * @property string|null $callback_url
+ * @property array|null $phone_numbers
+ * @property int|null $team_id
+ * @property int $message_count
+ * @property \Carbon\Carbon|null $last_message_at
+ */
 class EnterpriseHost extends Model
 {
     use HasFactory;
@@ -132,7 +144,7 @@ class EnterpriseHost extends Model
     public function getOutboundPhoneNumber(): ?string
     {
         // Use the first assigned number
-        if ($this->phone_numbers && count($this->phone_numbers) > 0) {
+        if (! empty($this->phone_numbers)) {
             return $this->phone_numbers[0];
         }
 

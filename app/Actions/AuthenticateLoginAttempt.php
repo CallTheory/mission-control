@@ -70,5 +70,7 @@ class AuthenticateLoginAttempt
                 return null;
             }
         }
+
+        return null;
     }
 }

@@ -419,9 +419,9 @@ class Helpers
             // The normal gmdate/date/DateTime methods don't handle $numberOfSeconds larger than 86,400
             // So we do this manually
 
-            return str_pad($hours, 2, 0, STR_PAD_LEFT).':'.
-                str_pad($minutes, 2, 0, STR_PAD_LEFT).':'.
-                str_pad($seconds, 2, 0, STR_PAD_LEFT);
+            return str_pad((string) $hours, 2, '0', STR_PAD_LEFT).':'.
+                str_pad((string) $minutes, 2, '0', STR_PAD_LEFT).':'.
+                str_pad((string) $seconds, 2, '0', STR_PAD_LEFT);
         } else {
             return number_format($numberOfSeconds / 60, 2).' minute(s)'; // minutes
         }

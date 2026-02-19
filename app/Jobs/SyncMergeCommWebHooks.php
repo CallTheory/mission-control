@@ -34,10 +34,6 @@ class SyncMergeCommWebHooks implements ShouldBeEncrypted, ShouldQueue
     {
         $datasources = DataSource::firstOrFail();
 
-        if (! $datasources) {
-            return;
-        }
-
         Config::set('database.connections.intelligent', [
             'driver' => 'sqlsrv',
             'host' => $datasources->is_db_host,

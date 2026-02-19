@@ -24,6 +24,6 @@ class MeController extends Controller
      */
     public function __invoke(Request $request): JsonResponse
     {
-        return $request->user();
+        return response()->json($request->user());
     }
 }

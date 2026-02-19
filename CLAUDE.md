@@ -72,6 +72,11 @@ If containers fail with "bash\\r: No such file or directory":
 # or without Sail:
 vendor/bin/pint
 
+# Static analysis with PHPStan
+./vendor/bin/sail php vendor/bin/phpstan analyse
+# or without Sail:
+vendor/bin/phpstan analyse
+
 # Run specific tests
 ./vendor/bin/sail artisan test --filter=TestClassName
 ./vendor/bin/sail artisan test tests/Feature/SpecificTest.php

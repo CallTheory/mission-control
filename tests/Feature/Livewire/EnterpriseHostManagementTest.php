@@ -56,9 +56,12 @@ class EnterpriseHostManagementTest extends TestCase
         $team = \App\Models\Team::factory()->create();
         $hosts = EnterpriseHost::factory()->count(15)->create(['team_id' => $team->id]);
 
+        // Component orders by name, so use the alphabetically first host to assert visibility
+        $firstByName = $hosts->sortBy('name')->first();
+
         Livewire::test(EnterpriseHostManagement::class)
             ->assertViewHas('hosts')
-            ->assertSee($hosts->first()->name)
+            ->assertSee($firstByName->name)
             ->assertSee('Next'); // Pagination should be present with 15 hosts (10 per page)
     }
 

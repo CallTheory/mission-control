@@ -24,7 +24,7 @@ class Transcriptions extends Call
 
         if (strlen($formatted_divs)) {
             return [
-                'html' => $formatted_divs ?? '',
+                'html' => $formatted_divs,
             ];
         } else {
             return null;

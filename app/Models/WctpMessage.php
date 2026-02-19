@@ -93,7 +93,7 @@ class WctpMessage extends Model
     /**
      * Mark message as failed
      */
-    public function markAsFailed(string $errorMessage = null): void
+    public function markAsFailed(?string $errorMessage = null): void
     {
         $data = [
             'status' => 'failed',

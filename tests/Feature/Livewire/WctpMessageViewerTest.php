@@ -446,12 +446,15 @@ class WctpMessageViewerTest extends TestCase
             'message' => 'Other message',
         ]);
 
-        Livewire::test(WctpMessageViewer::class)
-            ->set('host', $host1->id)
-            ->set('filterStatus', 'delivered')
-            ->set('filterDirection', 'outbound')
-            ->set('filterCarrier', 'twilio')
-            ->set('search', '555123')
+        // Use withQueryParams to set all filters during mount (single render)
+        // instead of 5 sequential set() calls that each trigger a full render cycle
+        Livewire::withQueryParams([
+            'host' => $host1->id,
+            'filterStatus' => 'delivered',
+            'filterDirection' => 'outbound',
+            'filterCarrier' => 'twilio',
+            'search' => '555123',
+        ])->test(WctpMessageViewer::class)
             ->assertSee('Target message')
             ->assertDontSee('Other message');
     }

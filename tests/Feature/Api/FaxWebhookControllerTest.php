@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Http\Controllers\API\Webhooks\FaxWebhookController;
 use App\Jobs\MoveFailedFaxFiles;
 use App\Jobs\MoveSuccessfulFaxFiles;
 use App\Mail\FaxFailAlert;
@@ -11,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -22,8 +24,13 @@ class FaxWebhookControllerTest extends TestCase
     {
         parent::setUp();
 
-        Storage::makeDirectory('feature-flags');
-        Storage::put('feature-flags/cloud-faxing.flag', encrypt('cloud-faxing'));
+        // Register fax webhook routes directly (bypasses cloud-faxing feature flag check at boot time)
+        Route::middleware('api')->prefix('api')->group(function () {
+            Route::post('/webhooks/fax/mfax', [FaxWebhookController::class, 'mfax'])
+                ->name('api.webhooks.fax.mfax');
+            Route::post('/webhooks/fax/ringcentral', [FaxWebhookController::class, 'ringcentral'])
+                ->name('api.webhooks.fax.ringcentral');
+        });
 
         // Avoid Redis dependency in tests
         config(['cache.default' => 'array']);

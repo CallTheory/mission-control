@@ -32,10 +32,7 @@ class AppServiceProvider extends ServiceProvider
         Socialite::extend('saml2', function ($app) {
             $config = $app['config']['services.saml2'];
             
-            return new SafeSaml2Provider(
-                $app['request'],
-                $config
-            );
+            return (new SafeSaml2Provider($app['request']))->setConfig($config);
         });
     }
 }

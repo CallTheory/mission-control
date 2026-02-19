@@ -4,6 +4,12 @@ namespace App\Models\Stats\Clients;
 
 use App\Models\Stats\Stat;
 
+/**
+ * @property string|null $ClientNumber
+ * @property int|null $cltId
+ * @property string|null $ClientName
+ * @property string|null $BillingCode
+ */
 class Client extends Stat
 {
     public function validateParams(): bool

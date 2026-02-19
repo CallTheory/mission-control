@@ -82,6 +82,10 @@ class CreatePrecisionJobTest extends TestCase
      */
     public function test_screenshot_generation_with_formatted_message(): void
     {
+        if (!$this->chromeIsAvailable()) {
+            $this->markTestSkipped('Chrome binary not available. Run: npx puppeteer browsers install chrome-headless-shell');
+        }
+
         $testMessage = "Emergency Medical Call - Patient experiencing chest pain at 123 Main St";
         $formattedContent = Helpers::formatMessageSummary($testMessage);
         
@@ -135,6 +139,35 @@ class CreatePrecisionJobTest extends TestCase
         $this->assertEquals(3, $job->tries, 'Should retry 3 times');
         $this->assertEquals(60, $job->retryAfter, 'Should retry after 60 seconds');
         $this->assertEquals(45, $job->timeout, 'Job timeout should be 45 seconds');
+    }
+
+    private function chromeIsAvailable(): bool
+    {
+        $possiblePaths = [
+            '/home/sail/.cache/puppeteer/chrome-headless-shell/linux-139.0.7258.68/chrome-headless-shell-linux64/chrome-headless-shell',
+            '/root/.cache/puppeteer/chrome-headless-shell/linux-139.0.7258.68/chrome-headless-shell-linux64/chrome-headless-shell',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+        ];
+
+        $homeDir = getenv('HOME') ?: '/home/sail';
+        $puppeteerCache = $homeDir . '/.cache/puppeteer';
+        if (is_dir($puppeteerCache)) {
+            $chromeHeadlessDir = glob($puppeteerCache . '/chrome-headless-shell/*/chrome-headless-shell-linux64/chrome-headless-shell');
+            if (!empty($chromeHeadlessDir)) {
+                array_unshift($possiblePaths, $chromeHeadlessDir[0]);
+            }
+        }
+
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path) && is_executable($path)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

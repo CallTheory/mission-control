@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Http\Controllers\Api\McpSseController;
 use App\Models\System\Settings;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -23,6 +25,12 @@ class McpSseControllerTest extends TestCase
     {
         parent::setUp();
 
+        // Register MCP routes directly (bypasses api-gateway feature flag check at boot time)
+        Route::middleware(['api', 'auth:sanctum'])->prefix('api/mcp')->group(function () {
+            Route::match(['get', 'post'], '/protocol', [McpSseController::class, 'protocol'])
+                ->name('api.mcp.protocol');
+        });
+
         // Create settings with MCP enabled
         Settings::create([
             'mcp_enabled' => true,
@@ -32,7 +40,7 @@ class McpSseControllerTest extends TestCase
             'mcp_log_level' => 'error',
             'mcp_max_response_size' => 1048576,
             'mcp_require_team_context' => false, // Disable for easier testing
-            'mcp_allowed_tools' => json_encode(['get_vcon_record']), // Enable vcon tool
+            'mcp_allowed_tools' => ['get_vcon_record'], // Enable vcon tool
         ]);
 
         // Create a user with a team
@@ -306,6 +314,8 @@ class McpSseControllerTest extends TestCase
 
     protected function tearDown(): void
     {
+        // Reset execution time limit since the MCP controller calls set_time_limit()
+        set_time_limit(0);
         \Mockery::close();
         parent::tearDown();
     }

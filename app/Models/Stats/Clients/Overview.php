@@ -43,9 +43,9 @@ class Overview extends Stat
         // stupid version of validation
         if (strlen($this->account_setting_value)) {
             if ($this->account_setting_value == 0) {
-                $this->account_setting_value = 0;
+                $this->account_setting_value = '0';
             } else {
-                $this->account_setting_value = 1;
+                $this->account_setting_value = '1';
             }
         }
         parent::__construct();

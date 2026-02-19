@@ -116,7 +116,7 @@ class McpServer
         $tools = [];
         $settings = Settings::first();
         $allowedTools = $settings && $settings->mcp_allowed_tools
-            ? json_decode($settings->mcp_allowed_tools, true)
+            ? $settings->mcp_allowed_tools
             : [];
 
         foreach ($this->tools as $tool) {
@@ -169,7 +169,7 @@ class McpServer
         // Check if tool is allowed
         $settings = Settings::first();
         $allowedTools = $settings && $settings->mcp_allowed_tools
-            ? json_decode($settings->mcp_allowed_tools, true)
+            ? $settings->mcp_allowed_tools
             : [];
 
         if (! empty($allowedTools) && ! in_array($toolName, $allowedTools)) {
