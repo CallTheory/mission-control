@@ -4,11 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
+/**
+ * @property int $id
+ * @property int $enterprise_host_id
+ * @property string $to
+ * @property string $from
+ * @property string|null $message
+ * @property string $wctp_message_id
+ * @property string|null $twilio_sid
+ * @property string $direction
+ * @property string $status
+ * @property string|null $error_message
+ * @property string|null $reply_with
+ * @property int|null $parent_message_id
+ * @property \Carbon\Carbon|null $delivered_at
+ * @property \Carbon\Carbon|null $failed_at
+ * @property \Carbon\Carbon|null $submitted_at
+ * @property \Carbon\Carbon|null $processed_at
+ */
 class WctpMessage extends Model
 {
     use HasFactory;
@@ -24,8 +42,11 @@ class WctpMessage extends Model
         'twilio_sid',
         'direction',
         'status',
+        'error_message',
         'delivered_at',
         'failed_at',
+        'submitted_at',
+        'processed_at',
         'reply_with',
         'parent_message_id',
     ];
@@ -33,7 +54,20 @@ class WctpMessage extends Model
     protected $casts = [
         'delivered_at' => 'datetime',
         'failed_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'processed_at' => 'datetime',
     ];
+
+    /**
+     * Encrypt/decrypt the message content automatically.
+     */
+    protected function message(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value ? decrypt($value) : null,
+            set: fn ($value) => $value ? encrypt($value) : null,
+        );
+    }
 
     /**
      * Get the enterprise host that owns the message.
@@ -68,6 +102,17 @@ class WctpMessage extends Model
     }
 
     /**
+     * Mark message as queued for processing
+     */
+    public function markAsQueued(): void
+    {
+        $this->update([
+            'status' => 'queued',
+            'submitted_at' => now(),
+        ]);
+    }
+
+    /**
      * Mark message as sent to Twilio
      */
     public function markAsSent(string $twilioSid): void
@@ -77,7 +122,6 @@ class WctpMessage extends Model
             'twilio_sid' => $twilioSid,
         ]);
     }
-
 
     /**
      * Mark message as delivered
@@ -99,12 +143,11 @@ class WctpMessage extends Model
             'status' => 'failed',
             'failed_at' => now(),
         ];
-        
+
         if ($errorMessage) {
-            $data['message'] = $this->message . ' [Error: ' . $errorMessage . ']';
+            $data['error_message'] = $errorMessage;
         }
-        
+
         $this->update($data);
     }
-
 }

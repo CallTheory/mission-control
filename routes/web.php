@@ -136,12 +136,14 @@ if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
     Route::post('/wctp', [WctpController::class, 'handle'])
         ->name('wctp');
 
-    Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
-        ->name('wctp.callback');
+    // Twilio-facing routes with signature validation
+    Route::middleware(\App\Http\Middleware\ValidateTwilioRequest::class)->group(function () {
+        Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
+            ->name('wctp.callback');
 
-    // Twilio incoming SMS webhook
-    Route::post('/wctp/sms/incoming', [WctpController::class, 'handleIncomingSms'])
-        ->name('wctp.sms.incoming');
+        Route::post('/wctp/sms/incoming', [WctpController::class, 'handleIncomingSms'])
+            ->name('wctp.sms.incoming');
+    });
 }
 
 // Support SAML2 get/post, but default to POST (see services.php)

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
-use App\Models\WctpMessage;
 use App\Models\EnterpriseHost;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\WctpMessage;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class WctpMessageTest extends TestCase
 {
@@ -30,7 +30,7 @@ class WctpMessageTest extends TestCase
         WctpMessage::factory()->delivered()->create();
 
         $pendingMessages = WctpMessage::pending()->get();
-        
+
         $this->assertCount(1, $pendingMessages);
         $this->assertEquals('pending', $pendingMessages->first()->status);
     }
@@ -41,7 +41,7 @@ class WctpMessageTest extends TestCase
         WctpMessage::factory()->inbound()->create();
 
         $outboundMessages = WctpMessage::outbound()->get();
-        
+
         $this->assertCount(1, $outboundMessages);
         $this->assertEquals('outbound', $outboundMessages->first()->direction);
     }
@@ -52,7 +52,7 @@ class WctpMessageTest extends TestCase
         WctpMessage::factory()->inbound()->create();
 
         $inboundMessages = WctpMessage::inbound()->get();
-        
+
         $this->assertCount(1, $inboundMessages);
         $this->assertEquals('inbound', $inboundMessages->first()->direction);
     }
@@ -117,13 +117,16 @@ class WctpMessageTest extends TestCase
             'twilio_sid',
             'direction',
             'status',
+            'error_message',
             'delivered_at',
             'failed_at',
+            'submitted_at',
+            'processed_at',
             'reply_with',
             'parent_message_id',
         ];
 
-        $message = new WctpMessage();
+        $message = new WctpMessage;
         $this->assertEquals($expectedFillable, $message->getFillable());
     }
 
@@ -141,7 +144,7 @@ class WctpMessageTest extends TestCase
 
     public function test_table_name(): void
     {
-        $message = new WctpMessage();
+        $message = new WctpMessage;
         $this->assertEquals('wctp_messages', $message->getTable());
     }
 
@@ -173,7 +176,7 @@ class WctpMessageTest extends TestCase
     public function test_factory_inbound_direction(): void
     {
         $message = WctpMessage::factory()->inbound()->create();
-        
+
         $this->assertEquals('inbound', $message->direction);
         $this->assertEquals('+15551234567', $message->to); // Our number
         $this->assertNotEquals('+15551234567', $message->from); // Customer number

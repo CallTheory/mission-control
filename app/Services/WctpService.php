@@ -4,25 +4,42 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Exception;
+use NotifiUs\WCTP\XML\MessageReply;
+use NotifiUs\WCTP\XML\SubmitRequest;
 use SimpleXMLElement;
 
 class WctpService
 {
     const WCTP_VERSION = '1.3';
+
     const DTD_URL = 'http://www.wctp.org/release/wctp-dtd-v1r3.dtd';
 
     /**
-     * Parse incoming WCTP XML message
+     * Parse incoming WCTP XML message with robust libxml error handling.
      */
     public function parseWctpMessage(string $xmlContent): array
     {
+        $previousState = libxml_use_internal_errors(true);
+
         try {
+            libxml_clear_errors();
+
             $xml = new SimpleXMLElement($xmlContent);
+            $errors = libxml_get_errors();
+            libxml_clear_errors();
+
+            if (! empty($errors)) {
+                $errorMessages = array_map(fn ($e) => trim($e->message), $errors);
+                throw new Exception('XML parsing warnings: '.implode('; ', $errorMessages));
+            }
+
             $operation = $this->getOperation($xml);
 
             $data = match ($operation) {
                 'wctp-SubmitRequest' => $this->parseSubmitRequest($xml),
+                'wctp-SubmitClientMessage' => $this->parseSubmitClientMessage($xml),
                 'wctp-ClientQuery' => $this->parseClientQuery($xml),
                 'wctp-MessageReply' => $this->parseMessageReply($xml),
                 default => throw new Exception("Unsupported WCTP operation: {$operation}")
@@ -34,6 +51,8 @@ class WctpService
             ];
         } catch (Exception $e) {
             throw new Exception('Failed to parse WCTP message: '.$e->getMessage());
+        } finally {
+            libxml_use_internal_errors($previousState);
         }
     }
 
@@ -45,13 +64,16 @@ class WctpService
         if (isset($xml->{'wctp-SubmitRequest'})) {
             return 'wctp-SubmitRequest';
         }
+        if (isset($xml->{'wctp-SubmitClientMessage'})) {
+            return 'wctp-SubmitClientMessage';
+        }
         if (isset($xml->{'wctp-ClientQuery'})) {
             return 'wctp-ClientQuery';
         }
         if (isset($xml->{'wctp-MessageReply'})) {
             return 'wctp-MessageReply';
         }
-        
+
         throw new Exception('No valid WCTP operation found');
     }
 
@@ -71,7 +93,7 @@ class WctpService
         $message = null;
         $messageType = null;
         $data = [];
-        
+
         if (isset($payload->{'wctp-Alphanumeric'}) && (string) $payload->{'wctp-Alphanumeric'} !== '') {
             $message = (string) $payload->{'wctp-Alphanumeric'};
             $messageType = 'alphanumeric';
@@ -107,7 +129,7 @@ class WctpService
             'message_id' => $messageControl['message_id'] ?? uniqid('wctp_'),
             'message_control' => $messageControl ?: ['message_id' => uniqid('wctp_')],
         ];
-        
+
         // Only add message and message_type if we actually found content
         if ($message !== null) {
             $result['message'] = $message;
@@ -115,13 +137,59 @@ class WctpService
         if ($messageType !== null) {
             $result['message_type'] = $messageType;
         }
-        
+
         // Add encoding if present
         if (isset($data['encoding'])) {
             $result['encoding'] = $data['encoding'];
         }
-        
+
         return $result;
+    }
+
+    /**
+     * Parse a WCTP SubmitClientMessage (transient client).
+     *
+     * SubmitClientMessage uses wctp-SubmitClientHeader and wctp-ClientOriginator
+     * where the securityCode is in the miscInfo attribute.
+     */
+    protected function parseSubmitClientMessage(SimpleXMLElement $xml): array
+    {
+        $submitClientMessage = $xml->{'wctp-SubmitClientMessage'};
+        $header = $submitClientMessage->{'wctp-SubmitClientHeader'};
+        $payload = $submitClientMessage->{'wctp-Payload'};
+
+        $originator = $header->{'wctp-ClientOriginator'} ?? null;
+        $recipient = $header->{'wctp-ClientMessageControl'} ?? null;
+
+        // For transient clients, security code is in miscInfo
+        $senderId = $originator ? (string) ($originator['senderID'] ?? '') : '';
+        $miscInfo = $originator ? (string) ($originator['miscInfo'] ?? '') : '';
+
+        // Extract message
+        $message = null;
+        if (isset($payload->{'wctp-Alphanumeric'}) && (string) $payload->{'wctp-Alphanumeric'} !== '') {
+            $message = (string) $payload->{'wctp-Alphanumeric'};
+        } elseif (isset($payload->{'wctp-Message'}) && (string) $payload->{'wctp-Message'} !== '') {
+            $message = (string) $payload->{'wctp-Message'};
+        }
+
+        $recipientId = '';
+        if ($recipient) {
+            // ClientMessageControl has sendResponsesToID attribute for the recipient
+            $recipientId = (string) ($recipient['sendResponsesToID'] ?? '');
+        }
+        // Also check for a wctp-Recipient element
+        if (empty($recipientId) && isset($header->{'wctp-Recipient'})) {
+            $recipientId = (string) ($header->{'wctp-Recipient'}['recipientID'] ?? '');
+        }
+
+        return [
+            'sender_id' => $senderId,
+            'security_code' => $miscInfo,
+            'recipient_id' => $recipientId,
+            'message_id' => uniqid('wctp_client_'),
+            'message' => $message,
+        ];
     }
 
     /**
@@ -159,25 +227,17 @@ class WctpService
 
     /**
      * Create a WCTP MessageReply for inbound SMS (from phone to Enterprise Host)
+     * using the notifius/php-wctp library.
      */
     public function createInboundMessage(string $from, string $to, string $messageText, string $twilioSid): string
     {
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE wctp-Operation SYSTEM "'.self::DTD_URL.'"><wctp-Operation></wctp-Operation>');
-        $xml->addAttribute('wctpVersion', self::WCTP_VERSION);
-
-        $submitRequest = $xml->addChild('wctp-SubmitRequest');
-        
-        // Header
-        $header = $submitRequest->addChild('wctp-SubmitHeader');
-        $header->addChild('wctp-Originator')->addAttribute('senderID', $from);
-        $header->addChild('wctp-Recipient')->addAttribute('recipientID', $to);
-        
-        $messageControl = $header->addChild('wctp-MessageControl');
-        $messageControl->addAttribute('messageID', $twilioSid);
-        
-        // Payload
-        $payload = $submitRequest->addChild('wctp-Payload');
-        $payload->addChild('wctp-Alphanumeric', htmlspecialchars($messageText));
+        $xml = (new SubmitRequest)
+            ->senderID($from)
+            ->recipientID($to)
+            ->messageID(substr($twilioSid, 0, 32))
+            ->submitTimestamp(Carbon::now())
+            ->payload($messageText)
+            ->xml();
 
         return $xml->asXML();
     }
@@ -188,12 +248,12 @@ class WctpService
     protected function parseClientQuery(SimpleXMLElement $xml): array
     {
         $clientQuery = $xml->{'wctp-ClientQuery'};
-        
+
         // Check both locations for the header
         $queryHeader = $clientQuery->{'wctp-ClientQueryHeader'} ?? $clientQuery;
-        
+
         $originator = $queryHeader->{'wctp-ClientOriginator'} ?? null;
-        
+
         return [
             'sender_id' => $originator ? (string) ($originator['senderID'] ?? '') : '',
             'security_code' => $originator ? (string) ($originator['securityCode'] ?? '') : '',
@@ -207,7 +267,7 @@ class WctpService
     protected function parseMessageReply(SimpleXMLElement $xml): array
     {
         $messageReply = $xml->{'wctp-MessageReply'};
-        
+
         return [
             'response_to_message_id' => (string) ($messageReply['responseToMessageID'] ?? ''),
             'response_text' => (string) ($messageReply['responseText'] ?? ''),
@@ -225,7 +285,7 @@ class WctpService
 
         $statusInfo = $xml->addChild('wctp-StatusInfo');
         $statusInfo->addAttribute('messageID', $messageId);
-        
+
         // Add notification element for proper WCTP format
         $notification = $statusInfo->addChild('wctp-Notification');
         $notification->addAttribute('notificationCode', $statusCode);
@@ -236,25 +296,17 @@ class WctpService
 
     /**
      * Create a WCTP SubmitRequest (for outbound messages)
+     * using the notifius/php-wctp library.
      */
     public function createSubmitRequest(string $from, string $to, string $message, ?string $messageId = null): string
     {
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE wctp-Operation SYSTEM "'.self::DTD_URL.'"><wctp-Operation></wctp-Operation>');
-        $xml->addAttribute('wctpVersion', self::WCTP_VERSION);
-
-        $submitRequest = $xml->addChild('wctp-SubmitRequest');
-        
-        // Header
-        $header = $submitRequest->addChild('wctp-SubmitHeader');
-        $header->addChild('wctp-Originator')->addAttribute('senderID', $from);
-        $header->addChild('wctp-Recipient')->addAttribute('recipientID', $to);
-        
-        $messageControl = $header->addChild('wctp-MessageControl');
-        $messageControl->addAttribute('messageID', $messageId ?? uniqid('wctp_'));
-        
-        // Payload
-        $payload = $submitRequest->addChild('wctp-Payload');
-        $payload->addChild('wctp-Alphanumeric', htmlspecialchars($message));
+        $xml = (new SubmitRequest)
+            ->senderID($from)
+            ->recipientID($to)
+            ->messageID(substr($messageId ?? uniqid('wctp_'), 0, 32))
+            ->submitTimestamp(Carbon::now())
+            ->payload($message)
+            ->xml();
 
         return $xml->asXML();
     }
@@ -269,11 +321,11 @@ class WctpService
 
         $clientQuery = $xml->addChild('wctp-ClientQuery');
         $header = $clientQuery->addChild('wctp-ClientQueryHeader');
-        
+
         $originator = $header->addChild('wctp-ClientOriginator');
         $originator->addAttribute('senderID', $senderId);
         $originator->addAttribute('securityCode', $securityCode);
-        
+
         $header->addChild('wctp-TrackingNumber', $trackingNumber);
 
         return $xml->asXML();

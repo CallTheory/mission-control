@@ -500,11 +500,10 @@ class WctpMessageViewerTest extends TestCase
             'twilio_sid' => 'SMdifferent_twilio_sid',
         ]);
 
-        // Test each searchable field
+        // Test each searchable field (message excluded - encrypted at rest)
         $searchTerms = [
             '5551111111', // to field
-            '5552222222', // from field  
-            'unique_content_123', // message field
+            '5552222222', // from field
             'unique_wctp_456', // wctp_message_id field
             'SMunique_twilio_sid', // twilio_sid field
         ];
@@ -512,8 +511,8 @@ class WctpMessageViewerTest extends TestCase
         foreach ($searchTerms as $term) {
             Livewire::test(WctpMessageViewer::class)
                 ->set('search', $term)
-                ->assertSee('unique_content_123')
-                ->assertDontSee('different content');
+                ->assertSee('unique_wctp_456')
+                ->assertDontSee('different_wctp');
         }
     }
 }

@@ -96,14 +96,17 @@ class WctpTest extends TestCase
         $response->assertStatus(200);
         $this->assertStringContainsString('wctp-Confirmation', $response->content());
         
-        // Check that a message was created
+        // Check that a message was created (message is encrypted at rest)
         $this->assertDatabaseHas('wctp_messages', [
             'enterprise_host_id' => $host->id,
             'to' => '5551234567',
-            'message' => 'Test message',
             'wctp_message_id' => 'test123',
-            'status' => 'pending',
+            'status' => 'queued',
         ]);
+
+        // Verify message content via model (encrypted at rest)
+        $wctpMessage = WctpMessage::where('wctp_message_id', 'test123')->first();
+        $this->assertEquals('Test message', $wctpMessage->message);
         
         // Check that the job was dispatched
         Queue::assertPushed(ProcessWctpMessage::class);

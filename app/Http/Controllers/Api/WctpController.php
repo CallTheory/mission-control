@@ -5,26 +5,43 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ForwardToEnterpriseHost;
 use App\Jobs\ProcessWctpMessage;
 use App\Models\EnterpriseHost;
 use App\Models\WctpMessage;
-use App\Services\TwilioService;
 use App\Services\WctpService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class WctpController extends Controller
 {
-    protected WctpService $wctpService;
-    protected TwilioService $twilioService;
+    /**
+     * Standard WCTP error codes.
+     */
+    const WCTP_ERROR_CODES = [
+        '200' => 'Success',
+        '300' => 'Other error',
+        '301' => 'Invalid or missing XML syntax',
+        '302' => 'Invalid or missing WCTP DTD version',
+        '400' => 'Bad request',
+        '401' => 'Unauthorized - invalid senderID',
+        '402' => 'Unauthorized - invalid securityCode',
+        '403' => 'Forbidden - invalid recipientID',
+        '404' => 'Not found',
+        '411' => 'Message content required',
+        '500' => 'Internal server error',
+        '503' => 'Service unavailable',
+        '604' => 'Message too long',
+        '606' => 'MCR (Message Control Record) error',
+    ];
 
-    public function __construct(WctpService $wctpService, TwilioService $twilioService)
+    protected WctpService $wctpService;
+
+    public function __construct(WctpService $wctpService)
     {
         $this->wctpService = $wctpService;
-        $this->twilioService = $twilioService;
     }
 
     /**
@@ -36,32 +53,37 @@ class WctpController extends Controller
             $xmlContent = $request->getContent();
 
             if (empty($xmlContent)) {
-                return $this->errorResponse('400', 'No WCTP message provided');
+                return $this->errorResponse('301', 'No WCTP message provided');
             }
 
             Log::info('WCTP Request received', ['content_length' => strlen($xmlContent)]);
 
             // Parse the WCTP message
             $wctpData = $this->wctpService->parseWctpMessage($xmlContent);
-            
+
             // Handle different operation types
             return match ($wctpData['operation']) {
                 'wctp-SubmitRequest' => $this->handleSubmitRequest($wctpData['data']),
+                'wctp-SubmitClientMessage' => $this->handleSubmitClientMessage($wctpData['data']),
                 'wctp-ClientQuery' => $this->handleClientQuery($wctpData['data']),
                 'wctp-MessageReply' => $this->handleMessageReply($wctpData['data']),
-                default => $this->errorResponse('500', 'Unsupported operation: ' . $wctpData['operation'])
+                default => $this->errorResponse('300', 'Unsupported operation: '.$wctpData['operation'])
             };
 
         } catch (Exception $e) {
             Log::error('WCTP processing error', ['error' => $e->getMessage()]);
-            
-            // Return specific error for known WCTP parsing issues
-            if (str_contains($e->getMessage(), 'No valid WCTP operation found') || 
-                str_contains($e->getMessage(), 'Unsupported WCTP operation')) {
-                return $this->errorResponse('500', $e->getMessage());
+
+            if (str_contains($e->getMessage(), 'XML parsing warnings') ||
+                str_contains($e->getMessage(), 'String could not be parsed as XML')) {
+                return $this->errorResponse('301', 'Invalid XML syntax');
             }
-            
-            return $this->errorResponse('500', 'Internal server error');
+
+            if (str_contains($e->getMessage(), 'No valid WCTP operation found') ||
+                str_contains($e->getMessage(), 'Unsupported WCTP operation')) {
+                return $this->errorResponse('302', $e->getMessage());
+            }
+
+            return $this->errorResponse('300', 'Internal server error');
         }
     }
 
@@ -95,17 +117,17 @@ class WctpController extends Controller
             ->bySenderID($senderId)
             ->first();
 
-        if (!$host) {
+        if (! $host) {
             return $this->errorResponse('401', 'sender not found');
         }
 
-        if (!$host->validateSecurityCode($securityCode)) {
+        if (! $host->validateSecurityCode($securityCode)) {
             return $this->errorResponse('402', 'Invalid securityCode');
         }
 
         // Get the from number for this Enterprise Host
         $fromNumber = $host->getOutboundPhoneNumber();
-        if (!$fromNumber) {
+        if (! $fromNumber) {
             return $this->errorResponse('503', 'Service unavailable');
         }
 
@@ -123,7 +145,8 @@ class WctpController extends Controller
             'message' => $message,
             'wctp_message_id' => $messageId,
             'direction' => 'outbound',
-            'status' => 'pending',
+            'status' => 'queued',
+            'submitted_at' => now(),
             'reply_with' => $replyWith,
         ]);
 
@@ -145,6 +168,73 @@ class WctpController extends Controller
     }
 
     /**
+     * Handle WCTP SubmitClientMessage (transient client)
+     */
+    protected function handleSubmitClientMessage(array $data): Response
+    {
+        $recipientPhone = preg_replace('/\D+/', '', $data['recipient_id'] ?? '');
+        $senderId = $data['sender_id'];
+        $securityCode = $data['security_code'] ?? '';
+        $message = $data['message'] ?? '';
+        $messageId = $data['message_id'];
+
+        if (empty($recipientPhone) || strlen($recipientPhone) < 10) {
+            return $this->errorResponse('403', 'Invalid recipientID');
+        }
+
+        if (empty($message)) {
+            return $this->errorResponse('411', 'Message is required');
+        }
+
+        if (empty($senderId)) {
+            return $this->errorResponse('401', 'Invalid senderID');
+        }
+
+        // Find and authenticate the Enterprise Host
+        $host = EnterpriseHost::enabled()
+            ->bySenderID($senderId)
+            ->first();
+
+        if (! $host) {
+            return $this->errorResponse('401', 'sender not found');
+        }
+
+        // For transient clients, miscInfo contains the security code
+        if (! $host->validateSecurityCode($securityCode)) {
+            return $this->errorResponse('402', 'Invalid securityCode');
+        }
+
+        $fromNumber = $host->getOutboundPhoneNumber();
+        if (! $fromNumber) {
+            return $this->errorResponse('503', 'Service unavailable');
+        }
+
+        $wctpMessage = WctpMessage::create([
+            'enterprise_host_id' => $host->id,
+            'to' => $recipientPhone,
+            'from' => $fromNumber,
+            'message' => $message,
+            'wctp_message_id' => $messageId,
+            'direction' => 'outbound',
+            'status' => 'queued',
+            'submitted_at' => now(),
+        ]);
+
+        $host->recordMessage();
+
+        ProcessWctpMessage::dispatch($wctpMessage);
+
+        Log::info('WCTP client message queued', [
+            'wctp_message_id' => $messageId,
+            'host' => $host->name,
+            'to' => $recipientPhone,
+        ]);
+
+        return response($this->wctpService->createConfirmation($messageId), 200)
+            ->header('Content-Type', 'text/xml; charset=UTF-8');
+    }
+
+    /**
      * Handle WCTP ClientQuery (status check)
      */
     protected function handleClientQuery(array $data): Response
@@ -160,17 +250,17 @@ class WctpController extends Controller
 
         // If sender is provided, authenticate
         $host = null;
-        if (!empty($senderId)) {
+        if (! empty($senderId)) {
             // Find and authenticate the Enterprise Host
             $host = EnterpriseHost::enabled()
                 ->bySenderID($senderId)
                 ->first();
 
-            if (!$host) {
+            if (! $host) {
                 return $this->errorResponse('401', 'sender not found');
             }
 
-            if (!$host->validateSecurityCode($securityCode)) {
+            if (! $host->validateSecurityCode($securityCode)) {
                 return $this->errorResponse('401', 'Authentication failed');
             }
         }
@@ -182,14 +272,14 @@ class WctpController extends Controller
         }
         $message = $query->first();
 
-        if (!$message) {
+        if (! $message) {
             // Return 404 status in a success response
             return response($this->wctpService->createStatusInfo($trackingNumber, '404', 'Message not found'), 200)
                 ->header('Content-Type', 'text/xml; charset=UTF-8');
         }
 
         // Check for cached status from Twilio callback
-        $cachedStatus = cache()->get('wctp_status_' . $trackingNumber);
+        $cachedStatus = cache()->get('wctp_status_'.$trackingNumber);
         if ($cachedStatus) {
             $message->status = $cachedStatus;
             $message->save();
@@ -199,11 +289,12 @@ class WctpController extends Controller
         $statusCode = match ($message->status) {
             'delivered' => '200',
             'sent' => '201',
+            'queued' => '202',
             'pending' => '202',
             'failed' => '400',
             default => '202'
         };
-        
+
         // Return status info
         return response($this->wctpService->createStatusInfo($trackingNumber, $statusCode, $message->status), 200)
             ->header('Content-Type', 'text/xml; charset=UTF-8');
@@ -219,8 +310,8 @@ class WctpController extends Controller
 
         // Find the original message
         $originalMessage = WctpMessage::where('wctp_message_id', $responseToMessageId)->first();
-        
-        if (!$originalMessage) {
+
+        if (! $originalMessage) {
             return $this->errorResponse('404', 'Original message not found');
         }
 
@@ -236,10 +327,16 @@ class WctpController extends Controller
             'parent_message_id' => $originalMessage->id,
         ]);
 
-        // Forward the reply to the Enterprise Host if they have a callback URL
+        // Forward the reply to the Enterprise Host asynchronously
         $host = $originalMessage->enterpriseHost;
         if ($host && $host->callback_url) {
-            $this->forwardToEnterpriseHost($host, $replyMessage);
+            $wctpXml = $this->wctpService->createInboundMessage(
+                $replyMessage->from,
+                $replyMessage->to,
+                $responseText,
+                $replyMessage->wctp_message_id
+            );
+            ForwardToEnterpriseHost::dispatch($host, $replyMessage, $wctpXml);
         }
 
         return response($this->wctpService->createConfirmation($replyMessage->wctp_message_id), 200)
@@ -260,15 +357,15 @@ class WctpController extends Controller
             Log::info('Incoming SMS from Twilio', [
                 'from' => $from,
                 'to' => $to,
-                'body' => $body,
                 'sid' => $messageSid,
             ]);
 
             // Find which Enterprise Host this message is for based on the receiving number
             $enterpriseHost = EnterpriseHost::findByPhoneNumber($to);
 
-            if (!$enterpriseHost) {
+            if (! $enterpriseHost) {
                 Log::warning('Incoming SMS to unassigned number', ['to' => $to]);
+
                 // Return empty TwiML response to acknowledge receipt
                 return response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 200)
                     ->header('Content-Type', 'text/xml');
@@ -285,14 +382,16 @@ class WctpController extends Controller
                 'direction' => 'inbound',
                 'status' => 'delivered',
                 'delivered_at' => now(),
+                'submitted_at' => now(),
             ]);
 
             // Update host statistics
             $enterpriseHost->recordMessage();
 
-            // If there's a callback URL, forward the message
+            // If there's a callback URL, forward the message asynchronously
             if ($enterpriseHost->callback_url) {
-                $this->forwardInboundMessage($enterpriseHost, $from, $to, $body, $messageSid);
+                $wctpXml = $this->wctpService->createInboundMessage($from, $to, $body, $messageSid);
+                ForwardToEnterpriseHost::dispatch($enterpriseHost, $wctpMessage, $wctpXml);
             }
 
             // Return empty TwiML response
@@ -301,6 +400,7 @@ class WctpController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error handling incoming SMS', ['error' => $e->getMessage()]);
+
             return response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 500)
                 ->header('Content-Type', 'text/xml');
         }
@@ -322,7 +422,7 @@ class WctpController extends Controller
         ]);
 
         // Cache the status for ClientQuery requests
-        cache()->put('wctp_status_' . $messageId, $messageStatus, now()->addMinutes(60));
+        cache()->put('wctp_status_'.$messageId, $messageStatus, now()->addMinutes(60));
 
         // Find and update the message
         $wctpMessage = WctpMessage::where('wctp_message_id', $messageId)
@@ -339,8 +439,13 @@ class WctpController extends Controller
                     $errorMessage = $errorCode ? "Error {$errorCode}" : 'Delivery failed';
                     $wctpMessage->markAsFailed($errorMessage);
                     break;
-                case 'sent':
+                case 'queued':
                     if ($wctpMessage->status === 'pending') {
+                        $wctpMessage->markAsQueued();
+                    }
+                    break;
+                case 'sent':
+                    if ($wctpMessage->status !== 'delivered') {
                         $wctpMessage->update(['status' => 'sent']);
                     }
                     break;
@@ -351,62 +456,6 @@ class WctpController extends Controller
     }
 
     /**
-     * Forward inbound SMS to Enterprise Host callback URL
-     */
-    protected function forwardInboundMessage(EnterpriseHost $host, string $from, string $to, string $body, string $twilioSid): void
-    {
-        try {
-            $wctpXml = $this->wctpService->createInboundMessage($from, $to, $body, $twilioSid);
-
-            $response = Http::timeout(10)
-                ->withHeaders(['Content-Type' => 'text/xml'])
-                ->post($host->callback_url, $wctpXml);
-
-            Log::info('Inbound message forwarded to Enterprise Host', [
-                'host' => $host->name,
-                'callback_url' => $host->callback_url,
-                'status' => $response->status(),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to forward inbound message', [
-                'host' => $host->name,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Forward message to Enterprise Host callback URL
-     */
-    protected function forwardToEnterpriseHost(EnterpriseHost $host, WctpMessage $message): void
-    {
-        try {
-            $wctpXml = $this->wctpService->createInboundMessage(
-                $message->from,
-                $message->to,
-                $message->message,
-                $message->wctp_message_id
-            );
-
-            $response = Http::timeout(10)
-                ->withHeaders(['Content-Type' => 'text/xml'])
-                ->post($host->callback_url, $wctpXml);
-
-            Log::info('Message forwarded to Enterprise Host', [
-                'host' => $host->name,
-                'callback_url' => $host->callback_url,
-                'message_id' => $message->wctp_message_id,
-                'status' => $response->status(),
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to forward message', [
-                'host' => $host->name,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
      * Create WCTP error response
      */
     protected function errorResponse(string $errorCode, string $errorText): Response
@@ -414,13 +463,18 @@ class WctpController extends Controller
         $responseXml = $this->wctpService->createFailure($errorCode, $errorText);
 
         $httpCode = match ($errorCode) {
+            '300' => 500,
+            '301' => 400,
+            '302' => 400,
             '400' => 400,
             '401', '402' => 401,
             '403' => 403,
-            '411' => 500,
             '404' => 404,
+            '411' => 400,
             '500' => 500,
             '503' => 503,
+            '604' => 400,
+            '606' => 400,
             default => 500
         };
 

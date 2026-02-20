@@ -129,13 +129,14 @@ XML;
     {
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], 'invalid xml');
 
-        $response->assertStatus(500);
+        $response->assertStatus(400);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        
+
         $responseXml = simplexml_load_string($response->getContent());
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
+        $this->assertEquals('301', (string)$responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
     }
 
     public function test_wctp_endpoint_returns_error_for_empty_request(): void
@@ -144,12 +145,12 @@ XML;
 
         $response->assertStatus(400);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        
+
         $responseXml = simplexml_load_string($response->getContent());
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
-        $this->assertEquals('400', (string)$responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertEquals('301', (string)$responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
     }
 
     public function test_wctp_endpoint_handles_message_reply(): void

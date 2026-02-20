@@ -57,7 +57,6 @@ class WctpMessageViewer extends Component
             $query->where(function ($q) {
                 $q->where('to', 'like', '%' . $this->search . '%')
                     ->orWhere('from', 'like', '%' . $this->search . '%')
-                    ->orWhere('message', 'like', '%' . $this->search . '%')
                     ->orWhere('wctp_message_id', 'like', '%' . $this->search . '%')
                     ->orWhere('twilio_sid', 'like', '%' . $this->search . '%');
             });

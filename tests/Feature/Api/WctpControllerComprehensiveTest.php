@@ -4,36 +4,34 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use Tests\TestCase;
-use App\Models\EnterpriseHost;
-use App\Models\DataSource;
-use App\Models\WctpMessage;
 use App\Jobs\ProcessWctpMessage;
-use App\Services\TwilioService;
+use App\Models\DataSource;
+use App\Models\EnterpriseHost;
+use App\Models\WctpMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
-use Tests\Traits\MocksTwilio;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
+use Tests\TestCase;
+use Tests\Traits\MocksTwilio;
 
 class WctpControllerComprehensiveTest extends TestCase
 {
-    use RefreshDatabase, MocksTwilio;
+    use MocksTwilio, RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Enable the WCTP gateway feature flag
         \Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
-        
+
         // Register WCTP routes for testing
         $this->app['router']->post('/wctp', [\App\Http\Controllers\Api\WctpController::class, 'handle'])
             ->name('wctp');
         $this->app['router']->post('/wctp/callback/{messageId}', [\App\Http\Controllers\Api\WctpController::class, 'twilioCallback'])
             ->name('wctp.callback');
-        
+
         // Set up Twilio mock
         $this->setUpTwilioMock();
     }
@@ -47,30 +45,30 @@ class WctpControllerComprehensiveTest extends TestCase
     public function test_empty_request_body_returns_400(): void
     {
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], '');
-        
+
         $response->assertStatus(400);
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        
+
         $xml = simplexml_load_string($response->content());
-        $this->assertEquals('400', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertEquals('301', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
         $this->assertStringContainsString('No WCTP message provided', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorText']);
     }
 
-    public function test_invalid_xml_returns_500(): void
+    public function test_invalid_xml_returns_400(): void
     {
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], 'invalid xml content');
-        
-        $response->assertStatus(500);
+
+        $response->assertStatus(400);
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        
+
         $xml = simplexml_load_string($response->content());
-        $this->assertEquals('500', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
-        $this->assertStringContainsString('Internal server error', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorText']);
+        $this->assertEquals('301', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertStringContainsString('Invalid XML syntax', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorText']);
     }
 
-    public function test_unsupported_operation_returns_500(): void
+    public function test_unsupported_operation_returns_400(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -79,12 +77,12 @@ class WctpControllerComprehensiveTest extends TestCase
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
-        $response->assertStatus(500);
+
+        $response->assertStatus(400);
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        
+
         $xml = simplexml_load_string($response->content());
-        $this->assertEquals('500', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertEquals('302', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
         $this->assertStringContainsString('No valid WCTP operation found', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorText']);
     }
 
@@ -95,7 +93,7 @@ XML;
             'securityCode' => 'testcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -113,7 +111,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(403);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('403', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -127,7 +125,7 @@ XML;
             'securityCode' => 'testcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -145,9 +143,8 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
-        // WCTP error code 411 maps to HTTP status 500 by default (not in the controller's specific mapping)
-        $response->assertStatus(500);
+
+        $response->assertStatus(400);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('411', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
         $this->assertStringContainsString('Message is required', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorText']);
@@ -155,7 +152,7 @@ XML;
 
     public function test_submit_request_without_sender_id_returns_401(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -172,7 +169,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('401', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -181,7 +178,7 @@ XML;
 
     public function test_submit_request_with_nonexistent_sender_id_returns_401(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -199,7 +196,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('401', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -213,7 +210,7 @@ XML;
             'securityCode' => 'correctcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -231,7 +228,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('402', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -245,7 +242,7 @@ XML;
             'securityCode' => 'testcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -263,7 +260,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('401', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -280,7 +277,7 @@ XML;
             'phone_numbers' => null,
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -298,7 +295,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(503);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('503', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -314,7 +311,7 @@ XML;
             'securityCode' => 'testcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -332,19 +329,22 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
-        
+
         // Verify message was created with cleaned phone number and extracted reply code
         $this->assertDatabaseHas('wctp_messages', [
             'enterprise_host_id' => $host->id,
             'to' => '5551234567', // Phone number should be cleaned
-            'message' => 'Please confirm your order. Reply with 456',
             'reply_with' => '456', // Reply code should be extracted
             'wctp_message_id' => 'test123',
-            'status' => 'pending',
+            'status' => 'queued',
         ]);
-        
+
+        // Verify message content (encrypted at rest, so check via model)
+        $wctpMessage = WctpMessage::where('wctp_message_id', 'test123')->first();
+        $this->assertEquals('Please confirm your order. Reply with 456', $wctpMessage->message);
+
         // Verify job was dispatched
         Queue::assertPushed(ProcessWctpMessage::class);
 
@@ -366,7 +366,7 @@ XML;
             'wctp_message_id' => 'test123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -380,7 +380,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('test123', (string) $xml->{'wctp-StatusInfo'}['messageID']);
@@ -390,7 +390,7 @@ XML;
 
     public function test_client_query_for_nonexistent_message(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -403,7 +403,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('nonexistent123', (string) $xml->{'wctp-StatusInfo'}['messageID']);
@@ -413,7 +413,7 @@ XML;
 
     public function test_client_query_without_tracking_number_returns_400(): void
     {
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -426,7 +426,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(400);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('400', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -440,7 +440,7 @@ XML;
             'securityCode' => 'correctcode',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -454,7 +454,7 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $xml = simplexml_load_string($response->content());
         $this->assertEquals('401', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
@@ -474,7 +474,7 @@ XML;
         // Put status in cache as if Twilio callback had occurred
         cache()->put('wctp_status_test123', 'delivered', now()->addMinutes(60));
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -487,9 +487,9 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
-        
+
         // Verify message status was updated from cache
         $message->refresh();
         $this->assertEquals('delivered', $message->status);
@@ -506,7 +506,7 @@ XML;
             'status' => 'delivered',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -515,17 +515,20 @@ XML;
 XML;
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
         $xml = simplexml_load_string($response->content());
         $this->assertNotNull($xml->{'wctp-Confirmation'}->{'wctp-Success'});
-        
-        // Check that a reply was created
+
+        // Check that a reply was created (message is encrypted at rest)
         $this->assertDatabaseHas('wctp_messages', [
             'parent_message_id' => $originalMessage->id,
             'direction' => 'inbound',
-            'message' => 'YES',
         ]);
+
+        // Verify message content via model
+        $reply = WctpMessage::where('parent_message_id', $originalMessage->id)->first();
+        $this->assertEquals('YES', $reply->message);
     }
 
     public function test_twilio_callback_updates_message_by_wctp_id(): void
@@ -545,11 +548,11 @@ XML;
         ]);
 
         $response->assertStatus(204);
-        
+
         $message->refresh();
         $this->assertEquals('delivered', $message->status);
         $this->assertNotNull($message->delivered_at);
-        
+
         // Verify cache was updated
         $this->assertEquals('delivered', Cache::get('wctp_status_wctp123'));
     }
@@ -571,7 +574,7 @@ XML;
         ]);
 
         $response->assertStatus(204);
-        
+
         $message->refresh();
         $this->assertEquals('failed', $message->status);
         $this->assertNotNull($message->failed_at);
@@ -580,7 +583,7 @@ XML;
     public function test_twilio_callback_handles_different_statuses(): void
     {
         $host = EnterpriseHost::factory()->create();
-        
+
         // Test 'sent' status
         $message1 = WctpMessage::factory()->pending()->create([
             'enterprise_host_id' => $host->id,
@@ -616,27 +619,12 @@ XML;
 
     public function test_error_code_mapping(): void
     {
-        // Test all WCTP error code mappings
-        $testCases = [
-            ['400', 400],
-            ['401', 401],
-            ['402', 401], // securityCode error maps to 401
-            ['403', 403],
-            ['404', 404],
-            ['500', 500],
-            ['501', 501],
-            ['503', 503],
-            ['604', 500], // Internal server error
-            ['999', 500], // Default case
-        ];
+        // Invalid XML triggers a 301 error code with HTTP 400
+        $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], 'invalid xml');
+        $this->assertEquals(400, $response->status());
 
-        foreach ($testCases as [$wctpCode, $expectedHttpCode]) {
-            $xml = 'invalid xml to trigger error';
-            $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-            
-            // We expect a 500 for invalid XML, but the mapping is tested internally
-            $this->assertEquals(500, $response->status());
-        }
+        $xml = simplexml_load_string($response->content());
+        $this->assertEquals('301', (string) $xml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
     }
 
     public function test_successful_request_processing(): void
@@ -646,7 +634,7 @@ XML;
             'securityCode' => 'testcode123',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -665,13 +653,12 @@ XML;
 
         Queue::fake();
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
         $this->assertStringStartsWith('text/xml', $response->headers->get('Content-Type'));
-        
+
         // Verify it's a success response
         $xml = simplexml_load_string($response->content());
         $this->assertNotNull($xml->{'wctp-Confirmation'}->{'wctp-Success'});
     }
-
 }
