@@ -84,7 +84,7 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
         if (Helpers::isSystemFeatureEnabled('transcription')) {
 
             if (file_exists($filepath)) {
-                $transcribe = "{$this->whisper_root}/main {$this->whisper_command_params} -m {$this->whisper_root}/models/{$this->whisper_model} -f {$recording_storage}/{$this->filename} -ojf -of {$transcription_storage}/{$json_filename}";
+                $transcribe = "{$this->whisper_root}/build/bin/whisper-cli {$this->whisper_command_params} -m {$this->whisper_root}/models/{$this->whisper_model} -f {$recording_storage}/{$this->filename} -ojf -of {$transcription_storage}/{$json_filename}";
                 Log::info("Transcribing {$this->filename}: {$transcribe}");
                 try {
                     $result = Process::timeout($this->timeout)->run($transcribe)->throw();
