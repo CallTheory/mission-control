@@ -166,7 +166,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
                 $resp = $platform->sendRequest($bodyParams);
                 $respData = $resp->json();
-                $apiMessageId = (string) ($respData['id'] ?? '');
+                $apiMessageId = (string) ($respData->id ?? '');
 
                 PendingFax::create([
                     'api_fax_id' => $apiMessageId,
