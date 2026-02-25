@@ -98,7 +98,7 @@ class CheckPendingFaxes extends Command
 
         $response = $platform->get("/restapi/v1.0/account/~/extension/~/message-store/{$pendingFax->api_fax_id}");
         $data = $response->json();
-        $messageStatus = $data['messageStatus'] ?? null;
+        $messageStatus = $data->messageStatus ?? null;
 
         // RingCentral messageStatus: Queued, Sent, Delivered, DeliveryFailed, SendingFailed, Received
         if (in_array($messageStatus, ['Sent', 'Delivered'])) {
