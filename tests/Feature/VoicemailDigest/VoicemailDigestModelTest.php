@@ -332,6 +332,61 @@ final class VoicemailDigestModelTest extends TestCase
         $this->assertNotNull($digest->fresh()->deleted_at);
     }
 
+    public function test_calculate_next_run_at_for_immediate_schedule(): void
+    {
+        $digest = VoicemailDigest::factory()->immediate()->create([
+            'timezone' => 'America/New_York',
+        ]);
+
+        $from = Carbon::parse('2026-01-26 10:30:00', 'America/New_York');
+        $nextRun = $digest->calculateNextRunAt($from);
+
+        $this->assertEquals('2026-01-26 10:31:00', $nextRun->format('Y-m-d H:i:s'));
+    }
+
+    public function test_get_date_range_for_immediate_schedule_uses_last_run_at(): void
+    {
+        $lastRun = Carbon::parse('2026-01-26 09:45:00', 'America/New_York');
+        $digest = VoicemailDigest::factory()->immediate()->create([
+            'timezone' => 'America/New_York',
+            'last_run_at' => $lastRun,
+        ]);
+
+        $endDate = Carbon::parse('2026-01-26 10:00:00', 'America/New_York');
+        [$start, $end] = $digest->getDateRange($endDate);
+
+        $this->assertEquals('2026-01-26 09:45:00', $start->format('Y-m-d H:i:s'));
+        $this->assertEquals('2026-01-26 10:00:00', $end->format('Y-m-d H:i:s'));
+    }
+
+    public function test_get_date_range_for_immediate_schedule_falls_back_to_one_hour(): void
+    {
+        $digest = VoicemailDigest::factory()->immediate()->create([
+            'timezone' => 'America/New_York',
+            'last_run_at' => null,
+        ]);
+
+        $endDate = Carbon::parse('2026-01-26 10:00:00', 'America/New_York');
+        [$start, $end] = $digest->getDateRange($endDate);
+
+        $this->assertEquals('2026-01-26 09:00:00', $start->format('Y-m-d H:i:s'));
+        $this->assertEquals('2026-01-26 10:00:00', $end->format('Y-m-d H:i:s'));
+    }
+
+    public function test_is_immediate_returns_true_for_immediate_schedule(): void
+    {
+        $digest = VoicemailDigest::factory()->immediate()->create();
+
+        $this->assertTrue($digest->isImmediate());
+    }
+
+    public function test_is_immediate_returns_false_for_other_schedules(): void
+    {
+        $digest = VoicemailDigest::factory()->daily()->create();
+
+        $this->assertFalse($digest->isImmediate());
+    }
+
     public function test_calculate_next_run_at_respects_timezone(): void
     {
         $digest = VoicemailDigest::factory()->daily()->create([

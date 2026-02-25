@@ -444,11 +444,55 @@ final class VoicemailDigestLivewireTest extends TestCase
         $types = $component->instance()->getScheduleTypes();
 
         $this->assertEquals([
+            'immediate' => 'Immediate',
             'hourly' => 'Hourly',
             'daily' => 'Daily',
             'weekly' => 'Weekly',
             'monthly' => 'Monthly',
         ], $types);
+    }
+
+    public function test_create_with_immediate_type_nulls_time_and_day_fields(): void
+    {
+        Livewire::test(VoicemailDigestComponent::class)
+            ->set('state.name', 'Immediate Digest')
+            ->set('state.recipients', 'test@example.com')
+            ->set('state.subject', 'Immediate Subject')
+            ->set('state.schedule_type', 'immediate')
+            ->set('state.schedule_time', '08:00')
+            ->set('state.schedule_day_of_week', 1)
+            ->set('state.schedule_day_of_month', 15)
+            ->set('state.timezone', 'America/New_York')
+            ->call('create')
+            ->assertHasNoErrors()
+            ->assertDispatched('saved');
+
+        $digest = VoicemailDigest::where('name', 'Immediate Digest')->first();
+        $this->assertEquals('immediate', $digest->schedule_type);
+        $this->assertNull($digest->schedule_time);
+        $this->assertNull($digest->schedule_day_of_week);
+        $this->assertNull($digest->schedule_day_of_month);
+    }
+
+    public function test_update_with_immediate_type_nulls_time_and_day_fields(): void
+    {
+        $digest = VoicemailDigest::factory()->daily()->create([
+            'team_id' => $this->team->id,
+            'schedule_time' => '08:00',
+        ]);
+
+        Livewire::test(VoicemailDigestComponent::class)
+            ->call('edit', $digest)
+            ->set('state.schedule_type', 'immediate')
+            ->call('update', $digest)
+            ->assertHasNoErrors()
+            ->assertDispatched('saved');
+
+        $digest->refresh();
+        $this->assertEquals('immediate', $digest->schedule_type);
+        $this->assertNull($digest->schedule_time);
+        $this->assertNull($digest->schedule_day_of_week);
+        $this->assertNull($digest->schedule_day_of_month);
     }
 
     public function test_get_days_of_week_returns_expected_values(): void

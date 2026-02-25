@@ -57,21 +57,33 @@
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        <span class="capitalize">{{ $schedule->schedule_type }}</span>
-                                        @if($schedule->schedule_time)
-                                            at {{ $schedule->schedule_time }}
-                                        @endif
-                                        @if($schedule->schedule_type === 'weekly')
-                                            on {{ ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][$schedule->schedule_day_of_week ?? 0] }}
-                                        @elseif($schedule->schedule_type === 'monthly')
-                                            on day {{ $schedule->schedule_day_of_month ?? 1 }}
+                                        @if($schedule->schedule_type === 'immediate')
+                                            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Immediate</span>
+                                        @else
+                                            <span class="capitalize">{{ $schedule->schedule_type }}</span>
+                                            @if($schedule->schedule_time)
+                                                at {{ $schedule->schedule_time }}
+                                            @endif
+                                            @if($schedule->schedule_type === 'weekly')
+                                                on {{ ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][$schedule->schedule_day_of_week ?? 0] }}
+                                            @elseif($schedule->schedule_type === 'monthly')
+                                                on day {{ $schedule->schedule_day_of_month ?? 1 }}
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         {{ $schedule->last_run_at?->format('M j, g:i A') ?? 'Never' }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                        {{ $schedule->next_run_at?->format('M j, g:i A') ?? 'Not scheduled' }}
+                                        @if($schedule->schedule_type === 'immediate')
+                                            @if($schedule->enabled)
+                                                <span class="text-green-600">Every minute</span>
+                                            @else
+                                                <span class="text-gray-400">Paused</span>
+                                            @endif
+                                        @else
+                                            {{ $schedule->next_run_at?->format('M j, g:i A') ?? 'Not scheduled' }}
+                                        @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         <button

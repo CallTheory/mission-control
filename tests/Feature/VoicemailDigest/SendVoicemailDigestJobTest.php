@@ -111,6 +111,18 @@ final class SendVoicemailDigestJobTest extends TestCase
         $this->assertEquals(3, $job->tries);
     }
 
+    public function test_job_recognizes_immediate_schedule(): void
+    {
+        $digest = VoicemailDigest::factory()->immediate()->create();
+        $startDate = Carbon::now()->subMinute();
+        $endDate = Carbon::now();
+
+        $job = new SendVoicemailDigest($digest, $startDate, $endDate);
+
+        $this->assertTrue($job->schedule->isImmediate());
+        $this->assertEquals('immediate', $job->schedule->schedule_type);
+    }
+
     public function test_job_properties_are_accessible(): void
     {
         $team = Team::factory()->create(['name' => 'Test Team']);

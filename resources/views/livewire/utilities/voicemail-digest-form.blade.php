@@ -52,13 +52,23 @@
         <x-input-error for="state.schedule_type" class="mt-2" />
     </div>
 
+    @if($state['schedule_type'] !== 'immediate')
     <div class="col-span-1 my-4">
         <x-label for="schedule_time" class="font-semibold" value="{{ __('Time') }}" />
         <x-input id="schedule_time" type="time" class="mt-1 block w-full" wire:model="state.schedule_time" />
         <small class="text-xs text-gray-400">Time to send (for daily/weekly/monthly)</small>
         <x-input-error for="state.schedule_time" class="mt-2" />
     </div>
+    @endif
 </div>
+
+@if($state['schedule_type'] === 'immediate')
+<div class="col-span-6 sm:col-span-4 my-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+    <p class="text-sm text-blue-700">
+        <strong>Immediate mode:</strong> The system checks for new recordings every minute. Each recording found will be sent as an individual email.
+    </p>
+</div>
+@endif
 
 @if($state['schedule_type'] === 'weekly')
 <div class="col-span-6 sm:col-span-4 my-4">

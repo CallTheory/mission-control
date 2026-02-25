@@ -38,7 +38,7 @@ class VoicemailDigest extends Component
         'state.billing_code' => 'nullable|string|max:50',
         'state.recipients' => 'required|string',
         'state.subject' => 'required|string|max:255',
-        'state.schedule_type' => 'required|in:hourly,daily,weekly,monthly',
+        'state.schedule_type' => 'required|in:immediate,hourly,daily,weekly,monthly',
         'state.schedule_time' => 'nullable|string',
         'state.schedule_day_of_week' => 'nullable|integer|min:0|max:6',
         'state.schedule_day_of_month' => 'nullable|integer|min:1|max:31',
@@ -88,6 +88,8 @@ class VoicemailDigest extends Component
 
         $team = request()->user()->currentTeam;
 
+        $isImmediate = $this->state['schedule_type'] === 'immediate';
+
         VoicemailDigestModel::create([
             'team_id' => $team->id,
             'name' => $this->state['name'],
@@ -96,9 +98,9 @@ class VoicemailDigest extends Component
             'recipients' => array_filter(array_map('trim', explode("\n", $this->state['recipients']))),
             'subject' => $this->state['subject'],
             'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $this->state['schedule_time'] ?: null,
-            'schedule_day_of_week' => $this->state['schedule_day_of_week'],
-            'schedule_day_of_month' => $this->state['schedule_day_of_month'],
+            'schedule_time' => $isImmediate ? null : ($this->state['schedule_time'] ?: null),
+            'schedule_day_of_week' => $isImmediate ? null : $this->state['schedule_day_of_week'],
+            'schedule_day_of_month' => $isImmediate ? null : $this->state['schedule_day_of_month'],
             'include_transcription' => $this->state['include_transcription'],
             'include_call_metadata' => $this->state['include_call_metadata'],
             'timezone' => $this->state['timezone'],
@@ -139,6 +141,8 @@ class VoicemailDigest extends Component
     {
         $this->validate();
 
+        $isImmediate = $this->state['schedule_type'] === 'immediate';
+
         $schedule->update([
             'name' => $this->state['name'],
             'client_number' => $this->state['client_number'] ?: null,
@@ -146,9 +150,9 @@ class VoicemailDigest extends Component
             'recipients' => array_filter(array_map('trim', explode("\n", $this->state['recipients']))),
             'subject' => $this->state['subject'],
             'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $this->state['schedule_time'] ?: null,
-            'schedule_day_of_week' => $this->state['schedule_day_of_week'],
-            'schedule_day_of_month' => $this->state['schedule_day_of_month'],
+            'schedule_time' => $isImmediate ? null : ($this->state['schedule_time'] ?: null),
+            'schedule_day_of_week' => $isImmediate ? null : $this->state['schedule_day_of_week'],
+            'schedule_day_of_month' => $isImmediate ? null : $this->state['schedule_day_of_month'],
             'include_transcription' => $this->state['include_transcription'],
             'include_call_metadata' => $this->state['include_call_metadata'],
             'timezone' => $this->state['timezone'],
@@ -238,6 +242,7 @@ class VoicemailDigest extends Component
     public function getScheduleTypes(): array
     {
         return [
+            'immediate' => 'Immediate',
             'hourly' => 'Hourly',
             'daily' => 'Daily',
             'weekly' => 'Weekly',

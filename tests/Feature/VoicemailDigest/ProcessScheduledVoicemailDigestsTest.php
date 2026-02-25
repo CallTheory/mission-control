@@ -398,6 +398,59 @@ final class ProcessScheduledVoicemailDigestsTest extends TestCase
         Queue::assertPushed(SendVoicemailDigest::class, 2);
     }
 
+    public function test_it_dispatches_job_with_correct_date_range_for_immediate(): void
+    {
+        Queue::fake();
+        $this->enableSystemFeatureFlag();
+
+        $team = Team::factory()->create([
+            'utility_voicemail_digest' => true,
+        ]);
+
+        $lastRun = Carbon::now()->subMinutes(5);
+        $digest = VoicemailDigest::factory()->immediate()->create([
+            'team_id' => $team->id,
+            'enabled' => true,
+            'next_run_at' => Carbon::now(),
+            'last_run_at' => $lastRun,
+        ]);
+
+        $this->artisan('voicemail-digest:process')
+            ->assertExitCode(0);
+
+        Queue::assertPushed(SendVoicemailDigest::class, function ($job) use ($lastRun) {
+            return abs($job->startDate->diffInSeconds($lastRun)) < 2
+                && abs($job->endDate->diffInSeconds(Carbon::now())) < 2;
+        });
+    }
+
+    public function test_it_dispatches_job_with_fallback_range_for_immediate_first_run(): void
+    {
+        Queue::fake();
+        $this->enableSystemFeatureFlag();
+
+        $team = Team::factory()->create([
+            'utility_voicemail_digest' => true,
+        ]);
+
+        $digest = VoicemailDigest::factory()->immediate()->create([
+            'team_id' => $team->id,
+            'enabled' => true,
+            'next_run_at' => null,
+            'last_run_at' => null,
+        ]);
+
+        $this->artisan('voicemail-digest:process')
+            ->assertExitCode(0);
+
+        Queue::assertPushed(SendVoicemailDigest::class, function ($job) {
+            $expectedStart = Carbon::now()->subHour();
+
+            return abs($job->startDate->diffInSeconds($expectedStart)) < 2
+                && abs($job->endDate->diffInSeconds(Carbon::now())) < 2;
+        });
+    }
+
     private function enableSystemFeatureFlag(): void
     {
         Storage::makeDirectory('feature-flags');

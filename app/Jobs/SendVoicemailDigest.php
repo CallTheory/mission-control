@@ -80,13 +80,17 @@ class SendVoicemailDigest implements ShouldQueue
                 return;
             }
 
-            // Send the email
-            Mail::send(new VoicemailDigestMailable(
-                $this->schedule,
-                $recordings,
-                $this->startDate,
-                $this->endDate
-            ));
+            // Send individual emails for immediate schedules, batch for others
+            if ($this->schedule->isImmediate()) {
+                $this->sendIndividualEmails($recordings);
+            } else {
+                Mail::send(new VoicemailDigestMailable(
+                    $this->schedule,
+                    $recordings,
+                    $this->startDate,
+                    $this->endDate
+                ));
+            }
 
             Log::info("Voicemail digest sent for schedule {$this->schedule->id} with ".count($recordings).' recordings');
 
@@ -139,6 +143,21 @@ class SendVoicemailDigest implements ShouldQueue
             Log::error('Failed to fetch calls: '.$e->getMessage());
 
             return [];
+        }
+    }
+
+    /**
+     * Send one email per recording for immediate schedules.
+     */
+    private function sendIndividualEmails(array $recordings): void
+    {
+        foreach ($recordings as $recording) {
+            Mail::send(new VoicemailDigestMailable(
+                $this->schedule,
+                [$recording],
+                $this->startDate,
+                $this->endDate
+            ));
         }
     }
 

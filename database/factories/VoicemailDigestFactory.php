@@ -24,7 +24,7 @@ class VoicemailDigestFactory extends Factory
                 $this->faker->email,
             ],
             'subject' => 'Voicemail Digest',
-            'schedule_type' => $this->faker->randomElement(['hourly', 'daily', 'weekly', 'monthly']),
+            'schedule_type' => $this->faker->randomElement(['immediate', 'hourly', 'daily', 'weekly', 'monthly']),
             'schedule_time' => '08:00',
             'schedule_day_of_week' => 0,
             'schedule_day_of_month' => 1,
@@ -41,6 +41,16 @@ class VoicemailDigestFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'enabled' => false,
+        ]);
+    }
+
+    public function immediate(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'schedule_type' => 'immediate',
+            'schedule_time' => null,
+            'schedule_day_of_week' => null,
+            'schedule_day_of_month' => null,
         ]);
     }
 
