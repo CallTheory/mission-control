@@ -16,6 +16,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use RingCentral\SDK\Platform\Platform as RingCentralPlatform;
 use RingCentral\SDK\SDK as RingCentralSDK;
 use Symfony\Component\Console\Command\Command as CommandStatus;
 
@@ -39,6 +40,22 @@ class CheckPendingFaxes extends Command
 
         $datasource = DataSource::first();
 
+        // Authenticate RingCentral once if any pending faxes use it
+        $rcPlatform = null;
+        if ($pendingFaxes->contains('fax_provider', 'ringcentral')) {
+            try {
+                $rcsdk = new RingCentralSDK(
+                    $datasource->ringcentral_client_id,
+                    decrypt($datasource->ringcentral_client_secret),
+                    $datasource->ringcentral_api_endpoint
+                );
+                $rcPlatform = $rcsdk->platform();
+                $rcPlatform->login(['jwt' => decrypt($datasource->ringcentral_jwt_token)]);
+            } catch (Exception $e) {
+                Log::error("CheckPendingFaxes: RingCentral auth failed: {$e->getMessage()}");
+            }
+        }
+
         foreach ($pendingFaxes as $pendingFax) {
             $pendingFax->increment('poll_attempts');
 
@@ -51,8 +68,9 @@ class CheckPendingFaxes extends Command
             try {
                 if ($pendingFax->fax_provider === 'mfax') {
                     $this->checkMfax($pendingFax, $datasource);
-                } elseif ($pendingFax->fax_provider === 'ringcentral') {
-                    $this->checkRingCentral($pendingFax, $datasource);
+                } elseif ($pendingFax->fax_provider === 'ringcentral' && $rcPlatform) {
+                    $this->checkRingCentral($pendingFax, $rcPlatform);
+                    sleep(2);
                 }
             } catch (Exception $e) {
                 Log::error("CheckPendingFaxes error for #{$pendingFax->id}: {$e->getMessage()}");
@@ -85,17 +103,8 @@ class CheckPendingFaxes extends Command
         // Otherwise still pending — do nothing
     }
 
-    private function checkRingCentral(PendingFax $pendingFax, DataSource $datasource): void
+    private function checkRingCentral(PendingFax $pendingFax, RingCentralPlatform $platform): void
     {
-        $rcsdk = new RingCentralSDK(
-            $datasource->ringcentral_client_id,
-            decrypt($datasource->ringcentral_client_secret),
-            $datasource->ringcentral_api_endpoint
-        );
-
-        $platform = $rcsdk->platform();
-        $platform->login(['jwt' => decrypt($datasource->ringcentral_jwt_token)]);
-
         $response = $platform->get("/restapi/v1.0/account/~/extension/~/message-store/{$pendingFax->api_fax_id}");
         $data = $response->json();
         $messageStatus = $data->messageStatus ?? null;
