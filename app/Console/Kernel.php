@@ -47,7 +47,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('isfax:process')->everyMinute();
         $schedule->command('isfax:process-ring-central')->everyMinute();
         $schedule->command('inbound-email:check')->everyMinute();
-        $schedule->command('isfax:check-pending')->everyMinute();
+        $schedule->command('isfax:check-pending')->everyMinute()->withoutOverlapping();
         $schedule->command('isfax:monitor mfax')->everyThirtyMinutes();
         $schedule->command('isfax:monitor ringcentral')->everyThirtyMinutes();
         $schedule->command('telescope:prune --hours=1')->hourly();

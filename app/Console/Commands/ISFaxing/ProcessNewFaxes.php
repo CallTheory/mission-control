@@ -158,8 +158,6 @@ class ProcessNewFaxes extends Command
                     $this->info(print_r($isfax, true));
                     SendFaxJob::dispatch($isfax);
                 }
-            } else {
-                $this->comment("[IGNORE] {$fax}");
             }
         }
 

@@ -124,9 +124,6 @@ class CloudFaxingRingCentral extends Component
             return;
         }
         try {
-            $endpoint = '/restapi/v1.0/account/~/extension/~/fax';
-            $resp = $platform->get($endpoint);
-
             $bodyParams = $rcsdk->createMultipartBuilder()
                 ->setBody([
                     'originalMessageId' => $this->faxIdToSend,
@@ -196,7 +193,7 @@ class CloudFaxingRingCentral extends Component
 
             $resp = $platform->get($endpoint, $queryParams);
             $jsonArray = $resp->jsonArray();
-            Redis::setEx('cloud-faxing:ring-central:failed-faxes', 15, json_encode($jsonArray['records'], JSON_UNESCAPED_SLASHES));
+            Redis::setEx('cloud-faxing:ring-central:failed-faxes', 120, json_encode($jsonArray['records'], JSON_UNESCAPED_SLASHES));
 
             return $jsonArray['records'];
 

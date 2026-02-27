@@ -2,7 +2,7 @@
     use Carbon\Carbon;
     use Illuminate\Support\Str;
 @endphp
-<div wire:poll.5000ms.visible="updateFaxData" class="w-full px-4">
+<div wire:poll.60s.visible="updateFaxData" class="w-full px-4">
 
 
     @if($datasource->ringcentral_client_id === null)

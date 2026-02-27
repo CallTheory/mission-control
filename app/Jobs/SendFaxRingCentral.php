@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -66,7 +67,12 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $this->filename = $fax['filename'];
         $this->status = $fax['status'];
         $this->fsFileName = $fax['fsFileName'];
+        $this->onQueue('ringcentral');
+    }
 
+    public function middleware(): array
+    {
+        return [new RateLimited('ringcentral')];
     }
 
     public function handle(): void

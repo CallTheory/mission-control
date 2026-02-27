@@ -182,7 +182,6 @@ class ProcessRingCentralNewFaxes extends Command
                 }
             } else {
                 $this->comment("[IGNORE] {$fax}");
-                Log::info("[IGNORE] {$fax}");
             }
         }
 

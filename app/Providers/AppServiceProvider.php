@@ -27,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(1);
         });
 
+        RateLimiter::for('ringcentral', function (object $job) {
+            return Limit::perMinute(10);
+        });
+
         // Override the default SAML2 provider with our PHP 8.4 compatible version
         // This fixes the strict type issue where getFirstAssertion() can return null
         Socialite::extend('saml2', function ($app) {
