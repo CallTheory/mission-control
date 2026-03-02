@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Utilities;
 
 use App\Http\Controllers\Controller;
+use App\Models\DataSource;
 use App\Models\Stats\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,10 +34,28 @@ class CloudFaxingController extends Controller
                 abort(403);
             }
 
+            $datasource = DataSource::first();
+            $mfaxConfigured = $datasource?->mfax_api_key !== null;
+            $ringcentralConfigured = $datasource?->ringcentral_client_id !== null;
+
+            if ($provider === 'ringcentral' && ! $ringcentralConfigured) {
+                if ($mfaxConfigured) {
+                    return redirect('/utilities/cloud-faxing');
+                }
+                abort(404);
+            }
+
+            if ($provider !== 'ringcentral' && ! $mfaxConfigured) {
+                if ($ringcentralConfigured) {
+                    return redirect('/utilities/cloud-faxing/ringcentral');
+                }
+                abort(404);
+            }
+
             if ($provider === 'ringcentral') {
-                return view('utilities.cloud-faxing-ringcentral');
+                return view('utilities.cloud-faxing-ringcentral', compact('mfaxConfigured', 'ringcentralConfigured'));
             } else {
-                return view('utilities.cloud-faxing');
+                return view('utilities.cloud-faxing', compact('mfaxConfigured', 'ringcentralConfigured'));
             }
         }
 
