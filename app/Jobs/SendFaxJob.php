@@ -22,10 +22,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Throwable;
 
 class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 60];
 
     public int $jobID;
 
@@ -205,15 +210,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 ];
             }
 
-            try {
-                $response = $guzzle->post('/v1/faxes', $request);
-            } catch (Exception $e) {
-                Log::error($e->getMessage(), $request);
-                Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
-                MoveFailedFaxFiles::dispatch($faxFsDetails);
-
-                return;
-            }
+            $response = $guzzle->post('/v1/faxes', $request);
 
             if ($response->getStatusCode() === 200) {
                 $responseBody = json_decode((string) $response->getBody(), true);
@@ -235,10 +232,24 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 return;
             }
 
-            Log::error('mFax HTTP Response: '.$response->getStatusCode());
-            Mail::queue(new FaxFailAlert($faxFsDetails, 'mFax HTTP Response: '.$response->getStatusCode()));
-            MoveFailedFaxFiles::dispatch($faxFsDetails);
+            throw new Exception('mFax HTTP Response: '.$response->getStatusCode());
         }
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        $faxFsDetails = [
+            'jobID' => $this->jobID,
+            'capfile' => $this->capfile,
+            'filename' => $this->filename,
+            'phone' => $this->phone,
+            'status' => $this->status,
+            'fsFileName' => $this->fsFileName,
+        ];
+
+        Log::error("SendFaxJob failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
+        Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
+        MoveFailedFaxFiles::dispatch($faxFsDetails);
     }
 
     public function uniqueId()

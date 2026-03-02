@@ -20,10 +20,15 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
 use RingCentral\SDK\SDK as RingCentralSDK;
+use Throwable;
 
 class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+
+    public array $backoff = [30, 60];
 
     public int $jobID;
 
@@ -58,8 +63,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      */
     public function __construct(array $fax)
     {
-        Log::info('SendFaxRingCentral constructer');
-
         $this->fax = $fax;
         $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
         $this->jobID = $fax['jobID'];
@@ -77,8 +80,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public function handle(): void
     {
-        Log::info('SendFaxRingCentral dispatch handler triggered');
-
         $this->datasource = DataSource::first();
         if ($this->datasource->ringcentral_client_id !== null) {
             $this->client_id = $this->datasource->ringcentral_client_id;
@@ -86,16 +87,13 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             try {
                 $this->client_secret = decrypt($this->datasource->ringcentral_client_secret);
                 $this->jwtToken = decrypt($this->datasource->ringcentral_jwt_token);
-                Log::info('SendFaxRingCentral Successfully Decrypt');
-
             } catch (Exception $e) {
-                Log::error($e->getMessage(), $this->fax);
+                $this->fail($e);
 
                 return;
-
             }
         } else {
-            Log::error('Empty ringcentral client details', $this->fax);
+            $this->fail(new Exception('Empty ringcentral client details'));
 
             return;
         }
@@ -132,16 +130,12 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 $platform->login(['jwt' => $this->jwtToken]);
             } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
-                Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
-                MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
 
-                return;
+                throw $e;
             } catch (Exception $e) {
-                Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
-                Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
-                MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+                Log::error($e->getMessage());
 
-                return;
+                throw $e;
             }
 
             try {
@@ -190,20 +184,31 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails);
             } catch (ApiException $e) {
                 Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
-                Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
-                MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+
+                throw $e;
             } catch (Exception $e) {
                 Log::error($e->getMessage());
-                Mail::queue(new FaxFailAlert($faxFsDetails, $e->getMessage()));
-                MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+
+                throw $e;
             }
         } else {
             Log::info('SendFaxringCentral Feature Turned Off');
         }
     }
 
-    /*public function uniqueId()
+    public function failed(Throwable $exception): void
     {
-        return $this->jobID;
-    }*/
+        $faxFsDetails = [
+            'jobID' => $this->jobID,
+            'capfile' => $this->capfile,
+            'filename' => $this->filename,
+            'phone' => $this->phone,
+            'status' => $this->status,
+            'fsFileName' => $this->fsFileName,
+        ];
+
+        Log::error("SendFaxRingCentral failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
+        Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
+        MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+    }
 }
