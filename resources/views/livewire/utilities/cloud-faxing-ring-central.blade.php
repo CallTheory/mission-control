@@ -39,36 +39,36 @@
                 @foreach($state['ringcentral_failed_faxes'] as $row)
                     <tr class="group  transform transition duration-700 ease-in-out">
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
-                            @foreach($row['to'] as $recipient)
-                                {{ $recipient['phoneNumber'] }}
+                            @foreach($row['to'] ?? [] as $recipient)
+                                {{ $recipient['phoneNumber'] ?? '' }}
                             @endforeach
 
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
                             <small>
-                                {{ Carbon::parse($row['creationTime'], 'UTC')->timezone(Auth::user()->timezone ?? 'UTC')->format('m/d/Y g:i:s A T') }}
+                                {{ Carbon::parse($row['creationTime'] ?? now(), 'UTC')->timezone(Auth::user()->timezone ?? 'UTC')->format('m/d/Y g:i:s A T') }}
                             </small>
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
-                            {{ $row['faxPageCount'] }}
+                            {{ $row['faxPageCount'] ?? 0 }}
                         </td>
 
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
 
-                            @if($row['messageStatus'] === 'SendingFailed')
+                            @if(($row['messageStatus'] ?? '') === 'SendingFailed')
                                 <span class="text-red-500">
                                     {{ ucwords($row['messageStatus']) }}
                                 </span>
-                            @elseif($row['messageStatus'] === 'Sent')
+                            @elseif(($row['messageStatus'] ?? '') === 'Sent')
                                 <span class="text-green-500">
-                                    {{ ucwords($row['messageStatus']) }}
+                                    {{ ucwords($row['messageStatus'] ?? '') }}
                                 </span>
                             @else
-                                {{ ucwords($row['messageStatus']) }}
+                                {{ ucwords($row['messageStatus'] ?? '') }}
                             @endif
 
-                            @if($row['messageStatus'] === 'SendingFailed' || $row['messageStatus'] === 'Sent')
+                            @if(($row['messageStatus'] ?? '') === 'SendingFailed' || ($row['messageStatus'] ?? '') === 'Sent')
                                 <a wire:click="openSendFaxDialog('{{ $row['id'] }}')" wire:loading.attr="disabled"
                                    title="Resend fax" class="hover:text-indigo-500 cursor-pointer">
                                     <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
