@@ -39,10 +39,13 @@
                 @foreach($state['ringcentral_failed_faxes'] as $row)
                     <tr class="group  transform transition duration-700 ease-in-out">
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
-                            @foreach($row['to'] ?? [] as $recipient)
-                                {{ $recipient['phoneNumber'] ?? '' }}
-                            @endforeach
-
+                            @if(($row['direction'] ?? '') === 'Inbound')
+                                {{ $row['from']['phoneNumber'] ?? '' }}
+                            @else
+                                @foreach($row['to'] ?? [] as $recipient)
+                                    {{ $recipient['phoneNumber'] ?? '' }}
+                                @endforeach
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-900   transform transition duration-700 ease-in-out">
                             <small>
