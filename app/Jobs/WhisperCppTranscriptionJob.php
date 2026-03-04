@@ -57,7 +57,7 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
             $this->whisper_model = config('whisper.model');
         }
 
-        if (config('whisper.model')) {
+        if (config('whisper.command_params')) {
             $this->whisper_command_params = config('whisper.command_params');
         }
 

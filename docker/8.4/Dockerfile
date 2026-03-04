@@ -78,7 +78,7 @@ RUN printf "; priority=30\nextension=pdo_sqlsrv.so\n" > /etc/php/8.4/mods-availa
 RUN phpenmod sqlsrv pdo_sqlsrv
 
 RUN git clone https://github.com/ggerganov/whisper.cpp.git /opt/whisper.cpp
-RUN cd /opt/whisper.cpp && bash ./models/download-ggml-model.sh base.en && make
+RUN cd /opt/whisper.cpp && bash ./models/download-ggml-model.sh base.en && cmake -B build && cmake --build build --config Release
 RUN chown -R sail /opt/whisper.cpp/*
 
 RUN apt-get install -y sox lame libsox-fmt-all ffmpeg
