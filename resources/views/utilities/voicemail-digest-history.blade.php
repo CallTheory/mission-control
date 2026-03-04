@@ -1,4 +1,4 @@
-@section('title', 'Voicemail Digest')
+@section('title', 'Voicemail Digest - Sent History')
 <x-app-layout>
     <x-slot name="header">
 
@@ -22,7 +22,7 @@
                 @include('utilities.voicemail-digest-nav')
 
                 <div class="mt-4">
-                    <livewire:utilities.voicemail-digest lazy="lazy" />
+                    <livewire:utilities.voicemail-digest-history lazy="lazy" />
                 </div>
             </div>
         </div>

@@ -237,7 +237,7 @@ class CallLog extends Stat
                     where vlogFiles.callID = statCallStart.callId
                       and vlogFiles.mimetype = 'video'
                 )\n";
-            } else {
+            } elseif ($this->hasVideo === false) {
                 $has_video_sql_filter = " and NOT EXISTS (
                    select 1
                     from vlogFiles
@@ -253,7 +253,7 @@ class CallLog extends Stat
                     where msgMessages.callID = statCallStart.callId
                       or msgMessages.savedCallID = statCallStart.callId
                 )\n";
-            } else {
+            } elseif ($this->hasMessages === false) {
                 $has_messages_sql_filter = " and NOT EXISTS (
                     select 1
                     from msgMessages
@@ -269,7 +269,7 @@ class CallLog extends Stat
                     where vlogFiles.callID = statCallStart.callId
                       and vlogFiles.mimetype <> 'video'
                 )\n";
-            } else {
+            } elseif ($this->hasRecordings === false) {
                 $has_recording_sql_filter = " and NOT EXISTS (
                      select 1
                     from vlogFiles

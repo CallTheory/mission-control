@@ -7,4 +7,7 @@ return [
     'inbound-email' => [
         'days_to_keep' => env('INBOUND_EMAIL_DAYS_TO_KEEP', 30),
     ],
+    'voicemail-digest' => [
+        'days_to_keep' => env('VOICEMAIL_DIGEST_LOG_DAYS_TO_KEEP', 30),
+    ],
 ];

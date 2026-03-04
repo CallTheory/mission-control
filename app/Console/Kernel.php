@@ -14,6 +14,7 @@ use App\Console\Commands\ProcessingCleanup;
 use App\Console\Commands\PurgeBoardCheckActivity;
 use App\Console\Commands\SyncISData;
 use App\Console\Commands\VoicemailDigests\ProcessScheduledVoicemailDigests;
+use App\Console\Commands\VoicemailDigests\PurgeVoicemailDigestLogs;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -37,6 +38,7 @@ class Kernel extends ConsoleKernel
         ProcessFilesToEmail::class,
         ClearOldInboundEmails::class,
         ProcessScheduledVoicemailDigests::class,
+        PurgeVoicemailDigestLogs::class,
     ];
 
     /**
@@ -58,6 +60,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('better-emails:process')->everyMinute()->withoutOverlapping();
         $schedule->command('app:clear-old-inbound-emails')->hourly();
         $schedule->command('voicemail-digest:process')->everyMinute()->withoutOverlapping();
+        $schedule->command('voicemail-digest:purge-logs')->daily();
     }
 
     /**

@@ -42,6 +42,7 @@ use App\Http\Controllers\Utilities\BoardReviewController;
 use App\Http\Controllers\Utilities\CallLookupController;
 use App\Http\Controllers\Utilities\CardProcessingController;
 use App\Http\Controllers\Utilities\CloudFaxingController;
+use App\Http\Controllers\Utilities\ConfigEditorController;
 use App\Http\Controllers\Utilities\CsvExportController;
 use App\Http\Controllers\Utilities\DatabaseHealthController;
 use App\Http\Controllers\Utilities\DirectorySearchController;
@@ -49,7 +50,6 @@ use App\Http\Controllers\Utilities\DownloadTBSReport;
 use App\Http\Controllers\Utilities\InboundEmailController;
 use App\Http\Controllers\Utilities\McpServerController;
 use App\Http\Controllers\Utilities\ScriptSearchController;
-use App\Http\Controllers\Utilities\ConfigEditorController;
 use App\Http\Controllers\Utilities\VoicemailDigestController;
 use App\Http\Controllers\Utilities\WctpGatewayController;
 use App\Http\Controllers\UtilitiesController;
@@ -100,7 +100,8 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-te
     return view('livewire.utilities.mcp-protocol-test');
 })->name('utilities.mcp-protocol-test');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', CsvExportController::class)->name('utilities.csv-export');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest', VoicemailDigestController::class)->name('utilities.voicemail-digest');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest', [VoicemailDigestController::class, 'index'])->name('utilities.voicemail-digest');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest/history', [VoicemailDigestController::class, 'history'])->name('utilities.voicemail-digest.history');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/config-editor', ConfigEditorController::class)->name('utilities.config-editor');
 
 Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController::class)->name('system');

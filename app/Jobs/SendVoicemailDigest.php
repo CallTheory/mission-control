@@ -7,6 +7,7 @@ namespace App\Jobs;
 use App\Mail\VoicemailDigestMailable;
 use App\Models\Stats\Calls\CallLog;
 use App\Models\VoicemailDigest;
+use App\Models\VoicemailDigestLog;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -55,12 +56,23 @@ class SendVoicemailDigest implements ShouldQueue
      */
     public function handle(): void
     {
+        $log = VoicemailDigestLog::create([
+            'voicemail_digest_id' => $this->schedule->id,
+            'team_id' => $this->schedule->team_id,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+            'recipients' => $this->schedule->recipients ?? [],
+            'subject' => $this->schedule->subject ?? 'Voicemail Digest',
+            'status' => 'queued',
+        ]);
+
         try {
             // Query calls with recordings for the account
             $calls = $this->fetchCallsWithRecordings();
 
             if (empty($calls)) {
                 Log::info("No recordings found for schedule {$this->schedule->id} between {$this->startDate} and {$this->endDate}");
+                $log->markAsNoRecordings();
 
                 return;
             }
@@ -76,6 +88,7 @@ class SendVoicemailDigest implements ShouldQueue
 
             if (empty($recordings)) {
                 Log::info("No recordings could be processed for schedule {$this->schedule->id}");
+                $log->markAsNoRecordings();
 
                 return;
             }
@@ -92,10 +105,13 @@ class SendVoicemailDigest implements ShouldQueue
                 ));
             }
 
+            $log->markAsSent(count($recordings));
+
             Log::info("Voicemail digest sent for schedule {$this->schedule->id} with ".count($recordings).' recordings');
 
         } catch (Exception $e) {
             Log::error("Failed to send voicemail digest for schedule {$this->schedule->id}: ".$e->getMessage());
+            $log->markAsFailed($e->getMessage());
             throw $e;
         }
     }

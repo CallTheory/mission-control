@@ -10,15 +10,28 @@ use Illuminate\Http\Request;
 
 class VoicemailDigestController extends Controller
 {
-    public function __invoke(Request $request)
+    public function index(Request $request)
     {
-        if (Helpers::isSystemFeatureEnabled('voicemail-digest') && $request->user()->currentTeam->utility_voicemail_digest) {
-            if ($request->user()->currentTeam->personal_team === true) {
-                abort(403);
-            }
+        $this->ensureAccess($request);
 
-            return view('utilities.voicemail-digest');
+        return view('utilities.voicemail-digest');
+    }
+
+    public function history(Request $request)
+    {
+        $this->ensureAccess($request);
+
+        return view('utilities.voicemail-digest-history');
+    }
+
+    private function ensureAccess(Request $request): void
+    {
+        if (! Helpers::isSystemFeatureEnabled('voicemail-digest') || ! $request->user()->currentTeam->utility_voicemail_digest) {
+            abort(404);
         }
-        abort(404);
+
+        if ($request->user()->currentTeam->personal_team === true) {
+            abort(403);
+        }
     }
 }
