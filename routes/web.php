@@ -99,7 +99,8 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-server', Mc
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-test', function () {
     return view('livewire.utilities.mcp-protocol-test');
 })->name('utilities.mcp-protocol-test');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', CsvExportController::class)->name('utilities.csv-export');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', [CsvExportController::class, 'index'])->name('utilities.csv-export');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export/history', [CsvExportController::class, 'history'])->name('utilities.csv-export.history');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest', [VoicemailDigestController::class, 'index'])->name('utilities.voicemail-digest');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest/history', [VoicemailDigestController::class, 'history'])->name('utilities.voicemail-digest.history');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/config-editor', ConfigEditorController::class)->name('utilities.config-editor');

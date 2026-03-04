@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
+use App\Models\CsvExportLog;
 use App\Models\Stats\Agents\Listing;
 use App\Models\Stats\Calls\CallLog as CallLogStats;
 use App\Models\Stats\Helpers;
@@ -92,6 +93,30 @@ class CsvExport extends Component
 
         if (! is_null($settings)) {
             $this->timezone = $settings->switch_data_timezone ?? 'UTC';
+        }
+
+        $reexportLogId = request()->query('reexport_log_id');
+        if ($reexportLogId) {
+            $log = CsvExportLog::find($reexportLogId);
+            if ($log && (int) $log->team_id === (int) request()->user()->currentTeam->id) {
+                $filters = $log->filters ?? [];
+                Session::put('csv_export:filter:start_date', $filters['start_date'] ?? null);
+                Session::put('csv_export:filter:end_date', $filters['end_date'] ?? null);
+                Session::put('csv_export:filter:client_number', $filters['client_number'] ?? null);
+                Session::put('csv_export:filter:ani', $filters['ani'] ?? null);
+                Session::put('csv_export:filter:call_type', $filters['call_type'] ?? null);
+                Session::put('csv_export:filter:agent', $filters['agent'] ?? null);
+                Session::put('csv_export:filter:min_duration', $filters['min_duration'] ?? null);
+                Session::put('csv_export:filter:max_duration', $filters['max_duration'] ?? null);
+                Session::put('csv_export:filter:keyword', $filters['keyword'] ?? null);
+                Session::put('csv_export:filter:keyword_search', $filters['keyword_search'] ?? null);
+                Session::put('csv_export:filter:sort_by', $filters['sort_by'] ?? 'statCallStart.Stamp');
+                Session::put('csv_export:filter:sort_direction', $filters['sort_direction'] ?? 'desc');
+                Session::put('csv_export:filter:has_any', $filters['has_any'] ?? true);
+                Session::put('csv_export:filter:has_messages', $filters['has_messages'] ?? false);
+                Session::put('csv_export:filter:has_recordings', $filters['has_recordings'] ?? false);
+                Session::put('csv_export:filter:has_video', $filters['has_video'] ?? false);
+            }
         }
 
         $this->start_date = Session::get('csv_export:filter:start_date', now($this->timezone)->subHours()->format('Y-m-d\TH:i'));
@@ -212,33 +237,48 @@ class CsvExport extends Component
 
     public function exportCsv(): StreamedResponse
     {
-        $callLog = new CallLogStats(
-            Carbon::parse($this->start_date)->format('Y-m-d H:i:s'),
-            Carbon::parse($this->end_date)->format('Y-m-d H:i:s'),
-            $this->timezone,
-            $this->client_number,
-            $this->ani,
-            $this->call_type,
-            $this->agent,
-            $this->min_duration,
-            $this->max_duration,
-            $this->keyword,
-            $this->keyword_search,
-            $this->sort_by,
-            $this->sort_direction,
-            $this->has_messages,
-            $this->has_recordings,
-            $this->has_video,
-            $this->has_any,
-            request()->user()->currentTeam->allowed_accounts,
-            request()->user()->currentTeam->allowed_billing,
-        );
+        $log = CsvExportLog::create([
+            'user_id' => request()->user()->id,
+            'team_id' => request()->user()->currentTeam->id,
+            'filters' => $this->getFilterArray(),
+            'status' => 'completed',
+        ]);
 
-        $results = $callLog->results ?? [];
-        $ck = Helpers::callTypes();
-        $st = Helpers::stationTypes();
+        try {
+            $callLog = new CallLogStats(
+                Carbon::parse($this->start_date)->format('Y-m-d H:i:s'),
+                Carbon::parse($this->end_date)->format('Y-m-d H:i:s'),
+                $this->timezone,
+                $this->client_number,
+                $this->ani,
+                $this->call_type,
+                $this->agent,
+                $this->min_duration,
+                $this->max_duration,
+                $this->keyword,
+                $this->keyword_search,
+                $this->sort_by,
+                $this->sort_direction,
+                $this->has_messages,
+                $this->has_recordings,
+                $this->has_video,
+                $this->has_any,
+                request()->user()->currentTeam->allowed_accounts,
+                request()->user()->currentTeam->allowed_billing,
+            );
 
-        $filename = 'call-log-export-'.now($this->timezone)->format('Y-m-d_His').'.csv';
+            $results = $callLog->results ?? [];
+            $ck = Helpers::callTypes();
+            $st = Helpers::stationTypes();
+
+            $filename = 'call-log-export-'.now($this->timezone)->format('Y-m-d_His').'.csv';
+
+            $log->markAsCompleted(count($results), $filename);
+        } catch (Exception $e) {
+            $log->markAsFailed($e->getMessage());
+
+            throw $e;
+        }
 
         return response()->streamDownload(function () use ($results, $ck, $st) {
             $handle = fopen('php://output', 'w');
@@ -322,6 +362,28 @@ class CsvExport extends Component
         }, $filename, [
             'Content-Type' => 'text/csv',
         ]);
+    }
+
+    private function getFilterArray(): array
+    {
+        return [
+            'start_date' => $this->start_date,
+            'end_date' => $this->end_date,
+            'client_number' => $this->client_number,
+            'ani' => $this->ani,
+            'call_type' => $this->call_type,
+            'agent' => $this->agent,
+            'min_duration' => $this->min_duration,
+            'max_duration' => $this->max_duration,
+            'keyword' => $this->keyword,
+            'keyword_search' => $this->keyword_search,
+            'sort_by' => $this->sort_by,
+            'sort_direction' => $this->sort_direction,
+            'has_any' => $this->has_any,
+            'has_messages' => $this->has_messages,
+            'has_recordings' => $this->has_recordings,
+            'has_video' => $this->has_video,
+        ];
     }
 
     public function render(): View

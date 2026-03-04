@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\BetterEmails\ProcessFilesToEmail;
 use App\Console\Commands\CheckInboundEmails;
 use App\Console\Commands\ClearOldInboundEmails;
+use App\Console\Commands\CsvExport\PurgeCsvExportLogs;
 use App\Console\Commands\ExportPeoplePraiseBoardCheckFile;
 use App\Console\Commands\ISFaxing\CheckPendingFaxes;
 use App\Console\Commands\ISFaxing\MonitorFaxBuildup;
@@ -39,6 +40,7 @@ class Kernel extends ConsoleKernel
         ClearOldInboundEmails::class,
         ProcessScheduledVoicemailDigests::class,
         PurgeVoicemailDigestLogs::class,
+        PurgeCsvExportLogs::class,
     ];
 
     /**
@@ -61,6 +63,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('app:clear-old-inbound-emails')->hourly();
         $schedule->command('voicemail-digest:process')->everyMinute()->withoutOverlapping();
         $schedule->command('voicemail-digest:purge-logs')->daily();
+        $schedule->command('csv-export:purge-logs')->daily();
     }
 
     /**

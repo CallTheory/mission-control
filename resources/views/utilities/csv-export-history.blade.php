@@ -1,5 +1,4 @@
-@section('title', 'CSV Export')
-
+@section('title', 'CSV Export - Export History')
 <x-app-layout>
     <x-slot name="header">
 
@@ -11,7 +10,7 @@
 
     <div class="p-4">
         <div id="toggleScreenWidthContent"
-             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded-sm border bg-white shadow border-gray-300">
+             class="max-w-7xl mx-auto transition duration-1000 ease-in-out rounded border bg-white shadow border-gray-300">
             <div class="m-2">
                 @include('layouts.width-toggle')
             </div>
@@ -19,12 +18,11 @@
             <div class="block min-w-full px-2 mx-auto">
                 @include('utilities.csv-export-nav')
 
-                <div class="mt-4 p-2">
-                    <livewire:utilities.csv-export lazy="lazy" />
+                <div class="mt-4">
+                    <livewire:utilities.csv-export-history lazy="lazy" />
                 </div>
             </div>
         </div>
     </div>
-
 
 </x-app-layout>
