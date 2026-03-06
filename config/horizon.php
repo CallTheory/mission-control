@@ -167,7 +167,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'transcriptions', 'inbound-email', 'outbound-email', 'ringcentral', 'mfax', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia', 'genesis'],
+            'queue' => ['default', 'inbound-email', 'outbound-email', 'ringcentral', 'mfax', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia', 'genesis'],
             'balance' => 'auto',
             'maxProcesses' => 1,
             'memory' => 128,
@@ -175,6 +175,17 @@ return [
             'nice' => 0,
             'timeout' => 90,
             'retry_after' => 90,
+        ],
+        'supervisor-transcriptions' => [
+            'connection' => 'redis',
+            'queue' => ['transcriptions'],
+            'balance' => 'simple',
+            'maxProcesses' => 1,
+            'memory' => 256,
+            'tries' => 3,
+            'nice' => 0,
+            'timeout' => 1830,
+            'retry_after' => 1860,
         ],
     ],
 
@@ -185,11 +196,17 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-transcriptions' => [
+                'maxProcesses' => 1,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-transcriptions' => [
+                'maxProcesses' => 1,
             ],
         ],
     ],
