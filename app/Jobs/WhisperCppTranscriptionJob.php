@@ -29,6 +29,10 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
 
     public int $timeout = 1800; // 30 minutes, its unique, and could be large file downloads
 
+    public int $tries = 60; // Allow many attempts since middleware releases (rate limiting, overlapping) each burn an attempt
+
+    public int $maxExceptions = 3; // Only count actual failures, not middleware releases
+
     public string $filename;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
