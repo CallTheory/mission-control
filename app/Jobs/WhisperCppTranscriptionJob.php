@@ -81,28 +81,37 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
         $filepath = "{$recording_storage}/{$this->filename}";
         $json_filename = basename($this->filename, '.wav');
 
-        if (Helpers::isSystemFeatureEnabled('transcription')) {
+        if (! Helpers::isSystemFeatureEnabled('transcription')) {
+            Log::warning("Transcription feature flag is disabled, skipping transcription for {$this->filename}");
 
-            if (file_exists($filepath)) {
-                $transcribe = "{$this->whisper_root}/build/bin/whisper-cli {$this->whisper_command_params} -m {$this->whisper_root}/models/{$this->whisper_model} -f {$recording_storage}/{$this->filename} -ojf -of {$transcription_storage}/{$json_filename}";
-                Log::info("Transcribing {$this->filename}: {$transcribe}");
-                try {
-                    $result = Process::timeout($this->timeout)->run($transcribe)->throw();
-                    Redis::setEx("{$json_filename}.json", 86400, Storage::get("transcriptions/{$json_filename}.json"));
-                    if (App::environment('local') || config('app.debug')) {
-                        Log::info("Transcription for {$this->filename} completed", ['command' => $transcribe]);
-                    }
-                } catch (Exception $e) {
-                    Log::error("Failed to transcribe {$this->filename}: {$e->getMessage()}");
-                }
-            } else {
-                Log::error("Failed to find recording {$this->filename}");
-            }
+            return;
+        }
 
+        if (file_exists($filepath)) {
+            $filesize = filesize($filepath);
+            Log::info("Transcription starting for {$this->filename} ({$filesize} bytes)");
+
+            $transcribe = "{$this->whisper_root}/build/bin/whisper-cli {$this->whisper_command_params} -m {$this->whisper_root}/models/{$this->whisper_model} -f {$recording_storage}/{$this->filename} -ojf -of {$transcription_storage}/{$json_filename}";
+            Log::info("Transcribing {$this->filename}: {$transcribe}");
             try {
-                Storage::delete("transcriptions/{$json_filename}.json");
+                $result = Process::timeout($this->timeout)->run($transcribe)->throw();
+                $jsonContent = Storage::get("transcriptions/{$json_filename}.json");
+                if ($jsonContent) {
+                    Redis::setEx("{$json_filename}.json", 86400, $jsonContent);
+                    Log::info("Transcription for {$this->filename} completed successfully (".strlen($jsonContent).' bytes)');
+                } else {
+                    Log::error("Transcription for {$this->filename} produced no output file at transcriptions/{$json_filename}.json");
+                }
             } catch (Exception $e) {
+                Log::error("Failed to transcribe {$this->filename}: {$e->getMessage()}");
             }
+        } else {
+            Log::error("Failed to find recording {$this->filename} at {$filepath}");
+        }
+
+        try {
+            Storage::delete("transcriptions/{$json_filename}.json");
+        } catch (Exception $e) {
         }
 
         try {

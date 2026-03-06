@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ProcessCallRecording implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
@@ -34,7 +35,11 @@ class ProcessCallRecording implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
      */
     public function handle(): void
     {
-        Artisan::call('recording:convert', ['isCallID' => $this->isCallID]);
+        Log::info("ProcessCallRecording starting for call {$this->isCallID}");
+        $exitCode = Artisan::call('recording:convert', ['isCallID' => $this->isCallID]);
+        if ($exitCode !== 0) {
+            Log::error("Recording conversion failed for call {$this->isCallID} (exit code: {$exitCode})");
+        }
         Storage::deleteDirectory("recordings/{$this->isCallID}/");
         Storage::delete("recordings/{$this->isCallID}.wav");
     }

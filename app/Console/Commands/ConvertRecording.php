@@ -6,6 +6,7 @@ use App\Jobs\WhisperCppTranscriptionJob;
 use App\Models\Stats\Calls\Call;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Console\Command\Command as CommandStatus;
@@ -58,6 +59,7 @@ class ConvertRecording extends Command
         }
 
         if (count($recordingPath) === 0) {
+            Log::warning("ConvertRecording: No recordings found for call {$isCallID}");
             Storage::deleteDirectory("recordings/{$isCallID}");
             Storage::delete("recordings/{$isCallID}.wav");
 
@@ -84,6 +86,7 @@ class ConvertRecording extends Command
             );
             $process->run();
         } catch (Exception $e) {
+            Log::error("ConvertRecording: Sox failed for call {$isCallID}: {$e->getMessage()}");
             Storage::deleteDirectory("recordings/{$isCallID}");
             Storage::delete("recordings/{$isCallID}.wav");
 
