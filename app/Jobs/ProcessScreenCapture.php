@@ -12,6 +12,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
@@ -45,6 +47,9 @@ class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
         try {
             $call = new Call(['ISCallId' => $this->isCallID, 'ScreenCaptureData' => true]);
         } catch (Exception $e) {
+            Log::warning("ProcessScreenCapture: Call lookup failed for {$this->isCallID}: {$e->getMessage()}");
+            $this->markUnavailable();
+
             return;
         }
 
@@ -52,13 +57,36 @@ class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
         $this->cleanupStorage($this->isCallID);
 
         $screenCapture = $call->screenCapture();
+
+        if (empty($screenCapture)) {
+            Log::warning("ProcessScreenCapture: No screen capture data found for {$this->isCallID}");
+            $this->markUnavailable();
+
+            return;
+        }
+
+        // Filter out captures with no actual video frames (header-only files)
+        $minDataSize = 1024;
+
         foreach ($screenCapture as $capture) {
+            if (strlen($capture->Data) < $minDataSize) {
+                continue;
+            }
+
             // save a recording file to a temp path
             $recordingPath[$capture->fileID] = "screencapture/{$this->isCallID}/{$capture->fileID}.mp4";
             Storage::put($recordingPath[$capture->fileID], $capture->Data);
         }
 
         $files = Storage::files("screencapture/{$this->isCallID}");
+
+        if (empty($files)) {
+            Log::warning("ProcessScreenCapture: No valid screen capture files for {$this->isCallID}, skipping");
+            $this->markUnavailable();
+            $this->cleanupStorage($this->isCallID);
+
+            return;
+        }
 
         $concat_list = '';
 
@@ -73,8 +101,12 @@ class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
 
         try {
             // -safe 0 is required to allow for paths ("/") in the file names
-            $process = Process::timeout($this->processTimeout)->run("ffmpeg -y -f concat -safe 0 -i {$concat_file} -c:a copy {$mp4_file}")->throw();
+            $process = Process::timeout($this->processTimeout)->run("ffmpeg -y -analyzeduration 10M -probesize 10M -f concat -safe 0 -i {$concat_file} -c:v libx264 -pix_fmt yuv420p {$mp4_file}")->throw();
         } catch (Exception $e) {
+            Log::error("ProcessScreenCapture: ffmpeg failed for {$this->isCallID}: {$e->getMessage()}");
+            $this->markUnavailable();
+            $this->cleanupStorage($this->isCallID);
+
             if (App::environment('local')) {
                 throw $e;
             }
@@ -89,6 +121,11 @@ class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
     public function uniqueId(): string
     {
         return $this->isCallID;
+    }
+
+    protected function markUnavailable(): void
+    {
+        Cache::put("screencapture_unavailable:{$this->isCallID}", true, now()->addHours(1));
     }
 
     protected function cleanupStorage($isCallID): void

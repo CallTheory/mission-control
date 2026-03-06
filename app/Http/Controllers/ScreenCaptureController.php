@@ -8,6 +8,7 @@ use App\Models\Stats\Helpers;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
 class ScreenCaptureController extends Controller
@@ -39,6 +40,10 @@ class ScreenCaptureController extends Controller
         $screenCapture = Redis::get("{$isCallID}.mp4");
 
         if (is_null($screenCapture)) {
+            if (Cache::has("screencapture_unavailable:{$isCallID}")) {
+                abort(404);
+            }
+
             ProcessScreenCapture::dispatch($isCallID);
 
             return response()->noContent(202);
