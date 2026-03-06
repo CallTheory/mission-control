@@ -7,6 +7,7 @@ use App\Models\System\Settings;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Http\Response;
 use Laravel\Socialite\Facades\Socialite;
 
 class MetadataController extends Controller
@@ -14,7 +15,7 @@ class MetadataController extends Controller
     /**
      * @throws Exception
      */
-    public function __invoke(Request $request): Socialite
+    public function __invoke(Request $request): Response
     {
 
         $settings = Settings::first();
