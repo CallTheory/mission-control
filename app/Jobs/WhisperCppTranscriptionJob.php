@@ -36,8 +36,8 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
     public function middleware(): array
     {
         return [
-            (new RateLimited('transcriptions'))->dontRelease(),
-            (new WithoutOverlapping('transcriptions'))->dontRelease(),
+            (new WithoutOverlapping('transcriptions'))->releaseAfter(60),
+            (new RateLimited('transcriptions')),
         ];
     }
 
