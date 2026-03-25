@@ -103,7 +103,7 @@ class ProcessMessageExport implements ShouldQueue
             $filePath = "message-exports/{$log->id}.csv";
             Storage::put($filePath, encrypt($csvContent['csv']));
 
-            // Send email if recipients are configured
+            // Send email to recipients
             $recipients = $this->export->recipients;
             if (! empty($recipients)) {
                 Mail::send(new MessageExportMailable(
@@ -114,12 +114,11 @@ class ProcessMessageExport implements ShouldQueue
                     $csvContent['count'],
                 ));
 
-                $log->markAsSent($csvContent['count']);
                 Log::info("Message export emailed for export {$this->export->id} with {$csvContent['count']} messages");
-            } else {
-                $log->markAsCompleted($csvContent['count'], $filePath);
-                Log::info("Message export generated for export {$this->export->id} with {$csvContent['count']} messages");
             }
+
+            // Mark as completed with file path for download
+            $log->markAsCompleted($csvContent['count'], $filePath);
         } catch (Exception $e) {
             Log::error("Failed to process message export {$this->export->id}: " . $e->getMessage());
             $log->markAsFailed($e->getMessage());

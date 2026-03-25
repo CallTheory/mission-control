@@ -1,6 +1,3 @@
-@assets
-    @vite('resources/js/config-editor.js')
-@endassets
 <div class="w-full">
 
     @if ($errorMessage)

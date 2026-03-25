@@ -44,7 +44,7 @@ class MessageExport extends Component
         'state.filter_field' => 'nullable|string',
         'state.filter_value' => 'nullable|string',
         'state.include_call_info' => 'boolean',
-        'state.recipients' => 'nullable|string',
+        'state.recipients' => 'required|string',
         'state.subject' => 'required|string|max:255',
         'state.schedule_type' => 'required|in:manual,immediate,hourly,daily,weekly,monthly',
         'state.schedule_time' => 'nullable|string',
@@ -139,10 +139,7 @@ class MessageExport extends Component
         // Find client name for display
         $clientName = $this->findClientName($this->state['client_number']);
 
-        $recipients = null;
-        if (! $isManual && ! empty($this->state['recipients'])) {
-            $recipients = array_filter(array_map('trim', explode("\n", $this->state['recipients'])));
-        }
+        $recipients = array_filter(array_map('trim', explode("\n", $this->state['recipients'])));
 
         MessageExportModel::create([
             'team_id' => $team->id,
@@ -214,10 +211,7 @@ class MessageExport extends Component
 
         $clientName = $this->findClientName($this->state['client_number']);
 
-        $recipients = null;
-        if (! $isManual && ! empty($this->state['recipients'])) {
-            $recipients = array_filter(array_map('trim', explode("\n", $this->state['recipients'])));
-        }
+        $recipients = array_filter(array_map('trim', explode("\n", $this->state['recipients'])));
 
         $export->update([
             'name' => $this->state['name'],

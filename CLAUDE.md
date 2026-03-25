@@ -12,15 +12,15 @@ Mission Control is a Laravel 12.x web application serving as a utility dashboard
 ```bash
 # Install dependencies
 composer install
-npm install
+pnpm install
 
 # Install Chrome for screenshot generation (required for board check exports)
-npx puppeteer browsers install chrome-headless-shell
+pnpm exec puppeteer browsers install chrome-headless-shell
 # Or if using Sail:
-./vendor/bin/sail exec -u sail mission-control.test npx puppeteer browsers install chrome-headless-shell
+./vendor/bin/sail exec -u sail mission-control.test pnpm exec puppeteer browsers install chrome-headless-shell
 
 # Build frontend assets
-npm run build
+pnpm run build
 
 # Database setup
 php artisan migrate
@@ -37,7 +37,7 @@ php artisan storage:link
 ./vendor/bin/sail up -d                  # Start development environment
 ./vendor/bin/sail artisan migrate        # Run migrations in container
 ./vendor/bin/sail artisan horizon        # Start queue workers
-./vendor/bin/sail npm run dev           # Start Vite dev server with HMR
+./vendor/bin/sail pnpm run dev          # Start Vite dev server with HMR
 ./vendor/bin/sail artisan test          # Run test suite
 ./vendor/bin/sail down                  # Stop all containers
 
@@ -54,7 +54,7 @@ php artisan storage:link
 
 # Without Sail (local PHP)
 php artisan serve          # Start development server
-npm run dev               # Start Vite dev server
+pnpm run dev              # Start Vite dev server
 php artisan horizon       # Start queue workers
 php artisan test          # Run test suite
 ```

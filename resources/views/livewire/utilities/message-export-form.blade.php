@@ -7,7 +7,7 @@
 
 <div class="col-span-6 sm:col-span-4 my-4">
     <x-label for="client_number" class="font-semibold" value="{{ __('Account (Client Number)') }}" />
-    <select id="client_number" class="mt-1 block w-full border border-gray-300 rounded-md shadow" wire:model.live="state.client_number">
+    <select id="client_number" class="mt-1 block w-full border border-gray-300 rounded-md shadow" wire:model.live="state.client_number" wire:change="discoverFields">
         <option value="">-- Select an Account --</option>
         @foreach($clients as $client)
             <option value="{{ $client->ClientNumber }}">{{ $client->ClientNumber }} - {{ $client->ClientName }}</option>
@@ -166,12 +166,11 @@
     <x-input-error for="state.timezone" class="mt-2" />
 </div>
 
-{{-- Recipients (only for scheduled types) --}}
-@if($state['schedule_type'] !== 'manual')
+{{-- Recipients --}}
 <div class="col-span-6 sm:col-span-4 my-4">
     <x-label for="recipients" class="font-semibold" value="{{ __('Recipients') }}" />
     <textarea id="recipients" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow" wire:model="state.recipients" placeholder="email@example.com"></textarea>
-    <small class="text-xs text-gray-400">One email address per line</small>
+    <small class="text-xs text-gray-400">One email address per line. The CSV export will be emailed to these addresses.</small>
     <x-input-error for="state.recipients" class="mt-2" />
 </div>
 
@@ -181,4 +180,3 @@
     <small class="text-xs text-gray-400">Subject line for the email</small>
     <x-input-error for="state.subject" class="mt-2" />
 </div>
-@endif
