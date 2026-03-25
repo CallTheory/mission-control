@@ -45,6 +45,7 @@ use App\Http\Controllers\Utilities\CloudFaxingController;
 use App\Http\Controllers\Utilities\ConfigEditorController;
 use App\Http\Controllers\Utilities\CsvExportController;
 use App\Http\Controllers\Utilities\DatabaseHealthController;
+use App\Http\Controllers\Utilities\MessageExportController;
 use App\Http\Controllers\Utilities\DirectorySearchController;
 use App\Http\Controllers\Utilities\DownloadTBSReport;
 use App\Http\Controllers\Utilities\InboundEmailController;
@@ -101,6 +102,9 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-te
 })->name('utilities.mcp-protocol-test');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', [CsvExportController::class, 'index'])->name('utilities.csv-export');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export/history', [CsvExportController::class, 'history'])->name('utilities.csv-export.history');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/message-export', [MessageExportController::class, 'index'])->name('utilities.message-export');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/message-export/history', [MessageExportController::class, 'history'])->name('utilities.message-export.history');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/message-export/download/{log}', [MessageExportController::class, 'download'])->name('utilities.message-export.download');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest', [VoicemailDigestController::class, 'index'])->name('utilities.voicemail-digest');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/voicemail-digest/history', [VoicemailDigestController::class, 'history'])->name('utilities.voicemail-digest.history');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/config-editor', ConfigEditorController::class)->name('utilities.config-editor');

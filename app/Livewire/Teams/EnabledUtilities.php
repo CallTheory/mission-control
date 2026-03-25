@@ -38,6 +38,8 @@ class EnabledUtilities extends Component
 
     public bool $script_search = false;
 
+    public bool $message_export = false;
+
     public bool $wctp_gateway = false;
 
     public function toggleSetting(string $setting): void
@@ -82,6 +84,9 @@ class EnabledUtilities extends Component
                 break;
             case 'mcp_server':
                 $team->utility_mcp_server = $this->mcp_server;
+                break;
+            case 'message_export':
+                $team->utility_message_export = $this->message_export;
                 break;
             case 'voicemail_digest':
                 $team->utility_voicemail_digest = $this->voicemail_digest;
@@ -184,6 +189,12 @@ class EnabledUtilities extends Component
             $this->csv_export = $team->utility_csv_export ?? false;
         } else {
             $this->csv_export = false;
+        }
+
+        if (Helpers::isSystemFeatureEnabled('message-export')) {
+            $this->message_export = $team->utility_message_export ?? false;
+        } else {
+            $this->message_export = false;
         }
 
         if (Helpers::isSystemFeatureEnabled('script-search')) {

@@ -35,6 +35,8 @@ class EnabledUtilities extends Component
 
     public bool $voicemail_digest = false;
 
+    public bool $message_export = false;
+
     public function toggleConfigEditorUtility(): void
     {
         if (Storage::fileExists('feature-flags/config-editor.flag')) {
@@ -204,6 +206,19 @@ class EnabledUtilities extends Component
         $this->dispatch('saved');
     }
 
+    public function toggleMessageExportUtility(): void
+    {
+        if (Storage::fileExists('feature-flags/message-export.flag')) {
+            Storage::delete('feature-flags/message-export.flag');
+            $this->message_export = false;
+        } else {
+            Storage::put('feature-flags/message-export.flag', encrypt('message-export'));
+            $this->message_export = true;
+        }
+
+        $this->dispatch('saved');
+    }
+
     public function mount(): void
     {
         $this->api_gateway = Helpers::isSystemFeatureEnabled('api-gateway');
@@ -219,6 +234,7 @@ class EnabledUtilities extends Component
         $this->config_editor = Helpers::isSystemFeatureEnabled('config-editor');
         $this->csv_export = Helpers::isSystemFeatureEnabled('csv-export');
         $this->voicemail_digest = Helpers::isSystemFeatureEnabled('voicemail-digest');
+        $this->message_export = Helpers::isSystemFeatureEnabled('message-export');
     }
 
     public function render(): View

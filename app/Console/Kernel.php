@@ -6,6 +6,8 @@ use App\Console\Commands\BetterEmails\ProcessFilesToEmail;
 use App\Console\Commands\CheckInboundEmails;
 use App\Console\Commands\ClearOldInboundEmails;
 use App\Console\Commands\CsvExport\PurgeCsvExportLogs;
+use App\Console\Commands\MessageExports\ProcessScheduledMessageExports;
+use App\Console\Commands\MessageExports\PurgeMessageExportLogs;
 use App\Console\Commands\ExportPeoplePraiseBoardCheckFile;
 use App\Console\Commands\ISFaxing\CheckPendingFaxes;
 use App\Console\Commands\ISFaxing\MonitorFaxBuildup;
@@ -41,6 +43,8 @@ class Kernel extends ConsoleKernel
         ProcessScheduledVoicemailDigests::class,
         PurgeVoicemailDigestLogs::class,
         PurgeCsvExportLogs::class,
+        ProcessScheduledMessageExports::class,
+        PurgeMessageExportLogs::class,
     ];
 
     /**
@@ -64,6 +68,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('voicemail-digest:process')->everyMinute()->withoutOverlapping();
         $schedule->command('voicemail-digest:purge-logs')->daily();
         $schedule->command('csv-export:purge-logs')->daily();
+        $schedule->command('message-export:process')->everyMinute()->withoutOverlapping();
+        $schedule->command('message-export:purge-logs')->daily();
     }
 
     /**

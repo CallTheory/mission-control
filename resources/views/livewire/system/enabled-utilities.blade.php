@@ -328,6 +328,35 @@
         </div>
         <!-- End config-editor -->
 
+        <!-- message-export -->
+        <div class="col-span-6 sm:col-span-4">
+            <div x-data="{ isEnabled: $wire.message_export }" class="flex items-center justify-between">
+                <span class="flex flex-grow flex-col">
+                    <span class="text-md font-semibold leading-6 text-gray-900" id="message-export-enabled-label">Message Export</span>
+                    <span class="text-sm text-gray-500 pr-2" id="message-export-description">
+                        Export Intelligent Series <strong>message data</strong> to CSV with selectable fields and scheduling
+                    </span>
+                </span>
+                <button
+                    type="button"
+                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    role="switch"
+                    :aria-checked="isEnabled.toString()"
+                    aria-labelledby="message-export-enabled-label"
+                    aria-describedby="message-export-description"
+                    @click="$wire.toggleMessageExportUtility(); isEnabled = !isEnabled"
+                >
+                    <span
+                        aria-hidden="true"
+                        :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    ></span>
+                </button>
+            </div>
+        </div>
+        <!-- End message-export -->
+
         <!-- voicemail-digest -->
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.voicemail_digest }" class="flex items-center justify-between">

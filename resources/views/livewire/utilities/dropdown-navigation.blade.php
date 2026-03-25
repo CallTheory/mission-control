@@ -90,6 +90,10 @@
                 <a href="/utilities/mcp-server" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-243">MCP Server</a>
             @endif
 
+            @if(Helpers::isSystemFeatureEnabled('message-export') && request()->user()->currentTeam->utility_message_export)
+                <a href="/utilities/message-export" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-245">Message Export</a>
+            @endif
+
             @if(Helpers::isSystemFeatureEnabled('script-search') && request()->user()->currentTeam->utility_script_search)
                 <a href="/utilities/script-search" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-26">Script Search</a>
             @endif
