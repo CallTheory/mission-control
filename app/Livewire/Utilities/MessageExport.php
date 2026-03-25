@@ -300,8 +300,9 @@ class MessageExport extends Component
 
         ProcessMessageExport::dispatch($export, $startDate, $endDate, request()->user()->id);
 
-        $this->closeRunNowModal();
-        $this->dispatch('saved');
+        $this->showRunNowModal = false;
+        $this->runNowExportId = 0;
+        $this->runNowState = [];
 
         session()->flash('message', 'Message export job has been queued. Check the Export History tab for results.');
     }
