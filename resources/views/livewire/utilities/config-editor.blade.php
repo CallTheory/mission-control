@@ -151,15 +151,26 @@
                         x-data="{
                             editor: null,
                             init() {
-                                if (window.initConfigEditor) {
+                                const initEditor = () => {
                                     this.editor = window.initConfigEditor(this.$refs.editorContainer, @this);
-                                }
 
-                                Livewire.on('xmlUpdated', (event) => {
-                                    if (this.editor && event.xml !== undefined) {
-                                        window.setConfigEditorContent(this.editor, event.xml);
-                                    }
-                                });
+                                    Livewire.on('xmlUpdated', (event) => {
+                                        if (this.editor && event.xml !== undefined) {
+                                            window.setConfigEditorContent(this.editor, event.xml);
+                                        }
+                                    });
+                                };
+
+                                if (window.initConfigEditor) {
+                                    initEditor();
+                                } else {
+                                    const waitForScript = setInterval(() => {
+                                        if (window.initConfigEditor) {
+                                            clearInterval(waitForScript);
+                                            initEditor();
+                                        }
+                                    }, 50);
+                                }
                             }
                         }"
                         x-init="init()"
