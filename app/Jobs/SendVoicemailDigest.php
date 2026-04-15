@@ -16,6 +16,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
@@ -154,12 +155,58 @@ class SendVoicemailDigest implements ShouldQueue
                 $allowedBilling,
             );
 
-            return $callLog->results ?? [];
+            $calls = $callLog->results ?? [];
+
+            return $this->filterCallsWithStreamData($calls);
         } catch (Exception $e) {
             Log::error('Failed to fetch calls: '.$e->getMessage());
 
             return [];
         }
+    }
+
+    /**
+     * Reduce the candidate list to calls that actually have wav stream data.
+     *
+     * CallLog's hasRecordings filter only proves a vlogFiles metadata row
+     * exists; the digest needs a real playable recording, which lives in
+     * vlogStreams and must match the MimeType that RecordingData fetches.
+     */
+    private function filterCallsWithStreamData(array $calls): array
+    {
+        if (empty($calls)) {
+            return [];
+        }
+
+        $callIds = array_values(array_filter(array_map(
+            fn ($call) => $call->CallId ?? null,
+            $calls
+        )));
+
+        if (empty($callIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($callIds), '?'));
+
+        $rows = DB::connection('intelligent')->select(
+            "select distinct vlogFiles.callID as callID
+             from vlogFiles
+             inner join vlogStreams on vlogStreams.fileID = vlogFiles.fileID
+             where vlogFiles.callID in ({$placeholders})
+               and vlogFiles.MimeType = 'audio/wav'",
+            $callIds
+        );
+
+        $playableIds = array_flip(array_map(
+            fn ($row) => (int) $row->callID,
+            $rows
+        ));
+
+        return array_values(array_filter(
+            $calls,
+            fn ($call) => isset($playableIds[(int) ($call->CallId ?? 0)])
+        ));
     }
 
     /**
