@@ -10,6 +10,8 @@ use Livewire\Component;
 
 class Twilio extends Component
 {
+    public bool $isOpen = false;
+
     public $twilio_account_sid = '';
 
     public $twilio_auth_token = '';
@@ -42,20 +44,23 @@ class Twilio extends Component
             'twilio_from_number' => 'nullable|string|max:20',
         ]);
 
-        // Encrypt sensitive data before saving
-        $this->datasource->twilio_account_sid = $this->twilio_account_sid
+        $datasource = DataSource::firstOrFail();
+
+        $datasource->twilio_account_sid = $this->twilio_account_sid
             ? encrypt($this->twilio_account_sid)
             : null;
 
-        $this->datasource->twilio_auth_token = $this->twilio_auth_token
+        $datasource->twilio_auth_token = $this->twilio_auth_token
             ? encrypt($this->twilio_auth_token)
             : null;
 
-        $this->datasource->twilio_from_number = $this->twilio_from_number ?: null;
+        $datasource->twilio_from_number = $this->twilio_from_number ?: null;
 
-        $this->datasource->save();
+        $datasource->save();
 
         $this->dispatch('saved');
+
+        $this->isOpen = false;
     }
 
     public function render(): View
