@@ -182,7 +182,7 @@ return [
             'balance' => 'simple',
             'maxProcesses' => 1,
             'memory' => 256,
-            'tries' => 3,
+            'tries' => 10,
             'nice' => 0,
             'timeout' => 1830,
             'retry_after' => 1860,

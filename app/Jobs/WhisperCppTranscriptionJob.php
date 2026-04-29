@@ -10,7 +10,6 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\App;
@@ -36,8 +35,7 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
     public function middleware(): array
     {
         return [
-            (new WithoutOverlapping('transcriptions'))->releaseAfter(60),
-            (new RateLimited('transcriptions')),
+            (new WithoutOverlapping($this->filename))->releaseAfter(60),
         ];
     }
 

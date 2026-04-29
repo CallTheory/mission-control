@@ -23,10 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        RateLimiter::for('transcriptions', function (object $job) {
-            return Limit::perMinute(1);
-        });
-
         RateLimiter::for('ringcentral', function (object $job) {
             return Limit::perMinute(10);
         });
