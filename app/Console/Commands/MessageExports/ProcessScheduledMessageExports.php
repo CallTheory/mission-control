@@ -9,7 +9,9 @@ use App\Models\MessageExport;
 use App\Models\Stats\Helpers;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\Command as CommandStatus;
+use Throwable;
 
 class ProcessScheduledMessageExports extends Command
 {
@@ -40,10 +42,8 @@ class ProcessScheduledMessageExports extends Command
 
         $exports = MessageExport::where('enabled', true)
             ->where('schedule_type', '!=', 'manual')
-            ->where(function ($query) {
-                $query->whereNull('next_run_at')
-                    ->orWhere('next_run_at', '<=', Carbon::now());
-            })
+            ->whereNotNull('next_run_at')
+            ->where('next_run_at', '<=', Carbon::now())
             ->get();
 
         if ($exports->isEmpty()) {
@@ -53,21 +53,26 @@ class ProcessScheduledMessageExports extends Command
         }
 
         foreach ($exports as $export) {
-            if (! $export->team->utility_message_export) {
-                continue;
+            try {
+                if (! $export->team->utility_message_export) {
+                    continue;
+                }
+
+                $this->info("Processing message export: {$export->name} (ID: {$export->id})");
+
+                [$startDate, $endDate] = $export->getDateRange();
+
+                $export->last_run_at = Carbon::now();
+                $export->next_run_at = $export->calculateNextRunAt();
+                $export->save();
+
+                ProcessMessageExport::dispatch($export, $startDate, $endDate);
+
+                $this->info("Dispatched job for export {$export->id}. Next run: {$export->next_run_at}");
+            } catch (Throwable $e) {
+                Log::error("Failed to schedule message export {$export->id}: ".$e->getMessage());
+                $this->error("Failed to schedule export {$export->id}: ".$e->getMessage());
             }
-
-            $this->info("Processing message export: {$export->name} (ID: {$export->id})");
-
-            [$startDate, $endDate] = $export->getDateRange();
-
-            ProcessMessageExport::dispatch($export, $startDate, $endDate);
-
-            $export->last_run_at = Carbon::now();
-            $export->next_run_at = $export->calculateNextRunAt();
-            $export->save();
-
-            $this->info("Dispatched job for export {$export->id}. Next run: {$export->next_run_at}");
         }
 
         return CommandStatus::SUCCESS;

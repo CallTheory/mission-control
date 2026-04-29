@@ -62,8 +62,6 @@
                                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                         @if($export->schedule_type === 'manual')
                                             <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">Manual</span>
-                                        @elseif($export->schedule_type === 'immediate')
-                                            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Immediate</span>
                                         @else
                                             <span class="capitalize">{{ $export->schedule_type }}</span>
                                             @if($export->schedule_time)

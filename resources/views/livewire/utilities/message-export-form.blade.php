@@ -105,7 +105,7 @@
         <x-input-error for="state.schedule_type" class="mt-2" />
     </div>
 
-    @if(!in_array($state['schedule_type'], ['manual', 'immediate']))
+    @if($state['schedule_type'] !== 'manual')
     <div class="col-span-1 my-4">
         <x-label for="schedule_time" class="font-semibold" value="{{ __('Time') }}" />
         <x-input id="schedule_time" type="time" class="mt-1 block w-full" wire:model="state.schedule_time" />
@@ -119,14 +119,6 @@
 <div class="col-span-6 sm:col-span-4 my-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
     <p class="text-sm text-blue-700">
         <strong>Manual mode:</strong> This export will only run when you click "Run Now". No scheduled emails will be sent.
-    </p>
-</div>
-@endif
-
-@if($state['schedule_type'] === 'immediate')
-<div class="col-span-6 sm:col-span-4 my-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-    <p class="text-sm text-blue-700">
-        <strong>Immediate mode:</strong> The system checks for new messages every minute and exports any found since the last run.
     </p>
 </div>
 @endif

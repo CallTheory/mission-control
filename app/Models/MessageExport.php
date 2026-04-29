@@ -123,7 +123,6 @@ class MessageExport extends Model
         $time = $this->schedule_time ? Carbon::parse($this->schedule_time, $this->timezone) : $from->copy();
 
         return match ($this->schedule_type) {
-            'immediate' => $from->copy()->addMinute(),
             'hourly' => $this->calculateNextHourly($from),
             'daily' => $this->calculateNextDaily($from, $time),
             'weekly' => $this->calculateNextWeekly($from, $time),
@@ -184,7 +183,6 @@ class MessageExport extends Model
         $end = $endDate ?? Carbon::now($this->timezone);
 
         $start = match ($this->schedule_type) {
-            'immediate' => $this->last_run_at?->copy() ?? $end->copy()->subHour(),
             'hourly' => $end->copy()->subHour(),
             'daily' => $end->copy()->subDay(),
             'weekly' => $end->copy()->subWeek(),

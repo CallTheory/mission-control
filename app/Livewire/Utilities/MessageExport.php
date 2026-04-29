@@ -46,7 +46,7 @@ class MessageExport extends Component
         'state.include_call_info' => 'boolean',
         'state.recipients' => 'required|string',
         'state.subject' => 'required|string|max:255',
-        'state.schedule_type' => 'required|in:manual,immediate,hourly,daily,weekly,monthly',
+        'state.schedule_type' => 'required|in:manual,hourly,daily,weekly,monthly',
         'state.schedule_time' => 'nullable|string',
         'state.schedule_day_of_week' => 'nullable|integer|min:0|max:6',
         'state.schedule_day_of_month' => 'nullable|integer|min:1|max:31',
@@ -133,15 +133,13 @@ class MessageExport extends Component
         $team = request()->user()->currentTeam;
 
         $isManual = $this->state['schedule_type'] === 'manual';
-        $isImmediate = $this->state['schedule_type'] === 'immediate';
-        $needsScheduleDetails = ! $isManual && ! $isImmediate;
 
         // Find client name for display
         $clientName = $this->findClientName($this->state['client_number']);
 
         $recipients = array_filter(array_map('trim', explode("\n", $this->state['recipients'])));
 
-        MessageExportModel::create([
+        $export = new MessageExportModel([
             'team_id' => $team->id,
             'name' => $this->state['name'],
             'client_number' => $this->state['client_number'],
@@ -153,13 +151,18 @@ class MessageExport extends Component
             'recipients' => $recipients,
             'subject' => $this->state['subject'],
             'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $needsScheduleDetails ? ($this->state['schedule_time'] ?: null) : null,
-            'schedule_day_of_week' => $needsScheduleDetails ? $this->state['schedule_day_of_week'] : null,
-            'schedule_day_of_month' => $needsScheduleDetails ? $this->state['schedule_day_of_month'] : null,
+            'schedule_time' => $isManual ? null : ($this->state['schedule_time'] ?: null),
+            'schedule_day_of_week' => $isManual ? null : $this->state['schedule_day_of_week'],
+            'schedule_day_of_month' => $isManual ? null : $this->state['schedule_day_of_month'],
             'timezone' => $this->state['timezone'],
             'enabled' => true,
-            'next_run_at' => null,
         ]);
+
+        if (! $isManual) {
+            $export->next_run_at = $export->calculateNextRunAt();
+        }
+
+        $export->save();
 
         $this->closeCreateModal();
         $this->dispatch('saved');
@@ -206,8 +209,6 @@ class MessageExport extends Component
         $this->validate();
 
         $isManual = $this->state['schedule_type'] === 'manual';
-        $isImmediate = $this->state['schedule_type'] === 'immediate';
-        $needsScheduleDetails = ! $isManual && ! $isImmediate;
 
         $clientName = $this->findClientName($this->state['client_number']);
 
@@ -224,9 +225,9 @@ class MessageExport extends Component
             'recipients' => $recipients,
             'subject' => $this->state['subject'],
             'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $needsScheduleDetails ? ($this->state['schedule_time'] ?: null) : null,
-            'schedule_day_of_week' => $needsScheduleDetails ? $this->state['schedule_day_of_week'] : null,
-            'schedule_day_of_month' => $needsScheduleDetails ? $this->state['schedule_day_of_month'] : null,
+            'schedule_time' => $isManual ? null : ($this->state['schedule_time'] ?: null),
+            'schedule_day_of_week' => $isManual ? null : $this->state['schedule_day_of_week'],
+            'schedule_day_of_month' => $isManual ? null : $this->state['schedule_day_of_month'],
             'timezone' => $this->state['timezone'],
         ]);
 
@@ -316,7 +317,6 @@ class MessageExport extends Component
     {
         return [
             'manual' => 'Manual (On-Demand Only)',
-            'immediate' => 'Immediate',
             'hourly' => 'Hourly',
             'daily' => 'Daily',
             'weekly' => 'Weekly',

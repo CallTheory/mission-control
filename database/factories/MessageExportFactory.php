@@ -51,17 +51,6 @@ class MessageExportFactory extends Factory
         ]);
     }
 
-    public function immediate(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'schedule_type' => 'immediate',
-            'schedule_time' => null,
-            'schedule_day_of_week' => null,
-            'schedule_day_of_month' => null,
-            'recipients' => [$this->faker->email],
-        ]);
-    }
-
     public function hourly(): static
     {
         return $this->state(fn (array $attributes) => [

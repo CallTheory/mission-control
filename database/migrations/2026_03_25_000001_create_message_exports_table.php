@@ -22,7 +22,7 @@ return new class extends Migration
             $table->boolean('include_call_info')->default(true);
             $table->json('recipients')->nullable();
             $table->string('subject')->default('Message Export');
-            $table->string('schedule_type'); // manual, immediate, hourly, daily, weekly, monthly
+            $table->string('schedule_type'); // manual, hourly, daily, weekly, monthly
             $table->string('schedule_time')->nullable(); // HH:MM format
             $table->unsignedTinyInteger('schedule_day_of_week')->nullable(); // 0-6 for weekly
             $table->unsignedTinyInteger('schedule_day_of_month')->nullable(); // 1-31 for monthly
