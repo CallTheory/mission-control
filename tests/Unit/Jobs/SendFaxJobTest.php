@@ -138,4 +138,43 @@ class SendFaxJobTest extends TestCase
 
         $this->assertEquals('915554567890', $job->phone);
     }
+
+    /**
+     * A stray trailing ';' from the .fs file must be stripped.
+     */
+    public function test_phone_number_with_trailing_semicolon_is_cleaned(): void
+    {
+        $fax = [
+            'jobID' => 7,
+            'capfile' => 'test.cap',
+            'filename' => 'test.txt',
+            'phone' => '9139069098;',
+            'status' => 'pending',
+            'fsFileName' => 'IS20.fs',
+        ];
+
+        $job = new SendFaxJob($fax);
+
+        $this->assertEquals('9139069098', $job->phone);
+    }
+
+    /**
+     * The unique lock must be keyed on the per-recipient .fs filename, not the shared
+     * jobID, so a fan-out (one .cap to several numbers) reaches every recipient.
+     */
+    public function test_unique_id_is_keyed_on_fs_filename(): void
+    {
+        $fax = [
+            'jobID' => 7,
+            'capfile' => 'test.cap',
+            'filename' => 'test.txt',
+            'phone' => '9133597692',
+            'status' => 'pending',
+            'fsFileName' => 'IS21.fs',
+        ];
+
+        $job = new SendFaxJob($fax);
+
+        $this->assertEquals('IS21.fs', $job->uniqueId());
+    }
 }

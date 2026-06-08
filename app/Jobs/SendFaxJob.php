@@ -67,7 +67,8 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $this->jobID = $fax['jobID'];
         $this->capfile = $fax['capfile'];
         $this->filename = $fax['filename'];
-        $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
+        // Strip everything that isn't a digit or leading +, e.g. a stray trailing ';'.
+        $this->phone = preg_replace('/[^0-9+]/', '', $fax['phone']);
         $this->status = $fax['status'];
         $this->fsFileName = $fax['fsFileName'];
 
@@ -252,9 +253,13 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         MoveFailedFaxFiles::dispatch($faxFsDetails);
     }
 
-    public function uniqueId()
+    /**
+     * Key the unique lock on the per-recipient .fs filename, not the shared jobID
+     * (from $var_def DATA5), so a fanned-out .cap reaches every recipient.
+     */
+    public function uniqueId(): string
     {
-        return $this->jobID;
+        return $this->fsFileName;
     }
 
     /**

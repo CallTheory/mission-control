@@ -26,7 +26,12 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
+    /**
+     * Real send failures are capped by maxExceptions. Rate-limit releases from the
+     * RateLimited middleware are NOT exceptions, so they no longer burn the retry
+     * budget — retryUntil bounds how long we keep re-queueing past the limiter.
+     */
+    public int $maxExceptions = 3;
 
     public array $backoff = [30, 60];
 
@@ -52,8 +57,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public string $notes;
 
-    private array $fax;
-
     public DataSource $datasource;
 
     /**
@@ -63,8 +66,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      */
     public function __construct(array $fax)
     {
-        $this->fax = $fax;
-        $this->phone = str_ireplace(['-', '.', ' ', '(', ')', ','], '', $fax['phone']);
+        // Strip everything that isn't a digit or leading +, e.g. the stray trailing ';'
+        // that arrives in some .fs files ("9139069098;") and breaks E.164 normalization.
+        $this->phone = preg_replace('/[^0-9+]/', '', $fax['phone']);
         $this->jobID = $fax['jobID'];
         $this->capfile = $fax['capfile'];
         $this->filename = $fax['filename'];
@@ -76,6 +80,27 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public function middleware(): array
     {
         return [new RateLimited('ringcentral')];
+    }
+
+    /**
+     * Keep re-queueing past rate-limit releases for up to 10 minutes. Combined with
+     * maxExceptions, this caps real failures at 3 while never failing a fax just
+     * because the limiter released it.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addMinutes(10);
+    }
+
+    /**
+     * The .fs filename (e.g. IS20.fs) is the true per-recipient identity. Keying the
+     * unique lock on it (instead of the shared jobID from $var_def DATA5) lets a
+     * fan-out — one .cap to several numbers — send to every recipient instead of just
+     * the first.
+     */
+    public function uniqueId(): string
+    {
+        return $this->fsFileName;
     }
 
     public function handle(): void
@@ -207,7 +232,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             'fsFileName' => $this->fsFileName,
         ];
 
-        Log::error("SendFaxRingCentral failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
+        Log::error("SendFaxRingCentral failed: {$exception->getMessage()}", $faxFsDetails);
         Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
         MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
     }

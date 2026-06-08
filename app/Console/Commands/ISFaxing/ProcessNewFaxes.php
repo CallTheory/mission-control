@@ -7,6 +7,7 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Symfony\Component\Console\Command\Command as CommandStatus;
@@ -71,7 +72,9 @@ class ProcessNewFaxes extends Command
         foreach ($faxesToSend as $fax) {
             if (Str::endsWith($fax, '.fs')) {
 
-                $isfax['fsFileName'] = $fax;
+                // Reset per file so fields from a previously-parsed .fs can't leak into a
+                // malformed one and slip past validation.
+                $isfax = ['fsFileName' => $fax];
                 $this->info("[PROCESS] {$fax}");
                 $fsFile = "{$toSendPath}{$fax}";
                 $lines = file_get_contents($fsFile);
@@ -146,10 +149,19 @@ class ProcessNewFaxes extends Command
 
                     $this->error("Missing expected fax details...\n".print_r($isfax, true));
 
+                    // Quarantine a persistently-invalid .fs so it stops re-failing every
+                    // minute forever. Grace window guards against catching the external
+                    // spooler mid-write.
+                    if (filemtime($fsFile) < time() - 120) {
+                        if (@rename($fsFile, storage_path('app/mfax/fail/'.$fax))) {
+                            Log::warning("Quarantined invalid mFax fax file {$fax} to fail/");
+                        }
+                    }
+
                 } else {
 
-                    if (PendingFax::where('job_id', $isfax['jobID'])->where('fax_provider', 'mfax')->where('delivery_status', 'pending')->exists()) {
-                        $this->comment("Skipping job {$isfax['jobID']} — already pending delivery confirmation.");
+                    if (PendingFax::where('fs_file_name', $isfax['fsFileName'])->where('fax_provider', 'mfax')->where('delivery_status', 'pending')->exists()) {
+                        $this->comment("Skipping {$isfax['fsFileName']} — already pending delivery confirmation.");
 
                         continue;
                     }

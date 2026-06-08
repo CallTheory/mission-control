@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\InteractsWithFaxSpool;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 
 class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithFaxSpool, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $jobID;
 
@@ -49,34 +50,41 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
      */
     public function handle(): void
     {
-        $fsFile = storage_path("app/{$this->fax_provider}/tosend/{$this->fsFileName}");
+        $toSendDir = storage_path("app/{$this->fax_provider}/tosend/");
+        $fsFile = $toSendDir.$this->fsFileName;
 
-        if(config('app.switch_engine') == 'infinity')
-        {
+        if (config('app.switch_engine') == 'infinity') {
             $capFile = storage_path("app/{$this->fax_provider}/messages/{$this->capfile}");
-            $sentCapFile = storage_path("app/{$this->fax_provider}/messages/{$this->capfile}");
-        }
-        else {
-            $capFile = storage_path("app/{$this->fax_provider}/tosend/{$this->capfile}");
+            $sentCapFile = $capFile;
+        } else {
+            $capFile = $toSendDir.$this->capfile;
             $sentCapFile = storage_path("app/{$this->fax_provider}/sent/{$this->capfile}");
         }
 
         $sentFsFile = storage_path("app/{$this->fax_provider}/sent/{$this->fsFileName}");
 
+        if (file_exists($fsFile)) {
+            $fsFileContents = file_get_contents($fsFile);
+            $fsFileContents = str_replace('tosend', 'sent', $fsFileContents);
+            $fsFileContents = str_replace('$fax_status1 '.$this->status, '$fax_status2 0', $fsFileContents);
+            file_put_contents($sentFsFile, $fsFileContents);
+            unlink($fsFile);
+        }
 
-        $capFileContents = file_get_contents($capFile);
-        $fsFileContents = file_get_contents($fsFile);
-        $fsFileContents = str_replace('tosend', 'sent', $fsFileContents);
-        $fsFileContents = str_replace('$fax_status1 '.$this->status, '$fax_status2 0', $fsFileContents);
-        file_put_contents($sentFsFile, $fsFileContents);
-        file_put_contents($sentCapFile, $capFileContents);
-        unlink($fsFile);
-        unlink($capFile);
+        // A single .cap is fanned out to multiple recipients (one .fs each). Only
+        // remove the source .cap once no other .fs in tosend still references it,
+        // otherwise we delete the payload out from under the other recipients.
+        if (file_exists($capFile)) {
+            file_put_contents($sentCapFile, file_get_contents($capFile));
 
+            if (! $this->capStillReferenced($toSendDir, $this->capfile, $this->fsFileName)) {
+                unlink($capFile);
+            }
+        }
     }
 
-    public function uniqueId()
+    public function uniqueId(): string
     {
-        return $this->jobID;
+        return $this->fsFileName;
     }
 }
