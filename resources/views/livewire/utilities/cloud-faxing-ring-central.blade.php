@@ -2,7 +2,7 @@
     use Carbon\Carbon;
     use Illuminate\Support\Str;
 @endphp
-<div wire:poll.60s.visible="updateFaxData" class="w-full px-4">
+<div wire:poll.30s.visible="updateFaxData" class="w-full px-4">
 
 
     @if($datasource->ringcentral_client_id === null)
@@ -126,6 +126,11 @@
         <p class="mt-1 max-w-2xl text-sm text-gray-500 0">
             This section is informational for troubleshooting the IS Fax and Ring Central integration within Mission Control.
         </p>
+        @if(!empty($state['generated_at']))
+            <p class="mt-1 text-xs text-gray-400">
+                Last updated {{ Carbon::parse($state['generated_at'])->timezone(Auth::user()->timezone ?? 'UTC')->format('g:i:s A T') }}
+            </p>
+        @endif
     </div>
 
     <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

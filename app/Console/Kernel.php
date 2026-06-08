@@ -6,13 +6,14 @@ use App\Console\Commands\BetterEmails\ProcessFilesToEmail;
 use App\Console\Commands\CheckInboundEmails;
 use App\Console\Commands\ClearOldInboundEmails;
 use App\Console\Commands\CsvExport\PurgeCsvExportLogs;
-use App\Console\Commands\MessageExports\ProcessScheduledMessageExports;
-use App\Console\Commands\MessageExports\PurgeMessageExportLogs;
 use App\Console\Commands\ExportPeoplePraiseBoardCheckFile;
+use App\Console\Commands\ISFaxing\BuildRingCentralFaxDashboard;
 use App\Console\Commands\ISFaxing\CheckPendingFaxes;
 use App\Console\Commands\ISFaxing\MonitorFaxBuildup;
 use App\Console\Commands\ISFaxing\ProcessNewFaxes;
 use App\Console\Commands\ISFaxing\ProcessRingCentralNewFaxes;
+use App\Console\Commands\MessageExports\ProcessScheduledMessageExports;
+use App\Console\Commands\MessageExports\PurgeMessageExportLogs;
 use App\Console\Commands\ProcessingCleanup;
 use App\Console\Commands\PurgeBoardCheckActivity;
 use App\Console\Commands\SyncISData;
@@ -33,6 +34,7 @@ class Kernel extends ConsoleKernel
         ProcessNewFaxes::class,
         ProcessRingCentralNewFaxes::class,
         CheckPendingFaxes::class,
+        BuildRingCentralFaxDashboard::class,
         MonitorFaxBuildup::class,
         CheckInboundEmails::class,
         ExportPeoplePraiseBoardCheckFile::class,
@@ -56,6 +58,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('isfax:process-ring-central')->everyMinute();
         $schedule->command('inbound-email:check')->everyMinute();
         $schedule->command('isfax:check-pending')->everyMinute()->withoutOverlapping();
+        $schedule->command('isfax:build-ringcentral-dashboard')->everyMinute()->withoutOverlapping();
         $schedule->command('isfax:monitor mfax')->everyThirtyMinutes();
         $schedule->command('isfax:monitor ringcentral')->everyThirtyMinutes();
         $schedule->command('telescope:prune --hours=1')->hourly();
