@@ -29,6 +29,13 @@ class BuildRingCentralFaxDashboard extends Command
      */
     private const CACHE_TTL_SECONDS = 180;
 
+    /**
+     * How far back to pull faxes for the status dashboard. RingCentral's message-store
+     * endpoint defaults to roughly a 24h window when dateFrom is omitted, which made the
+     * page look empty whenever no fax was sent in the last day. An explicit window fixes it.
+     */
+    private const LOOKBACK_DAYS = 7;
+
     protected $signature = 'isfax:build-ringcentral-dashboard';
 
     protected $description = 'Build the cached RingCentral fax status dashboard snapshot';
@@ -105,7 +112,8 @@ class BuildRingCentralFaxDashboard extends Command
 
             $resp = $platform->get('/restapi/v1.0/account/~/extension/~/message-store', [
                 'messageType' => ['Fax'],
-                'perPage' => 50,
+                'dateFrom' => now()->subDays(self::LOOKBACK_DAYS)->toIso8601String(),
+                'perPage' => 100,
             ]);
 
             return $resp->jsonArray()['records'] ?? [];
