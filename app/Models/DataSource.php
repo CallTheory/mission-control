@@ -21,7 +21,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $ringcentral_client_secret
  * @property string|null $ringcentral_jwt_token
  * @property string|null $ringcentral_api_endpoint
+ * @property bool $ringcentral_enabled
  * @property string|null $mfax_api_key
+ * @property bool $mfax_enabled
  * @property string|null $people_praise_basic_auth_user
  * @property string|null $people_praise_basic_auth_pass
  * @property string|null $twilio_from_number
@@ -33,4 +35,13 @@ class DataSource extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected function casts(): array
+    {
+        return [
+            'ringcentral_enabled' => 'boolean',
+            'mfax_enabled' => 'boolean',
+            'enabled' => 'boolean',
+        ];
+    }
 }

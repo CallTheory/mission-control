@@ -35,27 +35,27 @@ class CloudFaxingController extends Controller
             }
 
             $datasource = DataSource::first();
-            $mfaxConfigured = $datasource?->mfax_api_key !== null;
-            $ringcentralConfigured = $datasource?->ringcentral_client_id !== null;
+            $mfaxEnabled = (bool) $datasource?->mfax_enabled;
+            $ringcentralEnabled = (bool) $datasource?->ringcentral_enabled;
 
-            if ($provider === 'ringcentral' && ! $ringcentralConfigured) {
-                if ($mfaxConfigured) {
+            if ($provider === 'ringcentral' && ! $ringcentralEnabled) {
+                if ($mfaxEnabled) {
                     return redirect('/utilities/cloud-faxing');
                 }
                 abort(404);
             }
 
-            if ($provider !== 'ringcentral' && ! $mfaxConfigured) {
-                if ($ringcentralConfigured) {
+            if ($provider !== 'ringcentral' && ! $mfaxEnabled) {
+                if ($ringcentralEnabled) {
                     return redirect('/utilities/cloud-faxing/ringcentral');
                 }
                 abort(404);
             }
 
             if ($provider === 'ringcentral') {
-                return view('utilities.cloud-faxing-ringcentral', compact('mfaxConfigured', 'ringcentralConfigured'));
+                return view('utilities.cloud-faxing-ringcentral', compact('mfaxEnabled', 'ringcentralEnabled'));
             } else {
-                return view('utilities.cloud-faxing', compact('mfaxConfigured', 'ringcentralConfigured'));
+                return view('utilities.cloud-faxing', compact('mfaxEnabled', 'ringcentralEnabled'));
             }
         }
 

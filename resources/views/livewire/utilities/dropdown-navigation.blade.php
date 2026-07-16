@@ -66,7 +66,7 @@
                 <a href="/utilities/config-editor" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-244">Config Editor</a>
             @endif
 
-            @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing)
+            @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing && Helpers::anyCloudFaxProviderEnabled())
                 <a href="/utilities/cloud-faxing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-21">Cloud Faxing</a>
             @endif
 

@@ -11,17 +11,17 @@
                 @endphp
 
                 @if(request()->is('utilities/cloud-faxing'))
-                    @if($mfaxConfigured)
+                    @if($mfaxEnabled)
                         <a href="/utilities/cloud-faxing" {{ $aria_current }} class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $current }}" >mFax</a>
                     @endif
-                    @if($ringcentralConfigured)
+                    @if($ringcentralEnabled)
                         <a href="/utilities/cloud-faxing/ringcentral" class="{{ $default }} whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">RingCentral</a>
                     @endif
                 @else
-                    @if($mfaxConfigured)
+                    @if($mfaxEnabled)
                         <a href="/utilities/cloud-faxing" class="{{ $default }} whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium" >mFax</a>
                     @endif
-                    @if($ringcentralConfigured)
+                    @if($ringcentralEnabled)
                         <a href="/utilities/cloud-faxing/ringcentral" {{ $aria_current }} class="{{ $current }} whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium">RingCentral</a>
                     @endif
                 @endif

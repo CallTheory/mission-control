@@ -2,6 +2,7 @@
 
 namespace App\Models\Stats;
 
+use App\Models\DataSource;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -131,6 +132,20 @@ class Helpers
         }
 
         return $reassemble ?? [];
+    }
+
+    /**
+     * Whether at least one cloud fax provider is toggled on. Used to hide the Cloud Faxing
+     * navigation entry entirely when every provider is disabled, so the link never leads to
+     * a dead (404) page. Memoized per request to avoid repeated lookups across nav partials.
+     */
+    public static function anyCloudFaxProviderEnabled(): bool
+    {
+        return once(function () {
+            $datasource = DataSource::first();
+
+            return (bool) $datasource?->ringcentral_enabled || (bool) $datasource?->mfax_enabled;
+        });
     }
 
     public static function isSystemFeatureEnabled(string $feature): bool

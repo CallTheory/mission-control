@@ -45,10 +45,19 @@ class Ringcentral extends Component
     public function saveRingCentralFaxDetails(): void
     {
         try {
+            // First-time setup: enable the provider automatically so a fresh configuration
+            // isn't hidden by default. Re-editing existing keys leaves the toggle untouched.
+            $wasConfigured = $this->datasource->ringcentral_client_id !== null;
+
             $this->datasource->ringcentral_client_id = $this->state['ringcentral_client_id'];
             $this->datasource->ringcentral_client_secret = encrypt($this->state['ringcentral_client_secret']);
             $this->datasource->ringcentral_jwt_token = encrypt($this->state['ringcentral_jwt_token']);
             $this->datasource->ringcentral_api_endpoint = $this->state['ringcentral_api_endpoint'];
+
+            if (! $wasConfigured && ! empty($this->state['ringcentral_client_id'])) {
+                $this->datasource->ringcentral_enabled = true;
+            }
+
             $this->datasource->save();
             $this->dispatch('saved');
             $this->isOpen = false;

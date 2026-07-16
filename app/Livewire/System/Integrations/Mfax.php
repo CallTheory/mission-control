@@ -63,11 +63,20 @@ class Mfax extends Component
     public function saveMFaxDetails(): void
     {
         try {
+            // First-time setup: enable the provider automatically so a fresh configuration
+            // isn't hidden by default. Re-editing existing keys leaves the toggle untouched.
+            $wasConfigured = $this->datasource->mfax_api_key !== null;
+
             $this->datasource->mfax_notes = $this->state['mfax_notes'];
             $this->datasource->mfax_subject = $this->state['mfax_subject'];
             $this->datasource->mfax_api_key = encrypt($this->state['mfax_api_key']);
             $this->datasource->mfax_cover_page_id = $this->state['mfax_cover_page_id'];
             $this->datasource->mfax_sender_name = $this->state['mfax_sender_name'];
+
+            if (! $wasConfigured && ! empty($this->state['mfax_api_key'])) {
+                $this->datasource->mfax_enabled = true;
+            }
+
             $this->datasource->save();
             $this->dispatch('saved');
             $this->isOpen = false;

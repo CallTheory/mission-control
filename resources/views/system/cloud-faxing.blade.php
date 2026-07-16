@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Auth;
     <div class="p-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden  sm:rounded-lg  flex">
+               <livewire:system.cloud-faxing-providers></livewire:system.cloud-faxing-providers>
+            </div>
+            <hr class="my-4 border border-gray-300">
+            <div class="overflow-hidden  sm:rounded-lg  flex">
                <livewire:system.fax-notification-settings></livewire:system.fax-notification-settings>
             </div>
             <hr class="my-4 border border-gray-300">
