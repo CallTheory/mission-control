@@ -13,6 +13,12 @@ class Ringcentral extends Component
 
     public array $state;
 
+    // Whether a secret is already stored (so the view can show "leave blank to keep
+    // current") without ever shipping the decrypted value to the browser.
+    public bool $hasClientSecret = false;
+
+    public bool $hasJwtToken = false;
+
     public DataSource $datasource;
 
     /**
@@ -22,18 +28,14 @@ class Ringcentral extends Component
     {
         $this->datasource = DataSource::firstOrNew();
 
-        if ($this->datasource->ringcentral_client_secret !== null && $this->datasource->ringcentral_jwt_token !== null) {
-            try {
-                $this->state['ringcentral_jwt_token'] = decrypt($this->datasource->ringcentral_jwt_token);
-                $this->state['ringcentral_client_secret'] = decrypt($this->datasource->ringcentral_client_secret);
-
-            } catch (Exception $e) {
-                throw new Exception('Unable to decrypt Client Secret or JWT token');
-            }
-        } else {
-            $this->state['ringcentral_jwt_token'] = '';
-            $this->state['ringcentral_client_secret'] = '';
-        }
+        // Never place decrypted secrets into public Livewire state: public props are
+        // serialized into the component snapshot sent to (and echoed back from) the
+        // browser. The secret fields stay blank when editing; a blank value on save
+        // preserves the stored secret (see saveRingCentralFaxDetails).
+        $this->state['ringcentral_jwt_token'] = '';
+        $this->state['ringcentral_client_secret'] = '';
+        $this->hasClientSecret = $this->datasource->ringcentral_client_secret !== null;
+        $this->hasJwtToken = $this->datasource->ringcentral_jwt_token !== null;
 
         $this->state['ringcentral_client_id'] = $this->datasource->ringcentral_client_id ?? '';
         $this->state['ringcentral_api_endpoint'] = $this->datasource->ringcentral_api_endpoint ?? '';
@@ -50,8 +52,15 @@ class Ringcentral extends Component
             $wasConfigured = $this->datasource->ringcentral_client_id !== null;
 
             $this->datasource->ringcentral_client_id = $this->state['ringcentral_client_id'];
-            $this->datasource->ringcentral_client_secret = encrypt($this->state['ringcentral_client_secret']);
-            $this->datasource->ringcentral_jwt_token = encrypt($this->state['ringcentral_jwt_token']);
+            // Only overwrite a secret when the admin actually entered a new value;
+            // a blank field keeps the existing stored (encrypted) secret.
+            // The model cast encrypts on write; pass plaintext.
+            if (! empty($this->state['ringcentral_client_secret'])) {
+                $this->datasource->ringcentral_client_secret = $this->state['ringcentral_client_secret'];
+            }
+            if (! empty($this->state['ringcentral_jwt_token'])) {
+                $this->datasource->ringcentral_jwt_token = $this->state['ringcentral_jwt_token'];
+            }
             $this->datasource->ringcentral_api_endpoint = $this->state['ringcentral_api_endpoint'];
 
             if (! $wasConfigured && ! empty($this->state['ringcentral_client_id'])) {

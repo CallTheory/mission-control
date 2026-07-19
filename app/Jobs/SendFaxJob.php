@@ -65,16 +65,18 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     {
         $this->datasource = DataSource::firstOrFail();
         $this->jobID = $fax['jobID'];
-        $this->capfile = $fax['capfile'];
-        $this->filename = $fax['filename'];
+        // basename() neutralizes any path traversal in filenames sourced from .fs
+        // file contents before they are concatenated into storage paths.
+        $this->capfile = basename($fax['capfile']);
+        $this->filename = basename($fax['filename']);
         // Strip everything that isn't a digit or leading +, e.g. a stray trailing ';'.
         $this->phone = preg_replace('/[^0-9+]/', '', $fax['phone']);
         $this->status = $fax['status'];
-        $this->fsFileName = $fax['fsFileName'];
+        $this->fsFileName = basename($fax['fsFileName']);
 
         $this->notes = $this->datasource->mfax_notes ?? '';
 
-        $this->mFaxApiKey = decrypt($this->datasource->mfax_api_key);
+        $this->mFaxApiKey = $this->datasource->mfax_api_key;
         $this->coverPageId = $this->datasource->mfax_cover_page_id;
         $this->subject = $this->datasource->mfax_subject;
         $this->senderName = $this->datasource->mfax_sender_name;
@@ -275,7 +277,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             'port' => $this->datasource->is_db_port,
             'database' => $this->datasource->is_db_data,
             'username' => $this->datasource->is_db_user,
-            'password' => decrypt($this->datasource->is_db_pass),
+            'password' => $this->datasource->is_db_pass,
             'encrypt' => true,
             'trust_server_certificate' => true,
         ]);

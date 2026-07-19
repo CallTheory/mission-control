@@ -82,12 +82,8 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/script-search',
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-report', BoardReportController::class)->name('utilities.board-report');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-activity', BoardActivityController::class)->name('utilities.board-activity');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-gateway', WctpGatewayController::class)->name('utilities.wctp-gateway');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', function () {
-    return view('utilities.enterprise-hosts');
-})->name('utilities.enterprise-hosts');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', function () {
-    return view('utilities.wctp-messages');
-})->name('utilities.wctp-messages');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', \App\Http\Controllers\Utilities\EnterpriseHostsController::class)->name('utilities.enterprise-hosts');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', \App\Http\Controllers\Utilities\WctpMessageLogController::class)->name('utilities.wctp-messages');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/cloud-faxing/{provider?}', CloudFaxingController::class)->name('utilities.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing', CardProcessingController::class)->name('utilities.card-processing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing/download-tbs-import', DownloadTBSReport::class)->name('utilities.card-processing.download-tbs-import');
@@ -135,11 +131,15 @@ Route::get('/terms', [TermsOfServiceController::class, 'show'])->name('terms.sho
 Route::get('/privacy', [PrivacyPolicyController::class, 'show'])->name('policy.show');
 
 Route::post('/webhooks/sendgrid/parse/{api_key}', ParseController::class);
-Route::get('/email-unsubscribe', EmailUnsubscribeController::class)->name('email-unsubscribe');
+// Unsubscribe links are generated with URL::signedRoute (see BeautifyEmail), so the
+// signature must be verified here to prevent tampering/enumeration.
+Route::get('/email-unsubscribe', EmailUnsubscribeController::class)->middleware('signed')->name('email-unsubscribe');
 
-// WCTP Enterprise Host endpoint (public, no auth required)
+// WCTP Enterprise Host endpoint (public; authenticated per-request by senderID +
+// securityCode). Throttled to blunt security-code brute-forcing.
 if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
     Route::post('/wctp', [WctpController::class, 'handle'])
+        ->middleware('throttle:60,1')
         ->name('wctp');
 
     // Twilio-facing routes with signature validation

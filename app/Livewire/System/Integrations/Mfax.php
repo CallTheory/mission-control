@@ -23,36 +23,25 @@ class Mfax extends Component
         $this->datasource = DataSource::firstOrNew();
 
         if ($this->datasource->mfax_basic_auth_username === null || $this->datasource->mfax_basic_auth_password === null) {
-            // Automatically create a username / password
+            // Automatically create a username / password (the model cast encrypts on write).
             try {
-                $this->datasource->mfax_basic_auth_username = encrypt(bin2hex(random_bytes(8)));
-                $this->datasource->mfax_basic_auth_password = encrypt(bin2hex(random_bytes(8)));
+                $this->datasource->mfax_basic_auth_username = bin2hex(random_bytes(8));
+                $this->datasource->mfax_basic_auth_password = bin2hex(random_bytes(8));
                 $this->datasource->save();
             } catch (Exception $e) {
-                throw new Exception('Unable to generate and encrypt auth user/pass. '.$e->getMessage());
+                throw new Exception('Unable to generate auth user/pass. '.$e->getMessage());
             }
         }
 
-        try {
-            $this->state['mfax_basic_auth_username'] = decrypt($this->datasource->mfax_basic_auth_username);
-            $this->state['mfax_basic_auth_password'] = decrypt($this->datasource->mfax_basic_auth_password);
-        } catch (Exception $e) {
-            throw new Exception('Unable to decrypt auth user/pass');
-        }
+        // Values are decrypted transparently by the model cast.
+        $this->state['mfax_basic_auth_username'] = $this->datasource->mfax_basic_auth_username ?? '';
+        $this->state['mfax_basic_auth_password'] = $this->datasource->mfax_basic_auth_password ?? '';
 
         $this->state['mfax_notes'] = $this->datasource->mfax_notes ?? '';
         $this->state['mfax_subject'] = $this->datasource->mfax_subject ?? '';
         $this->state['mfax_sender_name'] = $this->datasource->mfax_sender_name ?? '';
 
-        if ($this->datasource->mfax_api_key !== null) {
-            try {
-                $this->state['mfax_api_key'] = decrypt($this->datasource->mfax_api_key);
-            } catch (Exception $e) {
-                throw new Exception('Unable to decrypt api key');
-            }
-        } else {
-            $this->state['mfax_api_key'] = '';
-        }
+        $this->state['mfax_api_key'] = $this->datasource->mfax_api_key ?? '';
 
         $this->state['mfax_cover_page_id'] = $this->datasource->mfax_cover_page_id ?? '';
     }
@@ -69,7 +58,7 @@ class Mfax extends Component
 
             $this->datasource->mfax_notes = $this->state['mfax_notes'];
             $this->datasource->mfax_subject = $this->state['mfax_subject'];
-            $this->datasource->mfax_api_key = encrypt($this->state['mfax_api_key']);
+            $this->datasource->mfax_api_key = $this->state['mfax_api_key'];
             $this->datasource->mfax_cover_page_id = $this->state['mfax_cover_page_id'];
             $this->datasource->mfax_sender_name = $this->state['mfax_sender_name'];
 

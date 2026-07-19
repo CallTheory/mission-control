@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
+use App\Livewire\Concerns\AuthorizesWctpManagement;
 use App\Models\WctpMessage;
 use App\Models\EnterpriseHost;
 use Livewire\Component;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 
 class WctpMessageViewer extends Component
 {
+    use AuthorizesWctpManagement;
     use WithPagination;
 
     public $host = null;
@@ -32,10 +34,7 @@ class WctpMessageViewer extends Component
 
     public function mount()
     {
-        // Permission check removed - add back if needed
-        // if (!auth()->user()->can('manage-wctp')) {
-        //     abort(403, 'Unauthorized');
-        // }
+        $this->authorizeWctpManagement();
 
         if (request()->has('host')) {
             $this->host = request()->get('host');
@@ -44,10 +43,16 @@ class WctpMessageViewer extends Component
 
     public function render()
     {
-        $query = WctpMessage::query()
-            ->with(['enterpriseHost']);
+        $this->authorizeWctpManagement();
 
-        // Filter by host if specified
+        // Only messages belonging to the acting team's enterprise hosts are ever visible.
+        $query = WctpMessage::query()
+            ->with(['enterpriseHost'])
+            ->whereHas('enterpriseHost', function ($q) {
+                $q->where('team_id', $this->currentTeamId());
+            });
+
+        // Filter by host if specified (still constrained to the team's hosts above)
         if ($this->host) {
             $query->where('enterprise_host_id', $this->host);
         }
@@ -88,8 +93,10 @@ class WctpMessageViewer extends Component
 
         $messages = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Get available hosts for filter
-        $hosts = EnterpriseHost::orderBy('name')->get();
+        // Get available hosts for filter (scoped to the acting team)
+        $hosts = EnterpriseHost::where('team_id', $this->currentTeamId())
+            ->orderBy('name')
+            ->get();
 
         // All messages use Twilio as carrier in current implementation
         $carriers = collect(['twilio']);
@@ -103,6 +110,8 @@ class WctpMessageViewer extends Component
 
     public function viewMessage(WctpMessage $message)
     {
+        $this->authorizeMessage($message);
+
         $this->selectedMessage = $message;
     }
 
@@ -113,6 +122,8 @@ class WctpMessageViewer extends Component
 
     public function retryMessage(WctpMessage $message)
     {
+        $this->authorizeMessage($message);
+
         if ($message->status === 'failed') {
             $message->update(['status' => 'pending', 'failed_at' => null]);
             \App\Jobs\ProcessWctpMessage::dispatch($message);
@@ -150,5 +161,22 @@ class WctpMessageViewer extends Component
     public function updatingHost()
     {
         $this->resetPage();
+    }
+
+    /**
+     * Ensure the given message belongs to one of the acting team's enterprise
+     * hosts before any per-message action is allowed.
+     */
+    protected function authorizeMessage(WctpMessage $message): void
+    {
+        $this->authorizeWctpManagement();
+
+        $belongsToTeam = EnterpriseHost::whereKey($message->enterprise_host_id)
+            ->where('team_id', $this->currentTeamId())
+            ->exists();
+
+        if (! $belongsToTeam) {
+            abort(403);
+        }
     }
 }

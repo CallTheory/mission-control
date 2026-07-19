@@ -19,13 +19,9 @@ class PeoplePraise extends Component
     {
         $this->datasource = DataSource::firstOrNew();
 
-        try {
-            $this->state['people_praise_basic_auth_user'] = decrypt($this->datasource->people_praise_basic_auth_user);
-            $this->state['people_praise_basic_auth_pass'] = decrypt($this->datasource->people_praise_basic_auth_pass);
-        } catch (Exception $e) {
-            $this->state['people_praise_basic_auth_user'] = '';
-            $this->state['people_praise_basic_auth_pass'] = '';
-        }
+        // Values are decrypted transparently by the model cast.
+        $this->state['people_praise_basic_auth_user'] = $this->datasource->people_praise_basic_auth_user ?? '';
+        $this->state['people_praise_basic_auth_pass'] = $this->datasource->people_praise_basic_auth_pass ?? '';
     }
 
     /**
@@ -34,8 +30,9 @@ class PeoplePraise extends Component
     public function savePeoplePraiseDetails(): void
     {
         try {
-            $this->datasource->people_praise_basic_auth_user = encrypt($this->state['people_praise_basic_auth_user']);
-            $this->datasource->people_praise_basic_auth_pass = encrypt($this->state['people_praise_basic_auth_pass']);
+            // The model cast encrypts on write; pass plaintext.
+            $this->datasource->people_praise_basic_auth_user = $this->state['people_praise_basic_auth_user'];
+            $this->datasource->people_praise_basic_auth_pass = $this->state['people_praise_basic_auth_pass'];
             $this->datasource->save();
             $this->dispatch('saved');
             $this->isOpen = false;

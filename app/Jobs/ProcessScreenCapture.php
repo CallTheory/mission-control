@@ -100,8 +100,19 @@ class ProcessScreenCapture implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
         $mp4_file = storage_path("app/screencapture/{$this->isCallID}.mp4");
 
         try {
-            // -safe 0 is required to allow for paths ("/") in the file names
-            $process = Process::timeout($this->processTimeout)->run("ffmpeg -y -analyzeduration 10M -probesize 10M -f concat -safe 0 -i {$concat_file} -c:v libx264 -pix_fmt yuv420p {$mp4_file}")->throw();
+            // Array form: passed directly to execvp (no shell), so the paths cannot
+            // inject shell metacharacters. -safe 0 allows "/" in the concat list paths.
+            $process = Process::timeout($this->processTimeout)->run([
+                'ffmpeg', '-y',
+                '-analyzeduration', '10M',
+                '-probesize', '10M',
+                '-f', 'concat',
+                '-safe', '0',
+                '-i', $concat_file,
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                $mp4_file,
+            ])->throw();
         } catch (Exception $e) {
             Log::error("ProcessScreenCapture: ffmpeg failed for {$this->isCallID}: {$e->getMessage()}");
             $this->markUnavailable();

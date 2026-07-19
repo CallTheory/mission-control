@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
+use App\Livewire\Concerns\AuthorizesWctpManagement;
 use App\Models\EnterpriseHost;
 use App\Models\Team;
 use Livewire\Component;
@@ -12,6 +13,7 @@ use Illuminate\Support\Str;
 
 class EnterpriseHostManagement extends Component
 {
+    use AuthorizesWctpManagement;
     use WithPagination;
 
     public $showCreateModal = false;
@@ -39,22 +41,22 @@ class EnterpriseHostManagement extends Component
         'securityCode' => 'required|string|min:8',
         'enabled' => 'boolean',
         'callback_url' => 'nullable|url',
-        'team_id' => 'nullable|exists:teams,id',
         'phoneNumbers' => 'array',
         'phoneNumbers.*' => 'string|regex:/^[\+]?[1-9]\d{1,14}$/',
     ];
 
     public function mount()
     {
-        // Permission check removed - add back if needed
-        // if (!auth()->user()->can('manage-wctp')) {
-        //     abort(403, 'Unauthorized');
-        // }
+        $this->authorizeWctpManagement();
     }
 
     public function render()
     {
+        $this->authorizeWctpManagement();
+
+        // Hosts are always scoped to the acting team; the client cannot widen this.
         $query = EnterpriseHost::query()
+            ->where('team_id', $this->currentTeamId())
             ->with(['team', 'messages' => function ($q) {
                 $q->latest()->limit(5);
             }])
@@ -73,13 +75,10 @@ class EnterpriseHostManagement extends Component
             $query->where('enabled', (bool) $this->filterEnabled);
         }
 
-        // Apply team filter
-        if ($this->filterTeam) {
-            $query->where('team_id', $this->filterTeam);
-        }
-
         $hosts = $query->orderBy('name')->paginate(10);
-        $teams = Team::orderBy('name')->get();
+
+        // Only the acting team is ever exposed to the management UI.
+        $teams = Team::whereKey($this->currentTeamId())->get();
 
         return view('livewire.utilities.enterprise-host-management', [
             'hosts' => $hosts,
@@ -95,6 +94,8 @@ class EnterpriseHostManagement extends Component
 
     public function editHost(EnterpriseHost $host)
     {
+        $this->authorizeHost($host);
+
         $this->editingHost = $host;
         $this->name = $host->name;
         $this->senderID = $host->senderID;
@@ -110,6 +111,8 @@ class EnterpriseHostManagement extends Component
 
     public function save()
     {
+        $this->authorizeWctpManagement();
+
         $this->validate();
 
         $data = [
@@ -117,18 +120,22 @@ class EnterpriseHostManagement extends Component
             'senderID' => $this->senderID,
             'enabled' => $this->enabled,
             'callback_url' => $this->callback_url ?: null,
-            'team_id' => $this->team_id ?: null,
+            // Ownership is always the acting team — never trust a client-supplied team_id.
+            'team_id' => $this->currentTeamId(),
             'phone_numbers' => array_values($this->phoneNumbers), // Ensure it's a sequential array
         ];
 
         if ($this->editingHost) {
+            // Re-authorize the target on write: the bound model must belong to the team.
+            $this->authorizeHost($this->editingHost);
+
             // Only update security code if a new one was provided
             if ($this->securityCode) {
                 $data['securityCode'] = $this->securityCode;
             }
-            
+
             $this->editingHost->update($data);
-            
+
             session()->flash('message', 'Enterprise Host updated successfully.');
         } else {
             // Validate unique senderID for new hosts
@@ -150,6 +157,8 @@ class EnterpriseHostManagement extends Component
 
     public function deleteHost(EnterpriseHost $host)
     {
+        $this->authorizeHost($host);
+
         if ($host->messages()->exists()) {
             session()->flash('error', 'Cannot delete host with existing messages. Disable it instead.');
             return;
@@ -162,6 +171,8 @@ class EnterpriseHostManagement extends Component
 
     public function toggleEnabled(EnterpriseHost $host)
     {
+        $this->authorizeHost($host);
+
         $host->update(['enabled' => !$host->enabled]);
         
         $status = $host->enabled ? 'enabled' : 'disabled';
@@ -216,7 +227,22 @@ class EnterpriseHostManagement extends Component
 
     public function viewMessages(EnterpriseHost $host)
     {
+        $this->authorizeHost($host);
+
         return redirect()->route('utilities.wctp-messages', ['host' => $host->id]);
+    }
+
+    /**
+     * Ensure the bound host belongs to the acting team before any mutation or
+     * navigation. Guards against tampered route-model-bound ids.
+     */
+    protected function authorizeHost(EnterpriseHost $host): void
+    {
+        $this->authorizeWctpManagement();
+
+        if ((int) $host->team_id !== $this->currentTeamId()) {
+            abort(403);
+        }
     }
 
     public function updatedSearch()

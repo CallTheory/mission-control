@@ -27,14 +27,9 @@ class TwilioService
             throw new Exception('No DataSource configured. Please configure Twilio credentials in System > Data Sources.');
         }
         
-        // Get credentials from DataSource only
-        $accountSid = $this->dataSource->twilio_account_sid 
-            ? decrypt($this->dataSource->twilio_account_sid)
-            : null;
-            
-        $authToken = $this->dataSource->twilio_auth_token
-            ? decrypt($this->dataSource->twilio_auth_token)
-            : null;
+        // Credentials are decrypted transparently by the model cast.
+        $accountSid = $this->dataSource->twilio_account_sid ?: null;
+        $authToken = $this->dataSource->twilio_auth_token ?: null;
             
         $this->fromNumber = $this->dataSource->twilio_from_number;
 

@@ -24,14 +24,9 @@ class Twilio extends Component
     {
         $this->datasource = DataSource::firstOrFail();
 
-        // Decrypt and load existing values
-        $this->twilio_account_sid = $this->datasource->twilio_account_sid
-            ? decrypt($this->datasource->twilio_account_sid)
-            : '';
-
-        $this->twilio_auth_token = $this->datasource->twilio_auth_token
-            ? decrypt($this->datasource->twilio_auth_token)
-            : '';
+        // Values are decrypted transparently by the model cast.
+        $this->twilio_account_sid = $this->datasource->twilio_account_sid ?: '';
+        $this->twilio_auth_token = $this->datasource->twilio_auth_token ?: '';
 
         $this->twilio_from_number = $this->datasource->twilio_from_number ?? '';
     }
@@ -46,13 +41,9 @@ class Twilio extends Component
 
         $datasource = DataSource::firstOrFail();
 
-        $datasource->twilio_account_sid = $this->twilio_account_sid
-            ? encrypt($this->twilio_account_sid)
-            : null;
-
-        $datasource->twilio_auth_token = $this->twilio_auth_token
-            ? encrypt($this->twilio_auth_token)
-            : null;
+        // The model cast encrypts on write; pass plaintext (or null to clear).
+        $datasource->twilio_account_sid = $this->twilio_account_sid ?: null;
+        $datasource->twilio_auth_token = $this->twilio_auth_token ?: null;
 
         $datasource->twilio_from_number = $this->twilio_from_number ?: null;
 

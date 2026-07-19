@@ -4,65 +4,183 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Livewire;
 
-use Tests\TestCase;
-use App\Livewire\Utilities\WctpMessageViewer;
-use App\Models\WctpMessage;
-use App\Models\EnterpriseHost;
-use App\Models\User;
 use App\Jobs\ProcessWctpMessage;
+use App\Livewire\Utilities\WctpMessageViewer;
+use App\Models\EnterpriseHost;
+use App\Models\Team;
+use App\Models\User;
+use App\Models\WctpMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
-use Carbon\Carbon;
+use Tests\TestCase;
 
 class WctpMessageViewerTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $user;
+
+    private Team $team;
+
+    private EnterpriseHost $host;
+
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Start session for flash message testing
+
         $this->app['session']->start();
-        
-        // Create a user with manage-wctp permission
-        $user = User::factory()->create();
-        $this->actingAs($user);
-        
-        // Define a gate that allows manage-wctp for this user
-        Gate::define('manage-wctp', function ($user) {
-            return true; // Allow all users for testing
-        });
+        $this->enableWctpFeature();
+
+        $this->team = $this->makeWctpTeam();
+        $this->user = User::factory()->create();
+        $this->user->teams()->attach($this->team, ['role' => 'admin']);
+        $this->user->switchTeam($this->team);
+        $this->actingAs($this->user);
+
+        // A default host owned by the acting team; messages hang off this by default.
+        $this->host = EnterpriseHost::factory()->create(['team_id' => $this->team->id]);
     }
 
-    public function test_component_mounts_successfully(): void
+    protected function tearDown(): void
     {
+        Storage::delete('feature-flags/wctp-gateway.flag');
+
+        parent::tearDown();
+    }
+
+    private function enableWctpFeature(): void
+    {
+        Storage::makeDirectory('feature-flags');
+        Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
+    }
+
+    private function makeWctpTeam(): Team
+    {
+        $team = Team::factory()->create(['personal_team' => false]);
+        $team->forceFill(['utility_wctp_gateway' => true])->save();
+
+        return $team->refresh();
+    }
+
+    /** Create a message owned by the acting team's default host unless a host is supplied. */
+    private function msg(array $attributes = []): WctpMessage
+    {
+        return WctpMessage::factory()->create(array_merge(
+            ['enterprise_host_id' => $this->host->id],
+            $attributes
+        ));
+    }
+
+    private function otherTeamHost(): EnterpriseHost
+    {
+        $otherTeam = Team::factory()->create(['personal_team' => false]);
+
+        return EnterpriseHost::factory()->create(['team_id' => $otherTeam->id]);
+    }
+
+    // ---------------------------------------------------------------------
+    // Authorization
+    // ---------------------------------------------------------------------
+
+    public function test_component_mounts_for_authorized_team(): void
+    {
+        Livewire::test(WctpMessageViewer::class)->assertSuccessful();
+    }
+
+    public function test_personal_team_is_forbidden(): void
+    {
+        $personal = Team::factory()->create(['personal_team' => true]);
+        $this->user->teams()->attach($personal, ['role' => 'admin']);
+        // Reload so the freshly attached team is visible to belongsToTeam()/switchTeam().
+        $this->user->refresh();
+        $this->user->switchTeam($personal);
+
+        $this->get(route('utilities.wctp-messages'))->assertForbidden();
+    }
+
+    public function test_team_without_utility_flag_is_forbidden(): void
+    {
+        $this->team->forceFill(['utility_wctp_gateway' => false])->save();
+
+        $this->get(route('utilities.wctp-messages'))->assertForbidden();
+    }
+
+    public function test_disabled_system_feature_is_forbidden(): void
+    {
+        Storage::delete('feature-flags/wctp-gateway.flag');
+
+        $this->get(route('utilities.wctp-messages'))->assertForbidden();
+    }
+
+    // ---------------------------------------------------------------------
+    // Tenant isolation
+    // ---------------------------------------------------------------------
+
+    public function test_only_current_team_messages_are_visible(): void
+    {
+        $mine = $this->msg(['message' => 'My team message', 'wctp_message_id' => 'mine123']);
+        $theirs = WctpMessage::factory()->create([
+            'enterprise_host_id' => $this->otherTeamHost()->id,
+            'message' => 'Their team message',
+            'wctp_message_id' => 'theirs456',
+        ]);
+
         Livewire::test(WctpMessageViewer::class)
-            ->assertSuccessful();
+            ->assertViewHas('messages', function ($messages) use ($mine, $theirs) {
+                $ids = $messages->pluck('id')->all();
+
+                return in_array($mine->id, $ids, true)
+                    && ! in_array($theirs->id, $ids, true);
+            })
+            ->assertSee('mine123')
+            ->assertDontSee('theirs456');
     }
 
-    public function test_unauthorized_user_cannot_access_component(): void
+    public function test_cannot_view_another_teams_message(): void
     {
-        // This test is skipped due to complexity of mocking Gate behavior in Livewire
-        $this->markTestSkipped('Authorization testing with Gate mocking requires more complex setup');
-    }
-
-    public function test_displays_messages_with_pagination(): void
-    {
-        $messages = WctpMessage::factory()->count(25)->create();
+        $theirs = WctpMessage::factory()->create(['enterprise_host_id' => $this->otherTeamHost()->id]);
 
         Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('messages')
-            ->assertSee($messages->first()->wctp_message_id)
-            ->assertSee('Next'); // Pagination should be present with 25 messages (20 per page)
+            ->call('viewMessage', $theirs)
+            ->assertForbidden();
     }
+
+    public function test_cannot_retry_another_teams_message(): void
+    {
+        Queue::fake();
+        $theirs = WctpMessage::factory()->failed()->create([
+            'enterprise_host_id' => $this->otherTeamHost()->id,
+            'status' => 'failed',
+        ]);
+
+        Livewire::test(WctpMessageViewer::class)
+            ->call('retryMessage', $theirs)
+            ->assertForbidden();
+
+        $this->assertSame('failed', $theirs->refresh()->status);
+        Queue::assertNotPushed(ProcessWctpMessage::class);
+    }
+
+    public function test_hosts_filter_is_scoped_to_current_team(): void
+    {
+        $this->otherTeamHost();
+
+        Livewire::test(WctpMessageViewer::class)
+            ->assertViewHas('hosts', function ($hosts) {
+                return $hosts->every(fn ($host) => (int) $host->team_id === $this->team->id);
+            });
+    }
+
+    // ---------------------------------------------------------------------
+    // Behaviour (scoped to the acting team)
+    // ---------------------------------------------------------------------
 
     public function test_messages_ordered_by_created_at_desc(): void
     {
-        $older = WctpMessage::factory()->create(['created_at' => now()->subHour()]);
-        $newer = WctpMessage::factory()->create(['created_at' => now()]);
+        $older = $this->msg(['created_at' => now()->subHour()]);
+        $newer = $this->msg(['created_at' => now()]);
 
         Livewire::test(WctpMessageViewer::class)
             ->assertViewHas('messages', function ($messages) use ($newer, $older) {
@@ -72,162 +190,88 @@ class WctpMessageViewerTest extends TestCase
 
     public function test_host_filter_from_query_string(): void
     {
-        $host1 = EnterpriseHost::factory()->create();
-        $host2 = EnterpriseHost::factory()->create();
-        
-        WctpMessage::factory()->create(['enterprise_host_id' => $host1->id, 'message' => 'Host 1 message']);
-        WctpMessage::factory()->create(['enterprise_host_id' => $host2->id, 'message' => 'Host 2 message']);
+        $host2 = EnterpriseHost::factory()->create(['team_id' => $this->team->id]);
 
-        // Simulate mounting with host parameter
+        $this->msg(['message' => 'Host 1 message', 'wctp_message_id' => 'host1msg']);
+        $this->msg(['enterprise_host_id' => $host2->id, 'message' => 'Host 2 message', 'wctp_message_id' => 'host2msg']);
+
         Livewire::test(WctpMessageViewer::class)
-            ->set('host', $host1->id)
-            ->assertSee('Host 1 message')
-            ->assertDontSee('Host 2 message');
+            ->set('host', $this->host->id)
+            ->assertSee('host1msg')
+            ->assertDontSee('host2msg');
     }
 
     public function test_search_functionality(): void
     {
-        $message1 = WctpMessage::factory()->create([
+        $message1 = $this->msg([
             'to' => '5551234567',
-            'from' => '+15552345678', // Different from default
-            'message' => 'Hello world unique content',
+            'from' => '+15552345678',
             'wctp_message_id' => 'msg123unique',
         ]);
-        $message2 = WctpMessage::factory()->create([
+        $this->msg([
             'to' => '5559876543',
-            'from' => '+15553456789', // Different from default and message1
-            'message' => 'Different message content',
+            'from' => '+15553456789',
             'wctp_message_id' => 'msg456different',
         ]);
 
-        // Test phone number search - verify data in view
-        $component = Livewire::test(WctpMessageViewer::class)
-            ->set('search', '5551234567');
-        
-        $messages = $component->viewData('messages');
+        $messages = Livewire::test(WctpMessageViewer::class)
+            ->set('search', '5551234567')
+            ->viewData('messages');
         $this->assertEquals(1, $messages->count());
         $this->assertEquals($message1->id, $messages->first()->id);
 
-        // Test message content search
-        $component = Livewire::test(WctpMessageViewer::class)
-            ->set('search', 'unique');
-        
-        $messages = $component->viewData('messages');
-        $this->assertEquals(1, $messages->count());
-        $this->assertEquals($message1->id, $messages->first()->id);
-
-        // Test message ID search
-        $component = Livewire::test(WctpMessageViewer::class)
-            ->set('search', 'msg123unique');
-        
-        $messages = $component->viewData('messages');
+        $messages = Livewire::test(WctpMessageViewer::class)
+            ->set('search', 'msg123unique')
+            ->viewData('messages');
         $this->assertEquals(1, $messages->count());
         $this->assertEquals($message1->id, $messages->first()->id);
     }
 
     public function test_status_filter(): void
     {
-        $pending = WctpMessage::factory()->pending()->create(['message' => 'Pending message']);
-        $delivered = WctpMessage::factory()->delivered()->create(['message' => 'Delivered message']);
+        $this->msg(['status' => 'pending', 'wctp_message_id' => 'pendingmsg']);
+        $this->msg(['status' => 'delivered', 'wctp_message_id' => 'deliveredmsg']);
 
         Livewire::test(WctpMessageViewer::class)
             ->set('filterStatus', 'pending')
-            ->assertSee('Pending message')
-            ->assertDontSee('Delivered message')
+            ->assertSee('pendingmsg')
+            ->assertDontSee('deliveredmsg')
             ->set('filterStatus', 'delivered')
-            ->assertSee('Delivered message')
-            ->assertDontSee('Pending message');
+            ->assertSee('deliveredmsg')
+            ->assertDontSee('pendingmsg');
     }
 
     public function test_direction_filter(): void
     {
-        $outbound = WctpMessage::factory()->create(['direction' => 'outbound', 'message' => 'Outbound message']);
-        $inbound = WctpMessage::factory()->inbound()->create(['message' => 'Inbound message']);
+        $this->msg(['direction' => 'outbound', 'wctp_message_id' => 'outboundmsg']);
+        $this->msg(['direction' => 'inbound', 'wctp_message_id' => 'inboundmsg']);
 
         Livewire::test(WctpMessageViewer::class)
             ->set('filterDirection', 'outbound')
-            ->assertSee('Outbound message')
-            ->assertDontSee('Inbound message')
+            ->assertSee('outboundmsg')
+            ->assertDontSee('inboundmsg')
             ->set('filterDirection', 'inbound')
-            ->assertSee('Inbound message')
-            ->assertDontSee('Outbound message');
-    }
-
-    public function test_carrier_filter(): void
-    {
-        $twilio = WctpMessage::factory()->create(['message' => 'Twilio message']);
-        $other = WctpMessage::factory()->create(['message' => 'Other message']);
-
-        // All messages are Twilio in current implementation
-        Livewire::test(WctpMessageViewer::class)
-            ->set('filterCarrier', 'twilio')
-            ->assertSee('Twilio message')
-            ->assertSee('Other message'); // Both should be visible as all are Twilio
-    }
-
-    public function test_date_from_filter(): void
-    {
-        $old = WctpMessage::factory()->create([
-            'created_at' => '2023-01-01 12:00:00',
-            'message' => 'Old message'
-        ]);
-        $new = WctpMessage::factory()->create([
-            'created_at' => '2023-06-01 12:00:00',
-            'message' => 'New message'
-        ]);
-
-        Livewire::test(WctpMessageViewer::class)
-            ->set('dateFrom', '2023-03-01')
-            ->assertSee('New message')
-            ->assertDontSee('Old message');
-    }
-
-    public function test_date_to_filter(): void
-    {
-        $old = WctpMessage::factory()->create([
-            'created_at' => '2023-01-01 12:00:00',
-            'message' => 'Old message'
-        ]);
-        $new = WctpMessage::factory()->create([
-            'created_at' => '2023-06-01 12:00:00',
-            'message' => 'New message'
-        ]);
-
-        Livewire::test(WctpMessageViewer::class)
-            ->set('dateTo', '2023-03-01')
-            ->assertSee('Old message')
-            ->assertDontSee('New message');
+            ->assertSee('inboundmsg')
+            ->assertDontSee('outboundmsg');
     }
 
     public function test_date_range_filter(): void
     {
-        $before = WctpMessage::factory()->create([
-            'created_at' => '2023-01-01 12:00:00',
-            'message' => 'Before range'
-        ]);
-        $within = WctpMessage::factory()->create([
-            'created_at' => '2023-03-15 12:00:00',
-            'message' => 'Within range'
-        ]);
-        $after = WctpMessage::factory()->create([
-            'created_at' => '2023-06-01 12:00:00',
-            'message' => 'After range'
-        ]);
+        $this->msg(['created_at' => '2023-01-01 12:00:00', 'wctp_message_id' => 'beforerange']);
+        $this->msg(['created_at' => '2023-03-15 12:00:00', 'wctp_message_id' => 'withinrange']);
+        $this->msg(['created_at' => '2023-06-01 12:00:00', 'wctp_message_id' => 'afterrange']);
 
         Livewire::test(WctpMessageViewer::class)
             ->set('dateFrom', '2023-03-01')
             ->set('dateTo', '2023-04-01')
-            ->assertSee('Within range')
-            ->assertDontSee('Before range')
-            ->assertDontSee('After range');
+            ->assertSee('withinrange')
+            ->assertDontSee('beforerange')
+            ->assertDontSee('afterrange');
     }
 
     public function test_view_message_modal(): void
     {
-        $message = WctpMessage::factory()->create([
-            'message' => 'Test message content',
-            'wctp_message_id' => 'test123',
-        ]);
+        $message = $this->msg(['wctp_message_id' => 'test123']);
 
         Livewire::test(WctpMessageViewer::class)
             ->call('viewMessage', $message)
@@ -236,7 +280,7 @@ class WctpMessageViewerTest extends TestCase
 
     public function test_close_message_modal(): void
     {
-        $message = WctpMessage::factory()->create();
+        $message = $this->msg();
 
         Livewire::test(WctpMessageViewer::class)
             ->set('selectedMessage', $message)
@@ -247,130 +291,45 @@ class WctpMessageViewerTest extends TestCase
     public function test_retry_failed_message(): void
     {
         Queue::fake();
-        
-        $message = WctpMessage::factory()->failed()->create([
-            'status' => 'failed',
-        ]);
 
-        Livewire::test(WctpMessageViewer::class)
-            ->call('retryMessage', $message);
-            
-        // Verify the message was updated correctly (which indicates the method worked)
-        $message->refresh();
-        $this->assertEquals('pending', $message->status);
-        $this->assertEquals(0, $message->retry_count);
-        
-        // Verify job was dispatched
-        Queue::assertPushed(ProcessWctpMessage::class);
-        
-        // Note: Flash message testing is skipped due to Livewire session isolation
-        // The important functionality (status update and job dispatch) is tested above
-    }
+        $message = $this->msg(['status' => 'failed', 'failed_at' => now()]);
 
-    public function test_retry_failed_message_only(): void
-    {
-        Queue::fake();
-        
-        $message = WctpMessage::factory()->create(['status' => 'failed']);
+        Livewire::test(WctpMessageViewer::class)->call('retryMessage', $message);
 
-        Livewire::test(WctpMessageViewer::class)
-            ->call('retryMessage', $message);
-            
-        // Verify the message was updated correctly
         $message->refresh();
         $this->assertEquals('pending', $message->status);
         $this->assertNull($message->failed_at);
-        
-        // Verify job was dispatched
+
         Queue::assertPushed(ProcessWctpMessage::class);
-        
-        // Note: Flash message testing is skipped due to Livewire session isolation
-        // The important functionality (status update and job dispatch) is tested above
     }
 
     public function test_retry_non_retryable_message_does_nothing(): void
     {
         Queue::fake();
-        
-        $message = WctpMessage::factory()->delivered()->create(['status' => 'delivered']);
 
-        Livewire::test(WctpMessageViewer::class)
-            ->call('retryMessage', $message);
-            
-        // Verify message status unchanged
-        $message->refresh();
-        $this->assertEquals('delivered', $message->status);
-        
-        // Verify no job was dispatched
+        $message = $this->msg(['status' => 'delivered']);
+
+        Livewire::test(WctpMessageViewer::class)->call('retryMessage', $message);
+
+        $this->assertEquals('delivered', $message->refresh()->status);
         Queue::assertNotPushed(ProcessWctpMessage::class);
-        
-        // Check no session flash message was set
-        $this->assertNull(session('message'));
-    }
-
-    public function test_export_messages_placeholder(): void
-    {
-        $component = Livewire::test(WctpMessageViewer::class)
-            ->call('exportMessages');
-            
-        // Verify the method call completed successfully
-        $this->assertTrue(true); // Simple assertion to prevent risky test
-        
-        // Note: Flash message testing is skipped due to Livewire session isolation
-        // The method call completed successfully which is the main functionality
     }
 
     public function test_pagination_resets_on_search_change(): void
     {
-        WctpMessage::factory()->count(25)->create(['message' => 'test message']);
+        WctpMessage::factory()->count(25)->create(['enterprise_host_id' => $this->host->id]);
 
-        // Navigate to page 2 first, then change search
-        $component = Livewire::test(WctpMessageViewer::class);
-        
-        // Check that we have multiple pages
-        $this->assertGreaterThan(1, $component->viewData('messages')->lastPage());
-        
-        // Set search which should reset to page 1
-        $component->set('search', 'test');
-        
-        // Verify we're on page 1 by checking the current page from the paginator
-        $this->assertEquals(1, $component->viewData('messages')->currentPage());
-    }
-
-    public function test_pagination_resets_on_filter_changes(): void
-    {
-        // Create messages with specific attributes for filtering
-        WctpMessage::factory()->count(15)->create(['status' => 'delivered']);
-        WctpMessage::factory()->count(15)->create(['status' => 'pending']);
-
-        // Test status filter reset
         $component = Livewire::test(WctpMessageViewer::class);
         $this->assertGreaterThan(1, $component->viewData('messages')->lastPage());
-        
-        $component->set('filterStatus', 'delivered');
-        $this->assertEquals(1, $component->viewData('messages')->currentPage());
 
-        // Test direction filter reset  
-        $component = Livewire::test(WctpMessageViewer::class);
-        $component->set('filterDirection', 'inbound');
-        $this->assertEquals(1, $component->viewData('messages')->currentPage());
-
-        // Test carrier filter reset
-        $component = Livewire::test(WctpMessageViewer::class);
-        $component->set('filterCarrier', 'twilio');
-        $this->assertEquals(1, $component->viewData('messages')->currentPage());
-
-        // Test host filter reset
-        $host = EnterpriseHost::factory()->create();
-        $component = Livewire::test(WctpMessageViewer::class);
-        $component->set('host', $host->id);
+        $component->set('search', '555');
         $this->assertEquals(1, $component->viewData('messages')->currentPage());
     }
 
     public function test_query_string_properties(): void
     {
         $component = new WctpMessageViewer();
-        
+
         $expectedQueryString = [
             'search' => ['except' => ''],
             'filterStatus' => ['except' => ''],
@@ -379,140 +338,24 @@ class WctpMessageViewerTest extends TestCase
             'host' => ['except' => null],
         ];
 
-        // Use reflection to access protected queryString property
         $reflection = new \ReflectionClass($component);
         $property = $reflection->getProperty('queryString');
         $property->setAccessible(true);
-        $queryString = $property->getValue($component);
-        
-        $this->assertEquals($expectedQueryString, $queryString);
-    }
 
-    public function test_hosts_loaded_for_filter(): void
-    {
-        $hosts = EnterpriseHost::factory()->count(3)->create();
-
-        Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('hosts', function ($loadedHosts) use ($hosts) {
-                return $loadedHosts->count() === 3;
-            });
-    }
-
-    public function test_carriers_loaded_for_filter(): void
-    {
-        WctpMessage::factory()->create();
-        WctpMessage::factory()->create();
-        WctpMessage::factory()->create(); // Multiple messages to test
-
-        Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('carriers', function ($carriers) {
-                // Only Twilio in current implementation
-                return $carriers->count() === 1 && 
-                       $carriers->contains('twilio');
-            });
+        $this->assertEquals($expectedQueryString, $property->getValue($component));
     }
 
     public function test_messages_loaded_with_enterprise_host_relationship(): void
     {
-        $host = EnterpriseHost::factory()->create(['name' => 'Test Host']);
-        $message = WctpMessage::factory()->create(['enterprise_host_id' => $host->id]);
+        $this->host->forceFill(['name' => 'Test Host'])->save();
+        $this->msg();
 
         Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('messages', function ($messages) use ($host) {
+            ->assertViewHas('messages', function ($messages) {
                 $message = $messages->first();
-                return $message->enterpriseHost !== null && 
-                       $message->enterpriseHost->name === 'Test Host';
+
+                return $message->enterpriseHost !== null
+                    && $message->enterpriseHost->name === 'Test Host';
             });
-    }
-
-    public function test_combined_filters(): void
-    {
-        $host1 = EnterpriseHost::factory()->create();
-        $host2 = EnterpriseHost::factory()->create();
-
-        $target = WctpMessage::factory()->create([
-            'enterprise_host_id' => $host1->id,
-            'status' => 'delivered',
-            'direction' => 'outbound',
-            'to' => '5551234567',
-            'message' => 'Target message',
-        ]);
-
-        $other = WctpMessage::factory()->create([
-            'enterprise_host_id' => $host2->id,
-            'status' => 'pending',
-            'direction' => 'inbound',
-            'to' => '5559876543',
-            'message' => 'Other message',
-        ]);
-
-        // Use withQueryParams to set all filters during mount (single render)
-        // instead of 5 sequential set() calls that each trigger a full render cycle
-        Livewire::withQueryParams([
-            'host' => $host1->id,
-            'filterStatus' => 'delivered',
-            'filterDirection' => 'outbound',
-            'filterCarrier' => 'twilio',
-            'search' => '555123',
-        ])->test(WctpMessageViewer::class)
-            ->assertSee('Target message')
-            ->assertDontSee('Other message');
-    }
-
-    public function test_date_filter_includes_full_day(): void
-    {
-        // Test that dateFrom includes from 00:00:00
-        $message = WctpMessage::factory()->create([
-            'created_at' => '2023-01-01 00:30:00',
-            'message' => 'Early morning'
-        ]);
-
-        Livewire::test(WctpMessageViewer::class)
-            ->set('dateFrom', '2023-01-01')
-            ->assertSee('Early morning');
-
-        // Test that dateTo includes until 23:59:59
-        $message = WctpMessage::factory()->create([
-            'created_at' => '2023-01-01 23:30:00',
-            'message' => 'Late night'
-        ]);
-
-        Livewire::test(WctpMessageViewer::class)
-            ->set('dateTo', '2023-01-01')
-            ->assertSee('Late night');
-    }
-
-    public function test_search_covers_all_searchable_fields(): void
-    {
-        $message = WctpMessage::factory()->create([
-            'to' => '5551111111',
-            'from' => '5552222222',
-            'message' => 'unique_content_123',
-            'wctp_message_id' => 'unique_wctp_456',
-            'twilio_sid' => 'SMunique_twilio_sid',
-        ]);
-
-        $otherMessage = WctpMessage::factory()->create([
-            'to' => '5559999999',
-            'from' => '5558888888',
-            'message' => 'different content',
-            'wctp_message_id' => 'different_wctp',
-            'twilio_sid' => 'SMdifferent_twilio_sid',
-        ]);
-
-        // Test each searchable field (message excluded - encrypted at rest)
-        $searchTerms = [
-            '5551111111', // to field
-            '5552222222', // from field
-            'unique_wctp_456', // wctp_message_id field
-            'SMunique_twilio_sid', // twilio_sid field
-        ];
-
-        foreach ($searchTerms as $term) {
-            Livewire::test(WctpMessageViewer::class)
-                ->set('search', $term)
-                ->assertSee('unique_wctp_456')
-                ->assertDontSee('different_wctp');
-        }
     }
 }

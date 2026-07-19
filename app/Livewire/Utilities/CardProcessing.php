@@ -84,12 +84,12 @@ class CardProcessing extends Component
     {
         // production means CHARGE CLIENTS SO BE CAREFUL
         if ($production === true) {
-            if (strlen(decrypt($this->datasource->stripe_prod_secret_key))) {
-                Stripe::setApiKey(decrypt($this->datasource->stripe_prod_secret_key));
-                $stripe = new StripeClient(decrypt($this->datasource->stripe_prod_secret_key));
+            if (strlen((string) $this->datasource->stripe_prod_secret_key)) {
+                Stripe::setApiKey($this->datasource->stripe_prod_secret_key);
+                $stripe = new StripeClient($this->datasource->stripe_prod_secret_key);
             } else {
                 try {
-                    $validator = Validator::make(['processing' => decrypt($this->datasource->stripe_prod_secret_key)], ['processing' => 'required'], [
+                    $validator = Validator::make(['processing' => $this->datasource->stripe_prod_secret_key], ['processing' => 'required'], [
                         'processing' => 'Missing production Stripe API key. Please check system data sources.',
                     ]);
                 } catch (Exception $e) {
@@ -101,12 +101,12 @@ class CardProcessing extends Component
                 }
             }
         } else {
-            if (strlen(decrypt($this->datasource->stripe_test_secret_key))) {
-                Stripe::setApiKey(decrypt($this->datasource->stripe_test_secret_key));
-                $stripe = new StripeClient(decrypt($this->datasource->stripe_test_secret_key));
+            if (strlen((string) $this->datasource->stripe_test_secret_key)) {
+                Stripe::setApiKey($this->datasource->stripe_test_secret_key);
+                $stripe = new StripeClient($this->datasource->stripe_test_secret_key);
             } else {
                 try {
-                    $validator = Validator::make(['processing' => decrypt($this->datasource->stripe_test_secret_key)], ['processing' => 'required'], [
+                    $validator = Validator::make(['processing' => $this->datasource->stripe_test_secret_key], ['processing' => 'required'], [
                         'processing' => 'Missing test Stripe API key. Please check system data sources.',
                     ]);
                 } catch (Exception $e) {

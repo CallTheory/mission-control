@@ -27,16 +27,18 @@ class ValidateTwilioRequest
             ->first();
 
         if (! $dataSource) {
-            Log::warning('Twilio signature validation skipped: no active Twilio data source');
+            // Fail closed: without a Twilio data source we cannot verify the
+            // signature, so the request cannot be trusted.
+            Log::warning('Twilio request rejected: no active Twilio data source to validate signature');
 
-            return $next($request);
+            return response('Forbidden', 403);
         }
 
         $authToken = $dataSource->credentials['auth_token'] ?? null;
         if (! $authToken) {
-            Log::warning('Twilio signature validation skipped: no auth token configured');
+            Log::warning('Twilio request rejected: no auth token configured to validate signature');
 
-            return $next($request);
+            return response('Forbidden', 403);
         }
 
         $signature = $request->header('X-Twilio-Signature', '');

@@ -38,11 +38,12 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
     {
         $this->fax_provider = $fax_provider;
         $this->jobID = $faxFsDetails['jobID'];
-        $this->capfile = $faxFsDetails['capfile'];
-        $this->filename = $faxFsDetails['filename'];
+        // basename() the filenames from .fs contents so they can't escape the spool dir.
+        $this->capfile = basename($faxFsDetails['capfile']);
+        $this->filename = basename($faxFsDetails['filename']);
         $this->phone = $faxFsDetails['phone'];
         $this->status = $faxFsDetails['status'];
-        $this->fsFileName = $faxFsDetails['fsFileName'];
+        $this->fsFileName = basename($faxFsDetails['fsFileName']);
     }
 
     /**

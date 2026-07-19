@@ -20,12 +20,23 @@ return [
         'publishable_key' => env('STRIPE_KEY'),
         'secret_key' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'fillout_success_url' => env('STRIPE_FILLOUT_SUCCESS_URL', 'https://example.com/thanks'),
+        'fillout_error_url' => env('STRIPE_FILLOUT_ERROR_URL', 'https://example.com/thanks'),
     ],
     
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),
         'from' => env('TWILIO_FROM_NUMBER'),
+    ],
+
+    // Shared secrets for unauthenticated inbound webhooks. These MUST be set to
+    // long random values in every environment; when unset the corresponding
+    // endpoint fails closed (rejects all requests) rather than falling back to a
+    // guessable value.
+    'inbound_email' => [
+        'forward_secret' => env('INBOUND_EMAIL_FORWARD_SECRET'),
+        'parse_secret' => env('INBOUND_EMAIL_PARSE_SECRET'),
     ],
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
@@ -43,6 +54,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
     'fax' => [
+        // Shared secret required on inbound fax provider callbacks. Fails closed when unset.
+        'webhook_secret' => env('FAX_WEBHOOK_SECRET'),
         'documo' => [
             'api_key' => env('DOCUMO_API_KEY', ''),
             'cover_page_id' => env('DOCUMO_COVERPAGE_ID', ''),

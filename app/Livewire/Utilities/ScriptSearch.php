@@ -32,7 +32,7 @@ class ScriptSearch extends Component
             'port' => $datasource->is_db_port,
             'database' => $datasource->is_db_data,
             'username' => $datasource->is_db_user,
-            'password' => decrypt($datasource->is_db_pass),
+            'password' => $datasource->is_db_pass,
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,

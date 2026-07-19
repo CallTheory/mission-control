@@ -62,7 +62,8 @@ class Intelligent extends Component
         $this->datasource->is_db_user = $this->state['is_db_user'];
 
         try {
-            $this->datasource->is_db_pass = encrypt($this->state['is_db_pass']);
+            // The model cast encrypts on write; pass plaintext.
+            $this->datasource->is_db_pass = $this->state['is_db_pass'];
             $this->datasource->save();
             $this->dispatch('saved');
         } catch (Exception $e) {
@@ -76,7 +77,7 @@ class Intelligent extends Component
         $database = $this->state['is_db_data'] ?: $this->datasource->is_db_data;
         $username = $this->state['is_db_user'] ?: $this->datasource->is_db_user;
         $password = $this->state['is_db_pass']
-            ?: ($this->datasource->is_db_pass ? decrypt($this->datasource->is_db_pass) : '');
+            ?: ($this->datasource->is_db_pass ?: '');
 
         if (empty($host) || empty($port) || empty($database) || empty($username) || empty($password)) {
             $this->connectionStatus = 'failed';

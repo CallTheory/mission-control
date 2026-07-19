@@ -104,11 +104,11 @@ class BuildRingCentralFaxDashboard extends Command
         try {
             $rcsdk = new RingCentralSDK(
                 $datasource->ringcentral_client_id,
-                decrypt($datasource->ringcentral_client_secret),
+                $datasource->ringcentral_client_secret,
                 $datasource->ringcentral_api_endpoint
             );
             $platform = $rcsdk->platform();
-            $platform->login(['jwt' => decrypt($datasource->ringcentral_jwt_token)]);
+            $platform->login(['jwt' => $datasource->ringcentral_jwt_token]);
 
             $resp = $platform->get('/restapi/v1.0/account/~/extension/~/message-store', [
                 'messageType' => ['Fax'],

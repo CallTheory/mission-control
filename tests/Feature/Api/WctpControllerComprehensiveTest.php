@@ -498,7 +498,11 @@ XML;
     public function test_message_reply_handling(): void
     {
         // Create an original message to reply to
-        $host = EnterpriseHost::factory()->create();
+        $host = EnterpriseHost::factory()->create([
+            'senderID' => 'reply-host',
+            'securityCode' => 'reply-secret-123',
+            'enabled' => true,
+        ]);
         $originalMessage = WctpMessage::factory()->create([
             'enterprise_host_id' => $host->id,
             'wctp_message_id' => 'original123',
@@ -510,7 +514,9 @@ XML;
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
-    <wctp-MessageReply responseToMessageID="original123" responseText="YES" submitTimestamp="2023-01-01T12:00:00Z"/>
+    <wctp-MessageReply responseToMessageID="original123" responseText="YES" submitTimestamp="2023-01-01T12:00:00Z">
+        <wctp-Originator senderID="reply-host" securityCode="reply-secret-123"/>
+    </wctp-MessageReply>
 </wctp-Operation>
 XML;
 

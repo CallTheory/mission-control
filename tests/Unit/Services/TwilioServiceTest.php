@@ -519,22 +519,21 @@ class TwilioServiceTest extends TestCase
         $accountSid = 'test_account_sid_123';
         $authToken = 'test_auth_token_456';
         
+        // Plaintext in — the model cast encrypts on write.
         $dataSource = DataSource::create([
-            'twilio_account_sid' => encrypt($accountSid),
-            'twilio_auth_token' => encrypt($authToken),
+            'twilio_account_sid' => $accountSid,
+            'twilio_auth_token' => $authToken,
             'twilio_from_number' => '+15551234567',
         ]);
 
-        // Verify the encrypted values in the database are different from plain text
+        // Verify the values are encrypted at rest (raw column != plaintext).
         $rawData = \DB::table('data_sources')->where('id', $dataSource->id)->first();
         $this->assertNotEquals($accountSid, $rawData->twilio_account_sid);
         $this->assertNotEquals($authToken, $rawData->twilio_auth_token);
 
-        // Verify the service can decrypt them properly
-        $decryptedSid = decrypt($dataSource->twilio_account_sid);
-        $decryptedToken = decrypt($dataSource->twilio_auth_token);
-        
-        $this->assertEquals($accountSid, $decryptedSid);
-        $this->assertEquals($authToken, $decryptedToken);
+        // Verify the model transparently decrypts on read (fresh instance from DB).
+        $fresh = DataSource::find($dataSource->id);
+        $this->assertEquals($accountSid, $fresh->twilio_account_sid);
+        $this->assertEquals($authToken, $fresh->twilio_auth_token);
     }
 }

@@ -50,10 +50,14 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public string $call_id;
 
+    // The board-check item this export represents. It is deleted only once the export
+    // is confirmed successful, so a failed/retrying export never loses the record.
+    public ?int $board_check_item_id;
+
     /**
      * Create a new job instance.
      */
-    public function __construct($initial, $client_id, $event_type, $event_datetime, $create_datetime, $notes, $reporter_initial, $call_id)
+    public function __construct($initial, $client_id, $event_type, $event_datetime, $create_datetime, $notes, $reporter_initial, $call_id, $board_check_item_id = null)
     {
         $this->initial = $initial;
         $this->client_id = $client_id;
@@ -63,6 +67,7 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $this->notes = $notes;
         $this->reporter_initial = $reporter_initial;
         $this->call_id = $call_id;
+        $this->board_check_item_id = $board_check_item_id;
         $this->queue = 'people-praise';
     }
 
@@ -76,10 +81,13 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $client = new Client;
         try {
             $datasource = DataSource::firstOrFail();
-            $username = decrypt($datasource->people_praise_basic_auth_user);
-            $password = decrypt($datasource->people_praise_basic_auth_pass);
+            $username = $datasource->people_praise_basic_auth_user;
+            $password = $datasource->people_praise_basic_auth_pass;
         } catch (Exception $e) {
-            return;
+            // Don't silently succeed on a missing/undecryptable credential — surface
+            // it so the job is retried/failed rather than dropping the export.
+            Log::error('PeoplePraise API: unable to load credentials for call ID '.$this->call_id.': '.$e->getMessage());
+            throw $e;
         }
 
         // Get timezone from Settings model
@@ -131,15 +139,15 @@ class CreatePrecisionJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             ],
         ]);
 
-        try {
-            if ($response->getStatusCode() !== 200) {
-                // forces retry
-                throw new Exception('Failed to create precision job');
-            } else {
-                return;
-            }
-        } catch (Exception $e) {
-            return;
+        // A non-200 must propagate so the job is retried; previously the throw was
+        // caught by its own try/catch and swallowed, so retries never happened.
+        if ($response->getStatusCode() !== 200) {
+            throw new Exception('Failed to create precision job (HTTP '.$response->getStatusCode().')');
+        }
+
+        // Export confirmed — now it's safe to remove the source board-check item.
+        if ($this->board_check_item_id !== null) {
+            \App\Models\BoardCheckItem::whereKey($this->board_check_item_id)->delete();
         }
     }
 

@@ -58,9 +58,10 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
         // make sure we have a database and table
         $validator = Validator::make($this->database_commands, [
             'database' => 'required|string|in:database',
-            'action' => 'required|string|in:replace',
+            'action' => 'required|string|in:replace,merge',
             'table_name' => 'required|string',
-            'column_for_pk' => 'required_if:action,merge|integer|min:1|max:255',
+            // column_for_pk is the CSV/column NAME to key the upsert on, not an index.
+            'column_for_pk' => 'required_if:action,merge|string',
         ]);
 
         if (! $validator->errors()->any()) {
@@ -140,7 +141,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
                 'port' => $this->datasource->client_db_port,
                 'database' => $this->datasource->client_db_data,
                 'username' => $this->datasource->client_db_user,
-                'password' => decrypt($this->datasource->client_db_pass),
+                'password' => $this->datasource->client_db_pass,
                 'encrypt' => true,
                 'trust_server_certificate' => true,
             ]);
@@ -206,15 +207,19 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
         $records_that_exist = [];
 
         // Update or Insert records based on the 'column_for_pk' variable
+        $pkColumn = $this->database_commands['column_for_pk'];
         foreach ($records as $record) {
             DB::connection('clientdb')
                 ->table($this->database_commands['table_name'])
-                ->updateOrInsert([$this->database_commands['column_for_pk'] => $record[$this->database_commands['column_for_pk']]], $record);
+                ->updateOrInsert([$pkColumn => $record[$pkColumn]], $record);
 
-            $records_that_exist[] = $record['id'];
+            // Track the PK values we saw so stale rows can be pruned below. (Previously
+            // this collected $record['id'], which doesn't exist in the CSV, so the
+            // whereNotIn prune operated on a list of nulls.)
+            $records_that_exist[] = $record[$pkColumn];
         }
 
-        DB::connection('clientdb')->table($this->database_commands['table_name'])->whereNotIn($this->database_commands['column_for_pk'], $records_that_exist)->delete();
+        DB::connection('clientdb')->table($this->database_commands['table_name'])->whereNotIn($pkColumn, $records_that_exist)->delete();
 
         $this->email->processed_at = Carbon::now();
         $this->email->save();
@@ -241,7 +246,7 @@ class DatabaseAttachmentSaveJob implements ShouldQueue
                 'port' => $this->datasource->client_db_port,
                 'database' => $this->datasource->client_db_data,
                 'username' => $this->datasource->client_db_user,
-                'password' => decrypt($this->datasource->client_db_pass),
+                'password' => $this->datasource->client_db_pass,
                 'encrypt' => true,
                 'trust_server_certificate' => true,
             ]);

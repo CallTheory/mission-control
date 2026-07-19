@@ -19,6 +19,10 @@ class ProcessCallRecording implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
 
     public int $timeout = 240;
 
+    public int $tries = 3;
+
+    public int $backoff = 60;
+
     public string $isCallID;
 
     /**
@@ -37,9 +41,14 @@ class ProcessCallRecording implements ShouldBeEncrypted, ShouldBeUnique, ShouldQ
     {
         Log::info("ProcessCallRecording starting for call {$this->isCallID}");
         $exitCode = Artisan::call('recording:convert', ['isCallID' => $this->isCallID]);
+
         if ($exitCode !== 0) {
+            // Keep the working copy so a retry can re-run the conversion; a transient
+            // sox failure must not permanently discard the source recording.
             Log::error("Recording conversion failed for call {$this->isCallID} (exit code: {$exitCode})");
+            throw new \RuntimeException("recording:convert failed for {$this->isCallID} (exit {$exitCode})");
         }
+
         Storage::deleteDirectory("recordings/{$this->isCallID}/");
         Storage::delete("recordings/{$this->isCallID}.wav");
     }

@@ -48,8 +48,8 @@ class ProcessRingCentralNewFaxes extends Command
         }
 
         if ($this->datasource->ringcentral_client_id &&
-            decrypt($this->datasource->ringcentral_client_secret) &&
-            decrypt($this->datasource->ringcentral_jwt_token) &&
+            $this->datasource->ringcentral_client_secret &&
+            $this->datasource->ringcentral_jwt_token &&
             $this->datasource->ringcentral_api_endpoint
         ) {
             return true;

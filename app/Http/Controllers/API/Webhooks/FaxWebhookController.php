@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\API\Webhooks;
 
+use App\Http\Controllers\Concerns\VerifiesSharedSecret;
 use App\Http\Controllers\Controller;
 use App\Jobs\MoveFailedFaxFiles;
 use App\Jobs\MoveSuccessfulFaxFiles;
@@ -17,8 +18,26 @@ use Illuminate\Support\Facades\Mail;
 
 class FaxWebhookController extends Controller
 {
+    use VerifiesSharedSecret;
+
+    /**
+     * Verify the shared secret carried on a provider callback. Configure the
+     * provider's webhook URL with `?token=<secret>` (or send it as the
+     * `X-Webhook-Secret` header). Fails closed when the secret is unset.
+     */
+    private function webhookSecretValid(Request $request): bool
+    {
+        $provided = $request->header('X-Webhook-Secret') ?? $request->query('token');
+
+        return $this->sharedSecretMatches($provided, config('services.fax.webhook_secret'));
+    }
+
     public function mfax(Request $request): JsonResponse
     {
+        if (! $this->webhookSecretValid($request)) {
+            return response()->json(['message' => 'unauthorized'], 403);
+        }
+
         $data = $request->all();
         $faxUuid = $data['uuid'] ?? $data['faxId'] ?? null;
         $status = $data['status'] ?? null;
@@ -47,6 +66,10 @@ class FaxWebhookController extends Controller
 
     public function ringcentral(Request $request): JsonResponse
     {
+        if (! $this->webhookSecretValid($request)) {
+            return response()->json(['message' => 'unauthorized'], 403);
+        }
+
         $data = $request->all();
 
         // Handle RingCentral validation token handshake

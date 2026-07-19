@@ -32,7 +32,8 @@ class IsUser extends Component
         ]);
 
         $this->datasource->is_agent_username = $this->state['is_username'];
-        $this->datasource->is_agent_password = encrypt($this->state['is_password']);
+        // The model cast encrypts on write; pass plaintext.
+        $this->datasource->is_agent_password = $this->state['is_password'];
         $this->datasource->save();
 
         $this->dispatch('saved');

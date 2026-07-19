@@ -51,8 +51,8 @@ class CloudFaxingRingCentral extends Component
         $this->datasource = DataSource::firstOrFail();
         $this->client_id = $this->datasource->ringcentral_client_id ?? '';
         try {
-            $this->client_secret = decrypt($this->datasource->ringcentral_client_secret) ?? '';
-            $this->jwtToken = decrypt($this->datasource->ringcentral_jwt_token) ?? '';
+            $this->client_secret = $this->datasource->ringcentral_client_secret ?? '';
+            $this->jwtToken = $this->datasource->ringcentral_jwt_token ?? '';
         } catch (Exception $e) {
             $this->client_secret = '';
             $this->jwtToken = '';

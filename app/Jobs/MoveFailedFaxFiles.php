@@ -37,12 +37,13 @@ class MoveFailedFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public function __construct($faxFsDetails, $fax_provider = 'mfax')
     {
         $this->fax_provider = $fax_provider;
-        $this->capfile = $faxFsDetails['capfile'];
+        // basename() the filenames from .fs contents so they can't escape the spool dir.
+        $this->capfile = basename($faxFsDetails['capfile']);
         $this->jobID = $faxFsDetails['jobID'];
-        $this->filename = $faxFsDetails['filename'];
+        $this->filename = basename($faxFsDetails['filename']);
         $this->phone = $faxFsDetails['phone'];
         $this->status = $faxFsDetails['status'];
-        $this->fsFileName = $faxFsDetails['fsFileName'];
+        $this->fsFileName = basename($faxFsDetails['fsFileName']);
     }
 
     /**

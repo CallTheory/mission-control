@@ -17,6 +17,13 @@ class ConfigEditorController extends Controller
                 abort(403);
             }
 
+            // The config editor issues raw SELECT/UPDATE against the production
+            // Amtelco SQL Server; restrict it to team admins, not any member with
+            // the utility enabled.
+            if (! $request->user()->hasTeamRole($request->user()->currentTeam, 'admin')) {
+                abort(403);
+            }
+
             return view('utilities.config-editor');
         }
         abort(404);

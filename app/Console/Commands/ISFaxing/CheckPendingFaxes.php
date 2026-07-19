@@ -46,11 +46,11 @@ class CheckPendingFaxes extends Command
             try {
                 $rcsdk = new RingCentralSDK(
                     $datasource->ringcentral_client_id,
-                    decrypt($datasource->ringcentral_client_secret),
+                    $datasource->ringcentral_client_secret,
                     $datasource->ringcentral_api_endpoint
                 );
                 $rcPlatform = $rcsdk->platform();
-                $rcPlatform->login(['jwt' => decrypt($datasource->ringcentral_jwt_token)]);
+                $rcPlatform->login(['jwt' => $datasource->ringcentral_jwt_token]);
             } catch (Exception $e) {
                 Log::error("CheckPendingFaxes: RingCentral auth failed: {$e->getMessage()}");
             }
@@ -86,7 +86,7 @@ class CheckPendingFaxes extends Command
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
-                'Authorization' => 'Basic '.decrypt($datasource->mfax_api_key),
+                'Authorization' => 'Basic '.$datasource->mfax_api_key,
             ],
         ]);
 

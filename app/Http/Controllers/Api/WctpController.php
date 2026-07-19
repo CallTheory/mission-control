@@ -315,6 +315,19 @@ class WctpController extends Controller
             return $this->errorResponse('404', 'Original message not found');
         }
 
+        // Authenticate the replying host with its security code, exactly as every
+        // other WCTP operation does. Without this, anyone who guesses a
+        // wctp_message_id could inject a forged inbound reply to the host.
+        $host = $originalMessage->enterpriseHost;
+
+        if (! $host || ! $host->enabled) {
+            return $this->errorResponse('401', 'sender not found');
+        }
+
+        if (! $host->validateSecurityCode($data['security_code'] ?? '')) {
+            return $this->errorResponse('402', 'Invalid securityCode');
+        }
+
         // Create a reply message
         $replyMessage = WctpMessage::create([
             'enterprise_host_id' => $originalMessage->enterprise_host_id,
@@ -328,8 +341,7 @@ class WctpController extends Controller
         ]);
 
         // Forward the reply to the Enterprise Host asynchronously
-        $host = $originalMessage->enterpriseHost;
-        if ($host && $host->callback_url) {
+        if ($host->callback_url) {
             $wctpXml = $this->wctpService->createInboundMessage(
                 $replyMessage->from,
                 $replyMessage->to,

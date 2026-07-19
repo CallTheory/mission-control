@@ -75,8 +75,10 @@ if (Helpers::isSystemFeatureEnabled('api-gateway')) {
     Route::match(['get', 'post'], '/utilities/studly-case', StudlyCaseController::class)
         ->name('api.utilities.studly-case');
 
-    // Stripe New Customer Form
+    // Stripe New Customer Form. Rate limited to blunt customer-enumeration and
+    // resource-creation abuse on this unauthenticated endpoint.
     Route::get('/integrations/stripe-fillout', StripeFillOut::class)
+        ->middleware('throttle:10,1')
         ->name('api.integrations.stripe-fillout');
 
     // Basic "me" api with auth

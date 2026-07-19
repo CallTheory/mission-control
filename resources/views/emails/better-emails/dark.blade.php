@@ -147,7 +147,7 @@
                                                                                     <tr>
                                                                                         <td style="line-height: 24px; font-size: 16px; width: 100%; color: #ffffff; margin: 0; padding: 20px;" align="left" bgcolor="#1a202c">
                                                                                             @foreach($msg as $line)
-                                                                                                {!! $line !!}<br>
+                                                                                                {{ $line }}<br>
                                                                                             @endforeach
                                                                                             @if($email_details['include']['message_history'])
                                                                                                 @if(count($email_details['envelope']['history'][$key]))
@@ -157,7 +157,7 @@
                                                                                                             <td style="line-height: 24px; font-size: 16px; border-radius: 4px; color: black; margin: 0; padding: 8px; border: 1px solid transparent;" align="left" bgcolor="#6b7fa7">
                                                                                                                 <div>
                                                                                                                     @foreach($email_details['envelope']['history'][$key] as $hi)
-                                                                                                                        <p class="text-xs" style="line-height: 14.4px; font-size: 12px; width: 100%; margin: 0;" align="left">{!! trim($hi) !!}</p>
+                                                                                                                        <p class="text-xs" style="line-height: 14.4px; font-size: 12px; width: 100%; margin: 0;" align="left">{{ trim($hi) }}</p>
                                                                                                                     @endforeach
                                                                                                                 </div>
                                                                                                             </td>

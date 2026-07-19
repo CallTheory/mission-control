@@ -62,7 +62,7 @@ class DatabaseHealth extends Component
             'port' => $this->datasource->is_db_port,
             'database' => $this->datasource->is_db_data,
             'username' => $this->datasource->is_db_user,
-            'password' => decrypt($this->datasource->is_db_pass),
+            'password' => $this->datasource->is_db_pass,
             'encrypt' => true,
             'trust_server_certificate' => true,
         ]);

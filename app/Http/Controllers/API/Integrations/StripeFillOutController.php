@@ -20,8 +20,8 @@ class StripeFillOutController extends Controller
 
     public function __construct()
     {
-        $this->redirectOnSuccess = 'https://example.com/thanks';
-        $this->redirectOnError = 'https://example.com/thanks';
+        $this->redirectOnSuccess = config('services.stripe.fillout_success_url', 'https://example.com/thanks');
+        $this->redirectOnError = config('services.stripe.fillout_error_url', 'https://example.com/thanks');
     }
 
     /**
@@ -78,6 +78,9 @@ class StripeFillOutController extends Controller
             return redirect()->to($this->redirectOnError);
         }
 
-        return response()->redirectTo($customer->data[0]->redirectToBillingPortal($this->redirectOnSuccess));
+        // $customer here is the freshly created Customer, not a search result, so
+        // redirect using it directly (the previous $customer->data[0] threw on the
+        // new-customer path, 500-ing every genuine first-time submission).
+        return response()->redirectTo($customer->redirectToBillingPortal($this->redirectOnSuccess));
     }
 }

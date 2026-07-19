@@ -40,7 +40,7 @@ class SyncMergeCommWebHooks implements ShouldBeEncrypted, ShouldQueue
             'port' => $datasources->is_db_port,
             'database' => $datasources->is_db_data,
             'username' => $datasources->is_db_user,
-            'password' => decrypt($datasources->is_db_pass),
+            'password' => $datasources->is_db_pass,
             'encrypt' => true,
             'trust_server_certificate' => true,
         ]);
@@ -66,6 +66,8 @@ class SyncMergeCommWebHooks implements ShouldBeEncrypted, ShouldQueue
                 $add->message = $trigger->Description;
                 $add->apiKey = $trigger->LookupId;
                 $add->login = $datasources->is_agent_username;
+                // is_agent_password is stored encrypted (see System\DataSources\IsUser);
+                // decrypt it so the trigger holds the real password, not ciphertext.
                 $add->password = $datasources->is_agent_password;
                 $add->save();
             }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\SendGrid;
 
+use App\Http\Controllers\Concerns\VerifiesSharedSecret;
 use App\Http\Controllers\Controller;
 use App\Jobs\InboundRuleMatch;
 use App\Models\InboundEmail;
@@ -10,13 +11,14 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 // use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ParseController extends Controller
 {
+    use VerifiesSharedSecret;
+
     public function __invoke(Request $request, string $api_key): JsonResponse
     {
         if (! Helpers::isSystemFeatureEnabled('inbound-email')) {
@@ -25,7 +27,7 @@ class ParseController extends Controller
             return response()->json(['error' => 'not found', 'error_code' => '404'], 404, [], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         }
 
-        if ($api_key !== hash('md5', config('app.url')) && ! App::environment('local')) {
+        if (! $this->sharedSecretMatches($api_key, config('services.inbound_email.parse_secret'))) {
             Log::info('[Inbound Email] Invalid API Key');
 
             return response()->json(['error' => 'not found', 'error_code' => '404'], 404, [], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);

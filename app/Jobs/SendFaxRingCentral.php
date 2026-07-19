@@ -70,10 +70,11 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         // that arrives in some .fs files ("9139069098;") and breaks E.164 normalization.
         $this->phone = preg_replace('/[^0-9+]/', '', $fax['phone']);
         $this->jobID = $fax['jobID'];
-        $this->capfile = $fax['capfile'];
-        $this->filename = $fax['filename'];
+        // basename() the filenames from .fs contents so they can't escape the spool dir.
+        $this->capfile = basename($fax['capfile']);
+        $this->filename = basename($fax['filename']);
         $this->status = $fax['status'];
-        $this->fsFileName = $fax['fsFileName'];
+        $this->fsFileName = basename($fax['fsFileName']);
         $this->onQueue('ringcentral');
     }
 
@@ -110,8 +111,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             $this->client_id = $this->datasource->ringcentral_client_id;
             $this->api_endpoint = $this->datasource->ringcentral_api_endpoint;
             try {
-                $this->client_secret = decrypt($this->datasource->ringcentral_client_secret);
-                $this->jwtToken = decrypt($this->datasource->ringcentral_jwt_token);
+                $this->client_secret = $this->datasource->ringcentral_client_secret;
+                $this->jwtToken = $this->datasource->ringcentral_jwt_token;
             } catch (Exception $e) {
                 $this->fail($e);
 

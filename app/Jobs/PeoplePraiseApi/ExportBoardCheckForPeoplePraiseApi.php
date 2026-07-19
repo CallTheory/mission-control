@@ -82,10 +82,15 @@ class ExportBoardCheckForPeoplePraiseApi implements ShouldBeEncrypted, ShouldBeU
                     } catch (Exception $e) {
                         Log::critical('Unable to get details: '.$e->getMessage());
 
-                        return;
+                        // Skip just this item; a single bad lookup must not abandon the
+                        // rest of the batch (and the msgId advance) as `return` did.
+                        continue;
                     }
 
                     try {
+                        // The item is deleted by CreatePrecisionJob only after the export
+                        // is confirmed — do NOT delete it here, or a failed async export
+                        // would silently lose the board-check record.
                         CreatePrecisionJob::dispatch(
                             $agent->Initials ?? 'AAA',
                             $call->ClientNumber ?? '0',
@@ -95,10 +100,10 @@ class ExportBoardCheckForPeoplePraiseApi implements ShouldBeEncrypted, ShouldBeU
                             $item->comments ?? '',
                             $item->problem_verified_by ?? '',
                             $item->callId ?? '0',
+                            $item->id,
                         );
-                        $item->delete();
                     } catch (Exception $e) {
-                        Log::critical('Unable to save row to file: '.$e->getMessage());
+                        Log::critical('Unable to queue precision export: '.$e->getMessage());
                     }
                 }
             }

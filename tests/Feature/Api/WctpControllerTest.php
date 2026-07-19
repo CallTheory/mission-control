@@ -170,7 +170,9 @@ XML;
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
-    <wctp-MessageReply responseToMessageID="msg123" responseText="Reply text" submitTimestamp="2024-01-01T12:00:00Z"/>
+    <wctp-MessageReply responseToMessageID="msg123" responseText="Reply text" submitTimestamp="2024-01-01T12:00:00Z">
+        <wctp-Originator senderID="test@example.com" securityCode="test123"/>
+    </wctp-MessageReply>
 </wctp-Operation>
 XML;
 
@@ -178,11 +180,44 @@ XML;
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        
+
         $responseXml = simplexml_load_string($response->getContent());
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Success'}));
+    }
+
+    public function test_wctp_message_reply_rejects_invalid_security_code(): void
+    {
+        \App\Models\WctpMessage::create([
+            'enterprise_host_id' => $this->host->id,
+            'to' => '+15551234567',
+            'from' => '+15559999999',
+            'message' => 'Original message',
+            'wctp_message_id' => 'msg123',
+            'direction' => 'outbound',
+            'status' => 'delivered',
+        ]);
+
+        // Correct senderID but wrong securityCode must be rejected (402), preventing
+        // forged inbound replies to the host.
+        $xml = <<<XML
+<?xml version="1.0"?>
+<!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
+<wctp-Operation wctpVersion="1.3">
+    <wctp-MessageReply responseToMessageID="msg123" responseText="Forged" submitTimestamp="2024-01-01T12:00:00Z">
+        <wctp-Originator senderID="test@example.com" securityCode="wrong-code"/>
+    </wctp-MessageReply>
+</wctp-Operation>
+XML;
+
+        $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
+
+        $responseXml = simplexml_load_string($response->getContent());
+        $this->assertNotNull($responseXml);
+        $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
+        // No forged inbound reply should have been stored.
+        $this->assertEquals(0, \App\Models\WctpMessage::where('direction', 'inbound')->count());
     }
 
     public function test_twilio_callback_updates_message_status(): void

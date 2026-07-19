@@ -15,13 +15,17 @@ class UserController extends Controller
      */
     public function __invoke(Request $request, User $user): View
     {
-        if ($request->user()->currentTeam->personal_team === false) {
-            if (
-                $request->user()->hasTeamRole($request->user()->currentTeam, 'admin')
-            ) {
-                return view('system.user')->with('user', $user);
-            }
+        $currentTeam = $request->user()->currentTeam;
+
+        if ($currentTeam->personal_team === false
+            && $request->user()->hasTeamRole($currentTeam, 'admin')
+            // The target user must belong to the admin's current team — otherwise
+            // an admin could enumerate users across other tenants by id.
+            && $user->belongsToTeam($currentTeam)
+        ) {
+            return view('system.user')->with('user', $user);
         }
+
         abort(403);
     }
 }

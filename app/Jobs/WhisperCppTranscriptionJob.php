@@ -89,8 +89,21 @@ class WhisperCppTranscriptionJob implements ShouldBeEncrypted, ShouldBeUnique, S
             $filesize = filesize($filepath);
             Log::info("Transcription starting for {$this->filename} ({$filesize} bytes)");
 
-            $transcribe = "{$this->whisper_root}/build/bin/whisper-cli {$this->whisper_command_params} -m {$this->whisper_root}/models/{$this->whisper_model} -f {$recording_storage}/{$this->filename} -ojf -of {$transcription_storage}/{$json_filename}";
-            Log::info("Transcribing {$this->filename}: {$transcribe}");
+            // Array form: arguments are passed directly to execvp without a shell,
+            // so a crafted filename can never inject shell metacharacters. Operator-
+            // supplied whisper_command_params are split on whitespace into args.
+            $extraParams = preg_split('/\s+/', trim((string) $this->whisper_command_params), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $transcribe = array_merge(
+                ["{$this->whisper_root}/build/bin/whisper-cli"],
+                $extraParams,
+                [
+                    '-m', "{$this->whisper_root}/models/{$this->whisper_model}",
+                    '-f', "{$recording_storage}/{$this->filename}",
+                    '-ojf',
+                    '-of', "{$transcription_storage}/{$json_filename}",
+                ]
+            );
+            Log::info("Transcribing {$this->filename}: ".implode(' ', $transcribe));
             try {
                 $result = Process::timeout($this->timeout)->run($transcribe)->throw();
                 $jsonContent = Storage::get("transcriptions/{$json_filename}.json");

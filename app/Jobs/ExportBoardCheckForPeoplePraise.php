@@ -86,7 +86,9 @@ class ExportBoardCheckForPeoplePraise implements ShouldBeEncrypted, ShouldBeUniq
                     } catch (Exception $e) {
                         Log::critical('Unable to get details: '.$e->getMessage());
 
-                        return;
+                        // Skip just this item; a single bad lookup must not abandon the
+                        // rest of the batch (and the msgId advance) as `return` did.
+                        continue;
                     }
 
                     /*

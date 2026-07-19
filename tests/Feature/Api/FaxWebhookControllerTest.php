@@ -38,9 +38,48 @@ class FaxWebhookControllerTest extends TestCase
         $this->app->forgetInstance('cache.store');
         $this->withoutMiddleware(ThrottleRequests::class);
 
+        // Fax callbacks now require a shared secret; supply it by default so the
+        // behavioural tests below exercise the business logic, not the auth gate.
+        config(['services.fax.webhook_secret' => 'test-fax-secret']);
+        $this->withHeader('X-Webhook-Secret', 'test-fax-secret');
+
         DataSource::create([
             'fax_failure_notification_email' => 'test@example.com',
         ]);
+    }
+
+    public function test_mfax_webhook_rejects_missing_secret(): void
+    {
+        Queue::fake();
+
+        $response = $this->withHeader('X-Webhook-Secret', 'wrong-secret')
+            ->postJson('/api/webhooks/fax/mfax', ['uuid' => 'x', 'status' => 'success']);
+
+        $response->assertForbidden();
+        Queue::assertNothingPushed();
+    }
+
+    public function test_ringcentral_webhook_rejects_missing_secret(): void
+    {
+        Queue::fake();
+
+        $response = $this->withHeader('X-Webhook-Secret', 'wrong-secret')
+            ->postJson('/api/webhooks/fax/ringcentral', ['body' => ['id' => 'x', 'messageStatus' => 'Sent']]);
+
+        $response->assertForbidden();
+        Queue::assertNothingPushed();
+    }
+
+    public function test_fax_webhook_fails_closed_when_secret_unconfigured(): void
+    {
+        Queue::fake();
+        config(['services.fax.webhook_secret' => null]);
+
+        $this->withHeader('X-Webhook-Secret', '')
+            ->postJson('/api/webhooks/fax/mfax', ['uuid' => 'x', 'status' => 'success'])
+            ->assertForbidden();
+
+        Queue::assertNothingPushed();
     }
 
     // --- MFax Webhook Tests ---

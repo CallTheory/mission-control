@@ -104,7 +104,14 @@ class EnterpriseHost extends Model
     public function validateSecurityCode(string $code): bool
     {
         try {
-            return $this->securityCode === $code;
+            $expected = $this->securityCode;
+
+            if (! is_string($expected) || $expected === '' || $code === '') {
+                return false;
+            }
+
+            // Constant-time comparison to avoid leaking the code via timing.
+            return hash_equals($expected, $code);
         } catch (\Exception $e) {
             return false;
         }

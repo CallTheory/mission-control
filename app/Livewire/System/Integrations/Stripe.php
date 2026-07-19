@@ -18,20 +18,17 @@ class Stripe extends Component
     public function mount(): void
     {
         $this->datasource = DataSource::firstOrNew();
-        try {
-            $this->state['stripe_secret_test_key'] = decrypt($this->datasource->stripe_test_secret_key ?? null);
-            $this->state['stripe_secret_prod_key'] = decrypt($this->datasource->stripe_prod_secret_key ?? null);
-        } catch (Exception $e) {
-            $this->state['stripe_secret_test_key'] = '';
-            $this->state['stripe_secret_prod_key'] = '';
-        }
+        // Keys are decrypted transparently by the model cast.
+        $this->state['stripe_secret_test_key'] = $this->datasource->stripe_test_secret_key ?? '';
+        $this->state['stripe_secret_prod_key'] = $this->datasource->stripe_prod_secret_key ?? '';
     }
 
     public function saveStripeKeys(): void
     {
         try {
-            $this->datasource->stripe_test_secret_key = encrypt($this->state['stripe_secret_test_key']);
-            $this->datasource->stripe_prod_secret_key = encrypt($this->state['stripe_secret_prod_key']);
+            // The model cast encrypts on write; pass plaintext.
+            $this->datasource->stripe_test_secret_key = $this->state['stripe_secret_test_key'];
+            $this->datasource->stripe_prod_secret_key = $this->state['stripe_secret_prod_key'];
             $this->datasource->save();
             $this->dispatch('saved');
             $this->isOpen = false;

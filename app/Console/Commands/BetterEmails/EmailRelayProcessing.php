@@ -27,7 +27,8 @@ class EmailRelayProcessing extends Command
     public function handle(): void
     {
         $raw_email = file_get_contents('php://stdin');
-        Log::info('Raw Email', [$raw_email]);
+        // Do NOT log the raw message body — it may contain PHI. Log only its size.
+        Log::info('Inbound relay email received', ['bytes' => strlen((string) $raw_email)]);
         // we need to get these:
         // subject
         // to
@@ -35,7 +36,6 @@ class EmailRelayProcessing extends Command
         $mime = mailparse_msg_create();
         mailparse_msg_parse($mime, $raw_email);
         mailparse_msg_free($mime);
-        Log::info('Mime Parsed', [$mime]);
         exit;
     }
 }

@@ -50,7 +50,7 @@ class CloudFaxing extends Component
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
-                'Authorization' => 'Basic '.decrypt($this->datasource->mfax_api_key),
+                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
             ],
         ]);
 
@@ -87,7 +87,7 @@ class CloudFaxing extends Component
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
-                'Authorization' => 'Basic '.decrypt($this->datasource->mfax_api_key),
+                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
             ],
         ]);
 
@@ -161,7 +161,7 @@ class CloudFaxing extends Component
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
-                'Authorization' => 'Basic '.decrypt($this->datasource->mfax_api_key),
+                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
             ],
         ]);
 

@@ -31,6 +31,12 @@ class EmailView extends Component
 
     public function forwardEmail(): void
     {
+        // Validate the destination before sending; a malformed/empty address
+        // previously threw or silently failed with no feedback.
+        $this->validate([
+            'state.forward_email' => 'required|email',
+        ]);
+
         $this->forwardEmailModal = false;
         Mail::send(new ForwardInboundEmail($this->email, $this->state['forward_email']));
         $this->state['forward_email'] = '';

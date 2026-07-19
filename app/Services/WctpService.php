@@ -268,10 +268,16 @@ class WctpService
     {
         $messageReply = $xml->{'wctp-MessageReply'};
 
+        $originator = $messageReply->{'wctp-Originator'}
+            ?? $messageReply->{'wctp-ClientOriginator'}
+            ?? null;
+
         return [
             'response_to_message_id' => (string) ($messageReply['responseToMessageID'] ?? ''),
             'response_text' => (string) ($messageReply['responseText'] ?? ''),
             'submit_time_stamp' => (string) ($messageReply['submitTimestamp'] ?? ''),
+            'sender_id' => $originator ? (string) ($originator['senderID'] ?? '') : '',
+            'security_code' => $originator ? (string) ($originator['securityCode'] ?? '') : '',
         ];
     }
 

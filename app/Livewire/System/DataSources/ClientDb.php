@@ -62,7 +62,8 @@ class ClientDb extends Component
         $this->datasource->client_db_user = $this->state['client_db_user'];
 
         try {
-            $this->datasource->client_db_pass = encrypt($this->state['client_db_pass']);
+            // The model cast encrypts on write; pass plaintext.
+            $this->datasource->client_db_pass = $this->state['client_db_pass'];
             $this->datasource->save();
             $this->dispatch('saved');
         } catch (Exception $e) {
@@ -76,7 +77,7 @@ class ClientDb extends Component
         $database = $this->state['client_db_data'] ?: $this->datasource->client_db_data;
         $username = $this->state['client_db_user'] ?: $this->datasource->client_db_user;
         $password = $this->state['client_db_pass']
-            ?: ($this->datasource->client_db_pass ? decrypt($this->datasource->client_db_pass) : '');
+            ?: ($this->datasource->client_db_pass ?: '');
 
         if (empty($host) || empty($port) || empty($database) || empty($username) || empty($password)) {
             $this->connectionStatus = 'failed';
