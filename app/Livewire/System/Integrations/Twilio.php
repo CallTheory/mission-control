@@ -4,53 +4,35 @@ declare(strict_types=1);
 
 namespace App\Livewire\System\Integrations;
 
-use App\Models\DataSource;
+use App\Livewire\Concerns\HasSettingsModal;
+use App\Livewire\Concerns\ManagesDataSourceSettings;
 use Illuminate\View\View;
 use Livewire\Component;
 
 class Twilio extends Component
 {
-    public bool $isOpen = false;
+    use HasSettingsModal;
+    use ManagesDataSourceSettings;
 
-    public $twilio_account_sid = '';
+    protected array $settingsFields = [
+        'twilio_account_sid',
+        'twilio_auth_token',
+        'twilio_from_number',
+    ];
 
-    public $twilio_auth_token = '';
-
-    public $twilio_from_number = '';
-
-    protected DataSource $datasource;
-
-    public function mount(): void
+    protected function rules(): array
     {
-        $this->datasource = DataSource::firstOrFail();
-
-        // Values are decrypted transparently by the model cast.
-        $this->twilio_account_sid = $this->datasource->twilio_account_sid ?: '';
-        $this->twilio_auth_token = $this->datasource->twilio_auth_token ?: '';
-
-        $this->twilio_from_number = $this->datasource->twilio_from_number ?? '';
+        return [
+            'state.twilio_account_sid' => 'nullable|string|max:255',
+            'state.twilio_auth_token' => 'nullable|string|max:255',
+            'state.twilio_from_number' => 'nullable|string|max:20',
+        ];
     }
 
     public function save(): void
     {
-        $this->validate([
-            'twilio_account_sid' => 'nullable|string|max:255',
-            'twilio_auth_token' => 'nullable|string|max:255',
-            'twilio_from_number' => 'nullable|string|max:20',
-        ]);
-
-        $datasource = DataSource::firstOrFail();
-
-        // The model cast encrypts on write; pass plaintext (or null to clear).
-        $datasource->twilio_account_sid = $this->twilio_account_sid ?: null;
-        $datasource->twilio_auth_token = $this->twilio_auth_token ?: null;
-
-        $datasource->twilio_from_number = $this->twilio_from_number ?: null;
-
-        $datasource->save();
-
-        $this->dispatch('saved');
-
+        $this->validate();
+        $this->persistSettings();
         $this->isOpen = false;
     }
 

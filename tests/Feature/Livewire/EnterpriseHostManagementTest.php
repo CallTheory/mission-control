@@ -168,7 +168,7 @@ class EnterpriseHostManagementTest extends TestCase
             ->set('team_id', Team::factory()->create()->id)
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSet('showCreateModal', false);
+            ->assertSet('showModal', false);
 
         $host = EnterpriseHost::where('senderID', 'test_sender')->firstOrFail();
         $this->assertSame($this->team->id, $host->team_id);
@@ -224,7 +224,7 @@ class EnterpriseHostManagementTest extends TestCase
             ->set('enabled', true)
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSet('showCreateModal', false);
+            ->assertSet('showModal', false);
 
         $this->assertDatabaseHas('enterprise_hosts', [
             'name' => 'Test Enterprise',
@@ -285,7 +285,7 @@ class EnterpriseHostManagementTest extends TestCase
 
         Livewire::test(EnterpriseHostManagement::class)
             ->call('editHost', $host)
-            ->assertSet('showEditModal', true)
+            ->assertSet('showModal', true)
             ->assertSet('name', 'Test Host')
             ->assertSet('senderID', 'test123')
             ->assertSet('securityCode', '')
@@ -304,7 +304,7 @@ class EnterpriseHostManagementTest extends TestCase
             ->set('securityCode', 'new_security_code_123')
             ->call('save')
             ->assertHasNoErrors()
-            ->assertSet('showEditModal', false);
+            ->assertSet('showModal', false);
 
         $host->refresh();
         $this->assertEquals('Updated Name', $host->name);

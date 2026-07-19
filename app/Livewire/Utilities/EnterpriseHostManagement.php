@@ -16,8 +16,7 @@ class EnterpriseHostManagement extends Component
     use AuthorizesWctpManagement;
     use WithPagination;
 
-    public $showCreateModal = false;
-    public $showEditModal = false;
+    public $showModal = false;
     public $editingHost = null;
     
     // Form fields
@@ -89,7 +88,7 @@ class EnterpriseHostManagement extends Component
     public function createHost()
     {
         $this->resetForm();
-        $this->showCreateModal = true;
+        $this->showModal = true;
     }
 
     public function editHost(EnterpriseHost $host)
@@ -105,8 +104,8 @@ class EnterpriseHostManagement extends Component
         $this->team_id = $host->team_id;
         $this->phoneNumbers = $host->phone_numbers ?? [];
         $this->newPhoneNumber = '';
-        
-        $this->showEditModal = true;
+
+        $this->showModal = true;
     }
 
     public function save()
@@ -151,8 +150,7 @@ class EnterpriseHostManagement extends Component
         }
 
         $this->resetForm();
-        $this->showCreateModal = false;
-        $this->showEditModal = false;
+        $this->showModal = false;
     }
 
     public function deleteHost(EnterpriseHost $host)
@@ -221,8 +219,9 @@ class EnterpriseHostManagement extends Component
             'newPhoneNumber',
             'editingHost',
         ]);
-        
+
         $this->resetValidation();
+        $this->showModal = false;
     }
 
     public function viewMessages(EnterpriseHost $host)

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ auth()->user()?->dark_mode === 'dark' ? 'dark' : '' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,13 +12,13 @@
         <link rel="shortcut icon" type="image/png" href="/images/mission-control.png"/>
 
     </head>
-    <body class="font-sans antialiased bg-gradient-to-br from-gray-200 to-gray-100">
+    <body class="font-sans antialiased bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 
         <x-banner />
 
-        <div class="min-h-screen bg-gradient-to-br from-gray-200 to-gray-100">
+        <div class="min-h-screen bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 
-            <div class="sticky top-0 bg-gradient-to-br from-gray-200 to-gray-100 z-10">
+            <div class="sticky top-0 bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800 z-10">
 
                 <div class="block">
                     @livewire('navigation-menu')
@@ -26,7 +26,7 @@
 
                 <!-- Page Heading -->
                 @if (isset($header))
-                    <header class="bg-white shadow z-20">
+                    <header class="bg-surface shadow z-20">
 
                         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
 

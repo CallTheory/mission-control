@@ -1,270 +1,158 @@
 <div>
-    {{-- Flash Messages --}}
-    @if (session()->has('message'))
-        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('message') }}</span>
-        </div>
-    @endif
+    <x-flash />
 
-    @if (session()->has('error'))
-        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span class="block sm:inline">{{ session('error') }}</span>
-        </div>
-    @endif
-
-    {{-- Header and Create Button --}}
-    <div class="mb-6 flex justify-between items-center">
-        <h2 class="text-2xl font-semibold text-gray-900">Enterprise Host Management</h2>
-        <button wire:click="createHost" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-            <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Create Enterprise Host
-        </button>
-    </div>
+    <x-page-header title="Enterprise Host Management">
+        <x-slot name="actions">
+            <x-button wire:click="createHost">
+                Create Enterprise Host
+            </x-button>
+        </x-slot>
+    </x-page-header>
 
     {{-- Filters --}}
     <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-            <input wire:model.live="search" type="text" id="search" 
-                   placeholder="Search by name or sender ID..."
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        
-        <div>
-            <label for="filterEnabled" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select wire:model.live="filterEnabled" id="filterEnabled" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All</option>
-                <option value="1">Enabled</option>
-                <option value="0">Disabled</option>
-            </select>
-        </div>
-        
-        <div>
-            <label for="filterTeam" class="block text-sm font-medium text-gray-700 mb-1">Team</label>
-            <select wire:model.live="filterTeam" id="filterTeam" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Teams</option>
-                @foreach($teams as $team)
-                    <option value="{{ $team->id }}">{{ $team->name }}</option>
-                @endforeach
-            </select>
-        </div>
+        <x-search-input wire-model="search" placeholder="Search by name or sender ID..." />
+
+        <x-filter-select for="filterEnabled" label="Status" wire-model="filterEnabled" placeholder="All">
+            <option value="1">Enabled</option>
+            <option value="0">Disabled</option>
+        </x-filter-select>
+
+        <x-filter-select for="filterTeam" label="Team" wire-model="filterTeam" :options="$teams"
+            placeholder="All Teams" option-value="id" option-label="name" />
     </div>
 
     {{-- Hosts Table --}}
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sender ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($hosts as $host)
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $host->name }}</div>
-                            @if($host->phone_numbers && count($host->phone_numbers) > 0)
-                                <div class="text-xs text-gray-500">📱 {{ count($host->phone_numbers) }} number(s)</div>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <code class="bg-gray-100 px-2 py-1 rounded">{{ $host->senderID }}</code>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $host->team ? $host->team->name : 'Global' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ number_format($host->messages_count) }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $host->last_message_at ? $host->last_message_at->diffForHumans() : 'Never' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button wire:click="toggleEnabled({{ $host->id }})" 
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                           {{ $host->enabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                {{ $host->enabled ? 'Enabled' : 'Disabled' }}
-                            </button>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button wire:click="editHost({{ $host->id }})" 
-                                    class="text-indigo-600 hover:text-indigo-900 mr-3">
-                                Edit
-                            </button>
-                            <button wire:click="viewMessages({{ $host->id }})" 
-                                    class="text-blue-600 hover:text-blue-900 mr-3">
-                                Messages
-                            </button>
-                            @if($host->messages_count == 0)
-                                <button wire:click="deleteHost({{ $host->id }})" 
-                                        wire:confirm="Are you sure you want to delete this host?"
-                                        class="text-red-600 hover:text-red-900">
-                                    Delete
-                                </button>
-                            @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                            No enterprise hosts found.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+    <x-table>
+        <x-slot name="head">
+            <x-table.heading>Name</x-table.heading>
+            <x-table.heading>Sender ID</x-table.heading>
+            <x-table.heading>Team</x-table.heading>
+            <x-table.heading>Messages</x-table.heading>
+            <x-table.heading>Last Activity</x-table.heading>
+            <x-table.heading>Status</x-table.heading>
+            <x-table.heading>Actions</x-table.heading>
+        </x-slot>
 
-    {{-- Pagination --}}
-    <div class="mt-4">
-        {{ $hosts->links() }}
-    </div>
+        @forelse($hosts as $host)
+            <x-table.row>
+                <x-table.cell>
+                    <div class="text-sm font-medium text-surface-fg">{{ $host->name }}</div>
+                    @if($host->phone_numbers && count($host->phone_numbers) > 0)
+                        <div class="text-xs text-muted">📱 {{ count($host->phone_numbers) }} number(s)</div>
+                    @endif
+                </x-table.cell>
+                <x-table.cell>
+                    <code class="bg-surface-2 px-2 py-1 rounded">{{ $host->senderID }}</code>
+                </x-table.cell>
+                <x-table.cell muted>{{ $host->team ? $host->team->name : 'Global' }}</x-table.cell>
+                <x-table.cell>{{ number_format($host->messages_count) }}</x-table.cell>
+                <x-table.cell muted>{{ $host->last_message_at ? $host->last_message_at->diffForHumans() : 'Never' }}</x-table.cell>
+                <x-table.cell>
+                    <button wire:click="toggleEnabled({{ $host->id }})">
+                        <x-badge :color="$host->enabled ? 'green' : 'red'">{{ $host->enabled ? 'Enabled' : 'Disabled' }}</x-badge>
+                    </button>
+                </x-table.cell>
+                <x-table.cell>
+                    <button wire:click="editHost({{ $host->id }})" class="text-primary hover:underline mr-3">Edit</button>
+                    <button wire:click="viewMessages({{ $host->id }})" class="text-primary hover:underline mr-3">Messages</button>
+                    @if($host->messages_count == 0)
+                        <button wire:click="deleteHost({{ $host->id }})"
+                                wire:confirm="Are you sure you want to delete this host?"
+                                class="text-danger hover:underline">Delete</button>
+                    @endif
+                </x-table.cell>
+            </x-table.row>
+        @empty
+            <x-table.empty :colspan="7">No enterprise hosts found.</x-table.empty>
+        @endforelse
+
+        <x-slot name="footer">{{ $hosts->links() }}</x-slot>
+    </x-table>
 
     {{-- Create/Edit Modal --}}
-    @if($showCreateModal || $showEditModal)
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 overflow-y-auto h-full w-full z-50">
-            <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">
-                        {{ $editingHost ? 'Edit Enterprise Host' : 'Create Enterprise Host' }}
-                    </h3>
-                    
-                    <form wire:submit="save">
-                        <div class="grid grid-cols-1 gap-4">
-                            {{-- Name --}}
-                            <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
-                                <input wire:model="name" type="text" id="name" required
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </div>
+    @if($showModal)
+        <x-dialog-modal wire:model.live="showModal" maxWidth="2xl">
+            <x-slot name="title">
+                {{ $editingHost ? 'Edit Enterprise Host' : 'Create Enterprise Host' }}
+            </x-slot>
 
-                            {{-- Sender ID --}}
-                            <div>
-                                <label for="senderID" class="block text-sm font-medium text-gray-700">Sender ID</label>
-                                <input wire:model="senderID" type="text" id="senderID" required
-                                       {{ $editingHost ? 'readonly' : '' }}
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm {{ $editingHost ? 'bg-gray-100' : '' }}">
-                                @error('senderID') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                <p class="mt-1 text-xs text-gray-500">This is the unique identifier used in WCTP messages</p>
-                            </div>
+            <x-slot name="content">
+                <div class="grid grid-cols-1 gap-4">
+                    <x-form-field for="name" label="Name" error-for="name" wire:model="name" required col-span="" />
 
-                            {{-- Security Code --}}
-                            <div>
-                                <label for="securityCode" class="block text-sm font-medium text-gray-700">
-                                    Security Code {{ $editingHost ? '(leave blank to keep existing)' : '' }}
-                                </label>
-                                <div class="mt-1 flex rounded-md shadow-sm">
-                                    <input wire:model="securityCode" type="text" id="securityCode" 
-                                           {{ !$editingHost ? 'required' : '' }}
-                                           class="flex-1 block w-full rounded-none rounded-l-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <button type="button" wire:click="generateSecurityCode"
-                                            class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100">
-                                        Generate
-                                    </button>
-                                </div>
-                                @error('securityCode') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                <p class="mt-1 text-xs text-gray-500">Used for authentication in WCTP requests</p>
-                            </div>
+                    <x-form-field for="senderID" label="Sender ID" error-for="senderID"
+                        help="This is the unique identifier used in WCTP messages" col-span="">
+                        <x-input id="senderID" type="text" wire:model="senderID" required
+                            :readonly="(bool) $editingHost"
+                            class="mt-1 block w-full {{ $editingHost ? 'bg-surface-2' : '' }}" />
+                    </x-form-field>
 
-                            {{-- Callback URL (Optional) --}}
-                            <div>
-                                <label for="callback_url" class="block text-sm font-medium text-gray-700">Callback URL (Optional)</label>
-                                <input wire:model="callback_url" type="url" id="callback_url"
-                                       placeholder="https://example.com/wctp/receive"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                @error('callback_url') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                <p class="mt-1 text-xs text-gray-500">URL to forward inbound SMS messages to this host</p>
-                            </div>
+                    <x-form-field for="securityCode"
+                        label="{{ 'Security Code'.($editingHost ? ' (leave blank to keep existing)' : '') }}"
+                        error-for="securityCode" help="Used for authentication in WCTP requests" col-span="">
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <x-input id="securityCode" type="text" class="flex-1 block w-full rounded-r-none"
+                                wire:model="securityCode" :required="! (bool) $editingHost" />
+                            <button type="button" wire:click="generateSecurityCode"
+                                class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-border bg-surface-2 text-muted text-sm hover:bg-border">
+                                Generate
+                            </button>
+                        </div>
+                    </x-form-field>
 
-                            {{-- Phone Numbers --}}
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Numbers</label>
-                                
-                                {{-- Existing Phone Numbers --}}
-                                @if(count($phoneNumbers) > 0)
-                                    <div class="mb-3 space-y-2">
-                                        @foreach($phoneNumbers as $index => $phoneNumber)
-                                            <div class="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
-                                                <span class="text-sm font-mono text-gray-900">{{ $phoneNumber }}</span>
-                                                <button type="button" wire:click="removePhoneNumber({{ $index }})" 
-                                                        class="text-red-600 hover:text-red-800">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        @endforeach
+                    <x-form-field for="callback_url" label="Callback URL (Optional)" type="url" error-for="callback_url"
+                        wire:model="callback_url" placeholder="https://example.com/wctp/receive"
+                        help="URL to forward inbound SMS messages to this host" col-span="" />
+
+                    {{-- Phone Numbers --}}
+                    <div>
+                        <x-label value="Phone Numbers" class="mb-2" />
+
+                        @if(count($phoneNumbers) > 0)
+                            <div class="mb-3 space-y-2">
+                                @foreach($phoneNumbers as $index => $phoneNumber)
+                                    <div class="flex items-center justify-between bg-surface-2 px-3 py-2 rounded">
+                                        <span class="text-sm font-mono text-surface-fg">{{ $phoneNumber }}</span>
+                                        <button type="button" wire:click="removePhoneNumber({{ $index }})" class="text-danger hover:underline">Remove</button>
                                     </div>
-                                @endif
-                                
-                                {{-- Add New Phone Number --}}
-                                <div class="flex gap-2">
-                                    <input wire:model="newPhoneNumber" type="tel" 
-                                           placeholder="+1234567890 or 1234567890"
-                                           class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <button type="button" wire:click="addPhoneNumber" 
-                                            class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                        Add
-                                    </button>
-                                </div>
-                                @error('newPhoneNumber') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                @error('phoneNumbers') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                @error('phoneNumbers.*') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                <p class="mt-1 text-xs text-gray-500">Phone numbers mapped to this host for inbound/outbound routing</p>
+                                @endforeach
                             </div>
+                        @endif
 
-                            {{-- Team --}}
-                            <div>
-                                <label for="team_id" class="block text-sm font-medium text-gray-700">Team (Optional)</label>
-                                <select wire:model="team_id" id="team_id"
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                    <option value="">Global (No Team)</option>
-                                    @foreach($teams as $team)
-                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('team_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                <p class="mt-1 text-xs text-gray-500">Associate this host with a specific team</p>
-                            </div>
-
-                            {{-- Enabled --}}
-                            <div>
-                                <label class="flex items-center">
-                                    <input wire:model="enabled" type="checkbox" 
-                                           class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <span class="ml-2 text-sm text-gray-700">Enabled</span>
-                                </label>
-                                <p class="mt-1 text-xs text-gray-500">Disabled hosts will reject all incoming messages</p>
-                            </div>
+                        <div class="flex gap-2">
+                            <x-input type="tel" class="flex-1" wire:model="newPhoneNumber" placeholder="+1234567890 or 1234567890" />
+                            <x-button type="button" wire:click="addPhoneNumber">Add</x-button>
                         </div>
+                        <x-input-error for="newPhoneNumber" class="mt-2" />
+                        <x-input-error for="phoneNumbers" class="mt-2" />
+                        <p class="mt-1 text-xs text-muted">Phone numbers mapped to this host for inbound/outbound routing</p>
+                    </div>
 
-                        {{-- Modal Actions --}}
-                        <div class="mt-6 flex justify-end space-x-3">
-                            <button type="button" 
-                                    wire:click="resetForm"
-                                    @click="$wire.showCreateModal = false; $wire.showEditModal = false"
-                                    class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                                Cancel
-                            </button>
-                            <button type="submit" 
-                                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                {{ $editingHost ? 'Update' : 'Create' }}
-                            </button>
-                        </div>
-                    </form>
+                    <x-form-field for="team_id" label="Team (Optional)" error-for="team_id"
+                        help="Associate this host with a specific team" col-span="">
+                        <select id="team_id" wire:model="team_id"
+                            class="mt-1 block w-full rounded-md border-border bg-surface text-surface-fg shadow-sm focus:border-primary focus:ring focus:ring-primary/30">
+                            <option value="">Global (No Team)</option>
+                            @foreach($teams as $team)
+                                <option value="{{ $team->id }}">{{ $team->name }}</option>
+                            @endforeach
+                        </select>
+                    </x-form-field>
+
+                    <x-toggle wire-model="enabled" label="Enabled" help="Disabled hosts will reject all incoming messages" />
                 </div>
-            </div>
-        </div>
+            </x-slot>
+
+            <x-slot name="footer">
+                <x-secondary-button wire:click="resetForm" wire:loading.attr="disabled">
+                    Cancel
+                </x-secondary-button>
+
+                <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
+                    {{ $editingHost ? 'Update' : 'Create' }}
+                </x-button>
+            </x-slot>
+        </x-dialog-modal>
     @endif
 </div>

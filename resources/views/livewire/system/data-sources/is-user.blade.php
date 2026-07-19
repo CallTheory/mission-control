@@ -8,28 +8,18 @@
     </x-slot>
 
     <x-slot name="form">
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="is_username" value="{{ __('Intelligent Series Agent Username') }}" />
-            <x-input id="is_username" type="text" class="mt-1 block w-full " wire:model.live="state.is_username" />
-            <x-input-error for="state.is_username" class="mt-2" />
-        </div>
+        <x-form-field for="is_username" label="{{ __('Intelligent Series Agent Username') }}"
+            error-for="state.is_username" wire:model.live="state.is_username" />
 
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="is_password" value="{{ __('Intelligent Series Agent Password') }}" />
-            <x-input id="is_password" type="password" class="mt-1 block w-full " wire:model.live="state.is_password" />
-            <x-input-error for="state.is_password" class="mt-2" />
-        </div>
+        <x-form-field for="is_password" label="{{ __('Intelligent Series Agent Password') }}" type="password"
+            error-for="state.is_password" wire:model.live="state.is_password" />
 
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="is_password_confirmation" value="{{ __('Password Confirmation') }}" />
-            <x-input id="is_password_confirmation" type="password" class="mt-1 block w-full " wire:model.live="state.is_password_confirmation" />
-            <x-input-error for="state.is_password_confirmation" class="mt-2" />
-        </div>
-
+        <x-form-field for="is_password_confirmation" label="{{ __('Password Confirmation') }}" type="password"
+            error-for="state.is_password_confirmation" wire:model.live="state.is_password_confirmation" />
     </x-slot>
 
     <x-slot name="actions">
-        <x-action-message class="mr-3 " on="saved">
+        <x-action-message class="mr-3" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
 

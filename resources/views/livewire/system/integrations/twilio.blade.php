@@ -1,92 +1,49 @@
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900 ">
-
+    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900">
         <a wire:click="$toggle('isOpen')" href="#" class="flex text-4xl text-white font-extrabold">
-            <img class="h-12 rounded-sm grayscale   mr-2" src="/images/twilio.svg"
-                 alt="Twilio">
+            <img class="h-12 rounded-sm grayscale mr-2" src="/images/twilio.svg" alt="Twilio">
         </a>
     </div>
 
     @if($isOpen)
-        <div class="">
-            <x-dialog-modal wire:model.live="isOpen">
-                <x-slot name="title">
+        <x-dialog-modal wire:model.live="isOpen">
+            <x-slot name="title">
+                <div class="flex text-4xl text-surface-fg font-extrabold">
+                    <img class="h-12 rounded mr-2" src="/images/twilio.svg" alt="Twilio">
+                </div>
+                Twilio Configuration
+            </x-slot>
+            <x-slot name="content">
+                <p class="mb-4">Configure Twilio credentials for SMS messaging and WCTP gateway integration. These credentials enable SMS forwarding and other Twilio-powered features.</p>
 
-                    <div class="flex text-4xl text-gray-900 font-extrabold">
-                        <img class="h-12 rounded  mr-2" src="/images/twilio.svg"
-                             alt="Twilio">
-                    </div>
+                <x-form-field for="twilio_account_sid" label="Account SID" error-for="state.twilio_account_sid"
+                    wire:model="state.twilio_account_sid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    help="Your Twilio Account SID from the Twilio Console" />
 
-                    Twilio Configuration
+                <x-form-field for="twilio_auth_token" label="Auth Token" type="password" error-for="state.twilio_auth_token"
+                    wire:model="state.twilio_auth_token" placeholder="********************************"
+                    help="Your Twilio Auth Token (keep this secret)" />
 
-                </x-slot>
-                <x-slot name="content">
-                    <p class="mb-4">Configure Twilio credentials for SMS messaging and WCTP gateway integration. These credentials enable SMS forwarding and other Twilio-powered features.</p>
+                <x-form-field for="twilio_from_number" label="From Phone Number" error-for="state.twilio_from_number"
+                    wire:model="state.twilio_from_number" placeholder="+15551234567"
+                    help="Your Twilio phone number to send SMS from (E.164 format)" />
 
-                    <div class="col-span-6 sm:col-span-4 my-2">
-                        <x-label for="twilio_account_sid" value="Account SID" />
-                        <x-input id="twilio_account_sid" type="text" class="mt-1 block w-full"
-                                 wire:model="twilio_account_sid"
-                                 placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
-                        <x-input-error for="twilio_account_sid" class="mt-2" />
-                        <p class="mt-1 text-sm text-gray-500">Your Twilio Account SID from the Twilio Console</p>
-                    </div>
+                @if(($state['twilio_account_sid'] ?? '') && ($state['twilio_auth_token'] ?? '') && ($state['twilio_from_number'] ?? ''))
+                    <x-alert-success
+                        title="Twilio is configured and ready to use"
+                        description="SMS messaging and WCTP gateway features are enabled" />
+                @endif
+            </x-slot>
 
-                    <div class="col-span-6 sm:col-span-4 my-2">
-                        <x-label for="twilio_auth_token" value="Auth Token" />
-                        <x-input id="twilio_auth_token" type="password" class="mt-1 block w-full"
-                                 wire:model="twilio_auth_token"
-                                 placeholder="********************************" />
-                        <x-input-error for="twilio_auth_token" class="mt-2" />
-                        <p class="mt-1 text-sm text-gray-500">Your Twilio Auth Token (keep this secret)</p>
-                    </div>
+            <x-slot name="footer">
+                <x-secondary-button wire:click="$toggle('isOpen')" wire:loading.attr="disabled">
+                    Cancel
+                </x-secondary-button>
 
-                    <div class="col-span-6 sm:col-span-4 my-2">
-                        <x-label for="twilio_from_number" value="From Phone Number" />
-                        <x-input id="twilio_from_number" type="text" class="mt-1 block w-full"
-                                 wire:model="twilio_from_number"
-                                 placeholder="+15551234567" />
-                        <x-input-error for="twilio_from_number" class="mt-2" />
-                        <p class="mt-1 text-sm text-gray-500">Your Twilio phone number to send SMS from (E.164 format)</p>
-                    </div>
-
-                    @if($twilio_account_sid && $twilio_auth_token && $twilio_from_number)
-                        <div class="col-span-6 sm:col-span-4 my-2">
-                            <div class="rounded-md bg-green-50 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm font-medium text-green-800">
-                                            Twilio is configured and ready to use
-                                        </p>
-                                        <p class="text-sm text-green-700 mt-1">
-                                            SMS messaging and WCTP gateway features are enabled
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                </x-slot>
-
-                <x-slot name="footer">
-
-                    <x-secondary-button wire:click="$toggle('isOpen')" wire:loading.attr="disabled">
-                        Cancel
-                    </x-secondary-button>
-
-                    <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
-                        Save
-                    </x-button>
-
-                </x-slot>
-            </x-dialog-modal>
-        </div>
+                <x-button class="ml-2" wire:click="save" wire:loading.attr="disabled">
+                    Save
+                </x-button>
+            </x-slot>
+        </x-dialog-modal>
     @endif
-
-
 </div>
