@@ -50,6 +50,11 @@ class CallbackController extends Controller
                     throw new Exception('Invalid SAML response: No user data received');
                 }
 
+                // The provider validates issuer/recipient/signature/timestamps but NOT
+                // the audience. Verify the assertion was minted for *this* SP so an
+                // assertion issued for a different SP can't be replayed here.
+                $this->validateAudience($samlUser, secure_url('/sso/saml2'));
+
                 Log::info('SAML2 User', [
                     'id' => $samlUser->getId(),
                     'name' => $samlUser->getName(),
@@ -119,6 +124,14 @@ class CallbackController extends Controller
                 return redirect()->to('/login')->withErrors($validator->errors()->all());
             }
 
+            if (! $this->emailDomainAllowed($emailAttribute)) {
+                Log::warning('SAML2 provisioning blocked: email domain not permitted', [
+                    'email' => $emailAttribute,
+                ]);
+
+                return redirect('/login')->withErrors(['Your account domain is not permitted to sign in.']);
+            }
+
             try {
                 // rotate secure passwords every time a user syncs?
                 $bytes = openssl_random_pseudo_bytes(64);
@@ -154,5 +167,63 @@ class CallbackController extends Controller
         }
 
         return redirect('/login')->withErrors(['SAML2 is not enabled']);
+    }
+
+    /**
+     * Ensure the assertion's AudienceRestriction names this service provider.
+     *
+     * If the assertion carries any AudienceRestriction, our SP entity id must be
+     * among the listed audiences. A missing AudienceRestriction is rejected only
+     * when services.saml2.require_audience is enabled.
+     *
+     * @throws Exception
+     */
+    protected function validateAudience(mixed $samlUser, string $expectedAudience): void
+    {
+        $assertion = method_exists($samlUser, 'getAssertion') ? $samlUser->getAssertion() : null;
+        $conditions = $assertion?->getConditions();
+
+        $audiences = [];
+        if ($conditions !== null) {
+            foreach ($conditions->getAllAudienceRestrictions() as $restriction) {
+                $audiences = array_merge($audiences, $restriction->getAllAudience() ?? []);
+            }
+        }
+
+        if (empty($audiences)) {
+            if (config('services.saml2.require_audience')) {
+                throw new Exception('SAML assertion is missing a required AudienceRestriction');
+            }
+
+            Log::warning('SAML2 assertion had no AudienceRestriction; audience not verified', [
+                'expected' => $expectedAudience,
+            ]);
+
+            return;
+        }
+
+        if (! in_array($expectedAudience, $audiences, true)) {
+            throw new Exception('SAML assertion audience does not match this service provider');
+        }
+    }
+
+    /**
+     * Gate JIT provisioning by email domain when an allow-list is configured.
+     */
+    protected function emailDomainAllowed(string $email): bool
+    {
+        $allowed = array_filter(array_map(
+            'trim',
+            explode(',', (string) config('services.saml2.allowed_email_domains'))
+        ));
+
+        if (empty($allowed)) {
+            return true;
+        }
+
+        $domain = strtolower(substr(strrchr($email, '@') ?: '', 1));
+        $allowed = array_map('strtolower', $allowed);
+
+        return $domain !== '' && in_array($domain, $allowed, true);
     }
 }

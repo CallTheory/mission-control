@@ -72,6 +72,13 @@ return [
     ],
     'saml2' => [
         'metadata' => '',
+        // Comma-separated list of email domains permitted to JIT-provision via SAML.
+        // Empty = allow any domain the (trusted) IdP asserts.
+        'allowed_email_domains' => env('SAML2_ALLOWED_EMAIL_DOMAINS'),
+        // When true, the assertion MUST carry an AudienceRestriction naming this SP.
+        // When false, audience is still validated if present, but a missing
+        // AudienceRestriction is allowed (logged) for IdPs that don't send one.
+        'require_audience' => env('SAML2_REQUIRE_AUDIENCE', false),
         'sp_default_binding_method' => SamlConstants::BINDING_SAML2_HTTP_POST,
         // 'sp_sls' => 'sso/saml2/slo', //same_site = none => i.e., bad security
         'sp_acs' => 'sso/saml2/callback',

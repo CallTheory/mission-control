@@ -33,11 +33,12 @@ class PregMatchController extends Controller
             'string' => $string,
             'pattern' => $regex,
         ], [
-            'string' => 'required|string|min:3',
-            'pattern' => 'required|string',
+            // Bound the input sizes so worst-case matching work stays limited.
+            'string' => 'required|string|min:3|max:4096',
+            'pattern' => 'required|string|max:512',
         ], [
-            'string' => 'The `string` field is required and must be 3 characters or longer',
-            'pattern' => 'The `pattern` field is required and must be a valid regular expression',
+            'string' => 'The `string` field is required and must be between 3 and 4096 characters',
+            'pattern' => 'The `pattern` field is required, must be a valid regular expression, and at most 512 characters',
         ]);
 
         if ($validator->fails()) {
@@ -49,16 +50,25 @@ class PregMatchController extends Controller
 
     private function preg_match(string $string, string $regex): array
     {
-        $matches = [];
-        if (@preg_match_all($regex, $string, $matches, PREG_PATTERN_ORDER) === false) {
-            return [];
+        $originalBacktrack = ini_get('pcre.backtrack_limit');
+        $originalRecursion = ini_get('pcre.recursion_limit');
+
+        // Bound catastrophic backtracking on an attacker-supplied pattern: once the
+        // limit is hit, preg_match_all returns false (handled below) instead of
+        // pinning a worker. Restored afterward so the low limit is request-scoped.
+        ini_set('pcre.backtrack_limit', '50000');
+        ini_set('pcre.recursion_limit', '50000');
+
+        try {
+            $matches = [];
+            if (@preg_match_all($regex, $string, $matches, PREG_PATTERN_ORDER) === false) {
+                return [];
+            }
+
+            return count($matches[0]) ? $matches[0] : [];
+        } finally {
+            ini_set('pcre.backtrack_limit', $originalBacktrack);
+            ini_set('pcre.recursion_limit', $originalRecursion);
         }
-
-        if (count($matches[0])) {
-            return $matches[0];
-        }
-
-        return [];
-
     }
 }

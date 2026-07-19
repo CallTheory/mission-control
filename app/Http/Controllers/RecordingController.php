@@ -17,6 +17,17 @@ class RecordingController extends Controller
      */
     public function __invoke(Request $request, int $isCallID): Response
     {
+        $allowedAccounts = $request->user()->currentTeam->allowed_accounts ?? '';
+        $allowedBilling = $request->user()->currentTeam->allowed_billing ?? '';
+
+        // Fail closed for "unrestricted" teams (no allow-lists configured): they would
+        // otherwise be able to fetch any call's recording by enumerating call ids.
+        // Checked before the (switch-DB) Call lookup so denied requests fail fast.
+        if (strlen(trim($allowedAccounts)) === 0 && strlen(trim($allowedBilling)) === 0
+            && ! config('recordings.allow_unrestricted_teams')) {
+            abort(403);
+        }
+
         try {
             $call = new Call(['ISCallId' => $isCallID]);
         } catch (Exception $e) {
@@ -26,8 +37,8 @@ class RecordingController extends Controller
         if (Helpers::allowedAccountAccess(
             $call->ClientNumber,
             $call->BillingCode ?? '',
-            $request->user()->currentTeam->allowed_accounts ?? '',
-            $request->user()->currentTeam->allowed_billing ?? ''
+            $allowedAccounts,
+            $allowedBilling
         ) !== true) {
             abort(403);
         }
