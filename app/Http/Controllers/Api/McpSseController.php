@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\System\Settings;
 use App\Services\Mcp\McpServer;
@@ -11,6 +12,7 @@ use App\Services\Mcp\Protocol\JsonRpcMessage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -101,6 +103,16 @@ class McpSseController extends Controller
                     'User must have a current team selected'
                 )->toJson(), true)
             )->withHeaders($corsHeaders);
+        }
+
+        // The per-team MCP utility gate: system + team feature flags, the
+        // personal-team block, and the caller's role/suffix capability. A
+        // valid token alone is not enough to reach the protocol.
+        if (! Gate::forUser($user)->allows(Utility::McpServer->capability()->value)) {
+            return response()->json([
+                'error' => 'Forbidden',
+                'message' => 'The MCP Server utility is not enabled for your team or role.',
+            ], 403)->withHeaders($corsHeaders);
         }
 
         $payload = $request->getContent();

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Capability;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -15,11 +16,7 @@ class TeamPolicy
      */
     public function viewAny(User $user): bool
     {
-        if ($user->currentTeam->personal_team === true) {
-            return false;
-        }
-
-        return true;
+        return $user->currentTeam->personal_team !== true;
     }
 
     /**
@@ -39,10 +36,8 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($user->currentTeam, 'admin') ||
-            $user->hasTeamRole($user->currentTeam, 'manager') ||
-            $user->ownsTeam($user->currentTeam);
+        return $user->hasCapability(Capability::TeamManage, $user->currentTeam)
+            || $user->ownsTeam($user->currentTeam);
     }
 
     /**
@@ -54,10 +49,8 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($team, 'admin') ||
-            $user->hasTeamRole($team, 'manager') ||
-            $user->ownsTeam($team);
+        return $user->hasCapability(Capability::TeamManage, $team)
+            || $user->ownsTeam($team);
     }
 
     /**
@@ -69,11 +62,8 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($team, 'admin') ||
-            $user->hasTeamRole($team, 'manager') ||
-            $user->hasTeamRole($team, 'supervisor') ||
-            $user->ownsTeam($team);
+        return $user->hasCapability(Capability::TeamAddMember, $team)
+            || $user->ownsTeam($team);
     }
 
     /**
@@ -85,10 +75,8 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($team, 'admin') ||
-            $user->hasTeamRole($team, 'manager') ||
-            $user->ownsTeam($team);
+        return $user->hasCapability(Capability::TeamManage, $team)
+            || $user->ownsTeam($team);
     }
 
     /**
@@ -100,10 +88,8 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($team, 'admin') ||
-            $user->hasTeamRole($team, 'manager') ||
-            $user->ownsTeam($team);
+        return $user->hasCapability(Capability::TeamManage, $team)
+            || $user->ownsTeam($team);
     }
 
     /**
@@ -115,9 +101,7 @@ class TeamPolicy
             return false;
         }
 
-        return
-            $user->hasTeamRole($team, 'admin') ||
-            $user->hasTeamRole($team, 'manager') ||
-            $user->ownsTeam($team);
+        return $user->hasCapability(Capability::TeamManage, $team)
+            || $user->ownsTeam($team);
     }
 }

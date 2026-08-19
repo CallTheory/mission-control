@@ -192,7 +192,22 @@
                     @foreach($user->allTeams() as $team)
                         <tr>
                             <td class="text-sm py-2 font-semibold text-indigo-900">{{ $team->name }}</td>
-                            <td class="text-sm py-2  text-gray-600">{{ $user->teamRole($team)->name ?? 'Error' }}</td>
+                            <td class="text-sm py-2  text-gray-600">
+                                @if($team->personal_team)
+                                    <span class="text-gray-400">&mdash;</span>
+                                @else
+                                    @forelse($user->rolesForTeam($team) as $role)
+                                        <span class="my-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-indigo-100 border-indigo-400 text-indigo-800 mr-1">
+                                            {{ $role->label }}
+                                            <button title="Remove the {{ $role->label }} role"
+                                                    wire:click="removeRole({{ $role->id }})"
+                                                    class="cursor-pointer text-indigo-500 hover:text-red-600">&times;</button>
+                                        </span>
+                                    @empty
+                                        <span class="text-gray-400">No roles</span>
+                                    @endforelse
+                                @endif
+                            </td>
                             <td class="text-sm py-2 ">
                                 @if(!$team->personal_team)
                                     <a title="Remove {{ $user->name }} from the {{ $team->name }} team"
@@ -232,8 +247,8 @@
                 <x-label class="mb-2 font-semibold" for="new_role" value="Role Assignment" />
                 <select class="w-full border border-gray-300 rounded shadow" id="new_role" wire:model="new_role">
                     <option value="">Select a Role</option>
-                    @foreach($roles as $role)
-                        <option value="{{ $role }}">{{ ucwords($role) }}</option>
+                    @foreach($roles as $key => $label)
+                        <option value="{{ $key }}">{{ $label }}</option>
                     @endforeach
                 </select>
                 <small class="block my-2 text-xs text-gray-500">

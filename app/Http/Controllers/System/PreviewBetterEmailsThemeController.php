@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\System;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Mail\PrettyLog;
 use App\Models\Stats\Helpers;
@@ -16,9 +17,7 @@ class PreviewBetterEmailsThemeController extends Controller
      */
     public function __invoke(Request $request, $theme): PrettyLog
     {
-        if ($request->user()->currentTeam->personal_team === true) {
-            abort(403);
-        }
+        $this->authorize(Capability::SystemAccess->value);
 
         $file_name = $request->get('example_file', 'messages 5520 06042024-070000.txt');
         $parsedLog = Helpers::parseMessageLog("better-emails/{$file_name}");

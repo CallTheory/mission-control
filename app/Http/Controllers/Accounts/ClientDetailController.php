@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Accounts;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Clients\Client;
 use App\Models\Stats\Helpers;
@@ -16,9 +17,7 @@ class ClientDetailController extends Controller
      */
     public function __invoke(Request $request, $client_number): View
     {
-        if ($request->user()->currentTeam->personal_team === true) {
-            abort(403);
-        }
+        $this->authorize(Capability::AccountsView->value);
 
         try {
             $client = new Client(['client_number' => $client_number]);

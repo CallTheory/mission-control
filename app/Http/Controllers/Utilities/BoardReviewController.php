@@ -2,43 +2,21 @@
 
 namespace App\Http\Controllers\Utilities;
 
+use App\Enums\Capability;
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Stats\Helpers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class BoardReviewController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (Helpers::isSystemFeatureEnabled('board-check') && $request->user()->currentTeam->utility_board_check) {
-            if ($request->user()->currentTeam->personal_team === true) {
-                abort(403);
-            }
-            $user = Auth::user();
-            $agent = null;
+        $this->abortUnlessUtilityEnabled(Utility::BoardCheck);
 
-            if (! is_null($user)) {
-                $agent = $user->getIntelligentAgent();
+        // Supervisor-level view (roles admin/manager/supervisor or a -SUP agent).
+        Gate::authorize(Capability::BoardReview->value);
 
-                if ($user->currentTeam->personal_team === true) {
-                    $supervisor = false;
-                } else {
-                    $supervisor = str_contains($agent->Name ?? '', '-SUP')
-                        || $user->hasTeamRole($user->currentTeam, 'admin')
-                        || $user->hasTeamRole($user->currentTeam, 'manager')
-                        || $user->hasTeamRole($user->currentTeam, 'supervisor');
-                }
-            } else {
-                $supervisor = false;
-            }
-
-            if (! $supervisor) {
-                abort(403);
-            }
-
-            return view('utilities.board-review');
-        }
-        abort(404);
+        return view('utilities.board-review');
     }
 }

@@ -2,21 +2,16 @@
 
 namespace App\Http\Controllers\Utilities;
 
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Stats\Helpers;
 use Illuminate\Http\Request;
 
 class ApiGatewayController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (Helpers::isSystemFeatureEnabled('api-gateway') && $request->user()->currentTeam->utility_api_gateway) {
-            if ($request->user()->currentTeam->personal_team === true) {
-                abort(403);
-            }
+        $this->authorizeUtility(Utility::ApiGateway);
 
-            return view('utilities.api-gateway');
-        }
-        abort(404);
+        return view('utilities.api-gateway');
     }
 }

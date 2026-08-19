@@ -23,10 +23,7 @@
             </x-button>
         </div>
 
-        @if( request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') ||
-            request()->user()->hasTeamRole(request()->user()->currentTeam, 'manager') ||
-            request()->user()->hasTeamRole(request()->user()->currentTeam, 'supervisor')
-        )
+        @if( request()->user()->can('board.review') )
             <div class="mx-2">
 
                 <x-secondary-button

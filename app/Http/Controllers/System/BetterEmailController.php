@@ -2,25 +2,19 @@
 
 namespace App\Http\Controllers\System;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Helpers;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BetterEmailController extends Controller
 {
-    /**
-     * @throws Exception
-     */
     public function __invoke(Request $request): View
     {
-        if ($request->user()->currentTeam->personal_team === true) {
-            abort(403);
-        }
-        if (Helpers::isSystemFeatureEnabled('better-emails')) {
-            return view('system.better-emails');
-        }
-        abort(404);
+        $this->authorize(Capability::SystemAccess->value);
+        abort_unless(Helpers::isSystemFeatureEnabled('better-emails'), 404);
+
+        return view('system.better-emails');
     }
 }

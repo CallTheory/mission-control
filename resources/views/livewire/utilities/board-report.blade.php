@@ -8,10 +8,7 @@
         @include('utilities.board-nav')
     </div>
 
-    @if( request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') ||
-        request()->user()->hasTeamRole(request()->user()->currentTeam, 'manager') ||
-        request()->user()->hasTeamRole(request()->user()->currentTeam, 'supervisor')
-    )
+    @if( request()->user()->can('board.report') )
         <div class="inline my-2">
             <form wire:target="exportPeopleSoft" wire:submit="exportPeopleSoft" class="mx-4 my-4">
                 <button class="cursor-pointer px-3 py-2 bg-gray-800 hover:bg-gray-600 text-white shadow rounded-lg transition transform duration-700 ease-in-out" type="submit">

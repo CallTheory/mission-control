@@ -2,23 +2,16 @@
 
 namespace App\Http\Controllers\Utilities;
 
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
-use App\Models\Stats\Helpers;
 use Illuminate\Http\Request;
 
 class McpServerController extends Controller
 {
     public function __invoke(Request $request)
     {
-        if (Helpers::isSystemFeatureEnabled('mcp-server') && $request->user()->currentTeam->utility_mcp_server) {
-            if ($request->user()->currentTeam->personal_team === true) {
-                abort(403);
-            }
+        $this->authorizeUtility(Utility::McpServer);
 
-            return view('utilities.mcp-server');
-
-        }
-        abort(404);
-
+        return view('utilities.mcp-server');
     }
 }

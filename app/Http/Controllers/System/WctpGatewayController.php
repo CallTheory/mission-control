@@ -2,27 +2,19 @@
 
 namespace App\Http\Controllers\System;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Helpers;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class WctpGatewayController extends Controller
 {
-    /**
-     * @throws Exception
-     */
     public function __invoke(Request $request): View
     {
+        $this->authorize(Capability::SystemAccess->value);
+        abort_unless(Helpers::isSystemFeatureEnabled('wctp-gateway'), 404);
 
-        if ($request->user()->currentTeam->personal_team === true) {
-            abort(403);
-        }
-
-        if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
-            return view('system.wctp-gateway');
-        }
-        abort(404);
+        return view('system.wctp-gateway');
     }
 }

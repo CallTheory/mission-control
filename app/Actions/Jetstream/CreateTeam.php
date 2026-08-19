@@ -2,6 +2,7 @@
 
 namespace App\Actions\Jetstream;
 
+use App\Actions\Roles\SeedDefaultRolesForTeam;
 use App\Models\Team;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
@@ -35,6 +36,14 @@ class CreateTeam implements CreatesTeams
             'name' => $input['name'],
             'personal_team' => false,
         ]));
+
+        // Seed the new team with the default roles and grant the owner the
+        // admin role so the capability system mirrors ownership from day one.
+        (new SeedDefaultRolesForTeam)($team);
+
+        if ($adminRole = $team->roles()->where('key', 'admin')->first()) {
+            $user->assignRole($adminRole);
+        }
 
         return $team;
     }

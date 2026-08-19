@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Utilities;
 
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Calls\Call;
 use App\Models\Stats\Helpers;
@@ -13,8 +14,13 @@ class CallLookupController extends Controller
 {
     public function __invoke(Request $request, ?string $isCallID = null)
     {
-        if (! Helpers::isSystemFeatureEnabled('call-lookup') && $request->user()->currentTeam->utility_call_lookup) {
-            abort(404);
+        // Call lookup is also available to personal teams for their OWN calls,
+        // so it is not routed through the standard (non-personal) utility gate.
+        abort_unless(Helpers::isSystemFeatureEnabled('call-lookup'), 404);
+
+        if ($request->user()->currentTeam->personal_team !== true) {
+            // Non-personal teams: enforce the team flag + call_lookup capability.
+            $this->authorizeUtility(Utility::CallLookup);
         }
 
         if (! is_null($isCallID)) {

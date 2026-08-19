@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\System\Settings;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Config;
 use Laravel\Socialite\Facades\Socialite;
 
 class MetadataController extends Controller

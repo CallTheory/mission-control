@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Accounts;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Clients\Greetings;
 use App\Models\Stats\Helpers;
@@ -22,10 +23,7 @@ class ClientGreetingController extends Controller
      */
     public function __invoke(Request $request, $greetingID): Response
     {
-
-        if ($request->user()->currentTeam->personal_team === true) {
-            abort(403);
-        }
+        $this->authorize(Capability::AccountsView->value);
 
         try {
             $greeting = new Greetings(['greetingID' => $greetingID]);

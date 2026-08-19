@@ -42,65 +42,67 @@
 
             <a href="/utilities/" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-0">Overview</a>
 
-            @if(Helpers::isSystemFeatureEnabled('api-gateway') && request()->user()->currentTeam->utility_api_gateway)
+            @can('utility.api_gateway')
                 <a href="/utilities/api-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-222">API Gateway</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('better-emails') && request()->user()->currentTeam->utility_better_emails)
+            @can('utility.better_emails')
                 <a href="/utilities/better-emails" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-2345">Better Emails</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('board-check') && request()->user()->currentTeam->utility_board_check)
+            @can('utility.board_check')
                 <a href="/utilities/board-check" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-2">Board Check</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('call-lookup') && request()->user()->currentTeam->utility_call_lookup)
+            @can('utility.call_lookup')
                 <a href="/utilities/call-lookup" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-1">Call Lookup</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('card-processing') && request()->user()->currentTeam->utility_card_processing)
+            @can('utility.card_processing')
                 <a href="/utilities/card-processing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-20">Card Processing</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('config-editor') && request()->user()->currentTeam->utility_config_editor)
+            @can('utility.config_editor')
                 <a href="/utilities/config-editor" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-244">Config Editor</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing && Helpers::anyCloudFaxProviderEnabled())
-                <a href="/utilities/cloud-faxing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-21">Cloud Faxing</a>
-            @endif
+            @can('utility.cloud_faxing')
+                @if(Helpers::anyCloudFaxProviderEnabled())
+                    <a href="/utilities/cloud-faxing" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-21">Cloud Faxing</a>
+                @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('csv-export') && request()->user()->currentTeam->utility_csv_export)
+            @can('utility.csv_export')
                 <a href="/utilities/csv-export" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-21">CSV Export</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('database-health') && request()->user()->currentTeam->utility_database_health)
+            @can('utility.database_health')
                 <a href="/utilities/database-health" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-22">Database Health</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('directory-search') && request()->user()->currentTeam->utility_directory_search)
+            @can('utility.directory_search')
                 <a href="/utilities/directory-search" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-2332">Directory Search</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('inbound-email') && request()->user()->currentTeam->utility_inbound_email)
+            @can('utility.inbound_email')
                 <a href="/utilities/inbound-email" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-23">Inbound Email</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('mcp-server') && request()->user()->currentTeam->utility_mcp_server)
+            @can('utility.mcp_server')
                 <a href="/utilities/mcp-server" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-243">MCP Server</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('message-export') && request()->user()->currentTeam->utility_message_export)
+            @can('utility.message_export')
                 <a href="/utilities/message-export" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-245">Message Export</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('script-search') && request()->user()->currentTeam->utility_script_search)
+            @can('utility.script_search')
                 <a href="/utilities/script-search" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-26">Script Search</a>
-            @endif
+            @endcan
 
-            @if(Helpers::isSystemFeatureEnabled('wctp-gateway') && request()->user()->currentTeam->utility_wctp_gateway)
+            @can('utility.wctp_gateway')
                 <a href="/utilities/wctp-gateway" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-263">WCTP Gateway</a>
-            @endif
+            @endcan
 
         </div>
     </div>

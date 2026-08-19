@@ -45,8 +45,8 @@ class CallbackController extends Controller
 
             try {
                 $samlUser = Socialite::driver('saml2')->stateless($settings->saml2_stateless_callback ?? false)->user();
-                
-                if (!$samlUser) {
+
+                if (! $samlUser) {
                     throw new Exception('Invalid SAML response: No user data received');
                 }
 
@@ -100,7 +100,8 @@ class CallbackController extends Controller
                     'message' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
-                return redirect('/login')->withErrors(['SAML2 authentication failed: ' . $e->getMessage()]);
+
+                return redirect('/login')->withErrors(['SAML2 authentication failed: '.$e->getMessage()]);
             }
 
             $validator = Validator::make([

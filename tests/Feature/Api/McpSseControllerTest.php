@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Actions\Roles\SeedDefaultRolesForTeam;
 use App\Http\Controllers\Api\McpSseController;
 use App\Models\System\Settings;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -18,6 +20,8 @@ class McpSseControllerTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
+    private Team $team;
 
     private string $token;
 
@@ -31,6 +35,11 @@ class McpSseControllerTest extends TestCase
                 ->name('api.mcp.protocol');
         });
 
+        // Fake the default disk so the mcp-server feature flag doesn't pollute
+        // real storage across test runs.
+        Storage::fake();
+        Storage::put('feature-flags/mcp-server.flag', encrypt('mcp-server'));
+
         // Create settings with MCP enabled
         Settings::create([
             'mcp_enabled' => true,
@@ -43,11 +52,19 @@ class McpSseControllerTest extends TestCase
             'mcp_allowed_tools' => ['get_vcon_record'], // Enable vcon tool
         ]);
 
-        // Create a user with a team
+        // The protocol endpoint sits behind the utility permission gate, so the
+        // default user needs a non-personal team with the MCP utility enabled
+        // and a role granting the utility.mcp_server capability.
         $this->user = User::factory()->create();
-        $team = Team::factory()->create(['user_id' => $this->user->id]);
-        $this->user->current_team_id = $team->id;
+        $this->team = Team::factory()->create([
+            'user_id' => $this->user->id,
+            'personal_team' => false,
+            'utility_mcp_server' => true,
+        ]);
+        (new SeedDefaultRolesForTeam)($this->team);
+        $this->user->current_team_id = $this->team->id;
         $this->user->save();
+        $this->user->assignRole($this->team->roles()->where('key', 'admin')->firstOrFail());
 
         // Create API token
         $this->token = $this->user->createToken('test-token')->plainTextToken;
@@ -310,6 +327,65 @@ class McpSseControllerTest extends TestCase
         $this->assertArrayHasKey('error', $data);
         $this->assertEquals(-32603, $data['error']['code']);
         $this->assertStringContainsString('callId is required', $data['error']['data']);
+    }
+
+    public function test_protocol_endpoint_denied_without_mcp_capability(): void
+    {
+        // A team member with no role (explicit or Jetstream pivot) resolves to
+        // no capabilities, so the utility gate must reject them even though
+        // their token is valid and the team has the utility enabled.
+        $member = User::factory()->create();
+        $this->team->users()->attach($member);
+        $member->current_team_id = $this->team->id;
+        $member->save();
+
+        Sanctum::actingAs($member);
+
+        $response = $this->postJson('/api/mcp/protocol', [
+            'jsonrpc' => '2.0',
+            'method' => 'ping',
+            'id' => 1,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error' => 'Forbidden']);
+    }
+
+    public function test_protocol_endpoint_denied_when_team_utility_disabled(): void
+    {
+        // Even a fully-capable admin is rejected when the team has not
+        // enabled the MCP Server utility.
+        $this->team->utility_mcp_server = false;
+        $this->team->save();
+
+        Sanctum::actingAs($this->user->fresh());
+
+        $response = $this->postJson('/api/mcp/protocol', [
+            'jsonrpc' => '2.0',
+            'method' => 'ping',
+            'id' => 1,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error' => 'Forbidden']);
+    }
+
+    public function test_protocol_endpoint_denied_for_personal_team(): void
+    {
+        // Personal teams are blocked from utilities wholesale; the MCP
+        // protocol endpoint is no exception.
+        $solo = User::factory()->withPersonalTeam()->create();
+
+        Sanctum::actingAs($solo);
+
+        $response = $this->postJson('/api/mcp/protocol', [
+            'jsonrpc' => '2.0',
+            'method' => 'ping',
+            'id' => 1,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error' => 'Forbidden']);
     }
 
     protected function tearDown(): void

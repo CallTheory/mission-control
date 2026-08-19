@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Utilities;
 
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Helpers;
 use Illuminate\Http\Request;
@@ -15,14 +16,17 @@ class EnterpriseHostsController extends Controller
     {
         $team = $request->user()->currentTeam;
 
-        if ($team->personal_team === true) {
-            abort(403);
-        }
+        // WCTP management pages deny with 403 across the board (matching the
+        // AuthorizesWctpManagement Livewire trait), rather than 404.
+        abort_if($team === null || $team->personal_team === true, 403);
 
-        if (Helpers::isSystemFeatureEnabled('wctp-gateway') && $team->utility_wctp_gateway) {
-            return view('utilities.enterprise-hosts');
-        }
+        abort_unless(
+            Helpers::isSystemFeatureEnabled('wctp-gateway')
+                && (bool) $team->utility_wctp_gateway
+                && $request->user()->hasCapability(Capability::UtilityWctpGateway, $team),
+            403
+        );
 
-        abort(403);
+        return view('utilities.enterprise-hosts');
     }
 }

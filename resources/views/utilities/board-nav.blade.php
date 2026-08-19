@@ -1,22 +1,5 @@
 @php
 
-    use Illuminate\Support\Facades\Auth;
-
-    $user = Auth::user();
-    $agent = null;
-
-    if(!is_null($user))
-    {
-        $agent = $user->getIntelligentAgent();
-        $dispatcher = str_contains($agent->Name ?? '', "-DISP") || str_contains($agent->Name ?? '', "-SUP") || $user->hasTeamRole($user->currentTeam, 'dispatcher');
-        $supervisor = str_contains($agent->Name ?? '', "-SUP") || $user->hasTeamRole($user->currentTeam, 'admin') || $user->hasTeamRole($user->currentTeam, 'manager') || $user->hasTeamRole($user->currentTeam, 'supervisor');
-    }
-    else
-    {
-        $dispatcher = false;
-        $supervisor = false;
-    }
-
     $boardCheckActive = basename(request()->header('referer')) == 'board-check';
     $boardReviewActive = basename(request()->header('referer')) == 'board-review';
     $boardReportActive = basename(request()->header('referer')) == 'board-report';
@@ -34,7 +17,7 @@
                     $aria_current = 'aria-current="page"';
                 @endphp
 
-                @if( $dispatcher || $supervisor )
+                @can('utility.board_check')
                     @if($boardCheckActive)
                         <a href="/utilities/board-check"
                            {{ $aria_current }} class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $current }}">Board
@@ -43,10 +26,10 @@
                         <a href="/utilities/board-check"
                            class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $default }}">Board Check</a>
                     @endif
-                @endif
+                @endcan
 
 
-                @if( $supervisor )
+                @can('board.review')
                     @if($boardReviewActive)
                         <a href="/utilities/board-review"
                            {{ $aria_current }} class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $current }}">Board
@@ -73,7 +56,7 @@
                         <a href="/utilities/board-activity"
                            class="whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium {{ $default }}">Board Activity</a>
                     @endif
-                @endif
+                @endcan
 
             </nav>
         </div>

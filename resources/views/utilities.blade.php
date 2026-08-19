@@ -27,7 +27,7 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5  gap-x-4 gap-y-4">
 
-                        @if(Helpers::isSystemFeatureEnabled('api-gateway') && request()->user()->currentTeam->utility_api_gateway)
+                        @can('utility.api_gateway')
                             <a class="group" title="API Gateway" href="/utilities/api-gateway">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
@@ -37,9 +37,9 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">API Gateway</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('better-emails') && request()->user()->currentTeam->utility_better_emails)
+                        @can('utility.better_emails')
                             <a class="group" title="Board Check" href="/utilities/better-emails">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
@@ -49,18 +49,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Better Emails</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('board-check') && request()->user()->currentTeam->utility_board_check)
+                        @can('utility.board_check')
                             <a class="group" title="Board Check" href="/utilities/board-check">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Board Check</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('call-lookup') && request()->user()->currentTeam->utility_call_lookup)
+                        @can('utility.call_lookup')
                         <a class="group" title="Call Lookup" href="/utilities/call-lookup">
                             <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                 <svg class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white
@@ -68,18 +68,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                 <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Call Lookup</small>
                             </div>
                         </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('card-processing') && request()->user()->currentTeam->utility_card_processing)
+                        @can('utility.card_processing')
                             <a class="group" title="Card Processing" href="/utilities/card-processing">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Card Processing</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('config-editor') && request()->user()->currentTeam->utility_config_editor)
+                        @can('utility.config_editor')
                             <a class="group" title="Config Editor" href="/utilities/config-editor">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -89,18 +89,20 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Config Editor</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('cloud-faxing') && request()->user()->currentTeam->utility_cloud_faxing && Helpers::anyCloudFaxProviderEnabled())
+                        @can('utility.cloud_faxing')
+                            @if(Helpers::anyCloudFaxProviderEnabled())
                             <a class="group" title="Cloud Faxing" href="/utilities/cloud-faxing">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Cloud Faxing</small>
                                 </div>
                             </a>
-                        @endif
+                            @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('csv-export') && request()->user()->currentTeam->utility_csv_export)
+                        @can('utility.csv_export')
                             <a class="group" title="CSV Export" href="/utilities/csv-export">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
@@ -109,18 +111,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">CSV Export</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('database-health') && request()->user()->currentTeam->utility_database_health)
+                        @can('utility.database_health')
                         <a class="group" title="Database Health" href="/utilities/database-health">
                             <div class="bg-white px-4 py-8  transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                 <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
                                 <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Database Health</small>
                             </div>
                         </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('directory-search') && request()->user()->currentTeam->utility_directory_search)
+                        @can('utility.directory_search')
                             <a class="group" title="Directory Search" href="/utilities/directory-search">
                                 <div class="bg-white px-4 py-8  transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -130,18 +132,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Directory Search</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('inbound-email') && request()->user()->currentTeam->utility_inbound_email)
+                        @can('utility.inbound_email')
                             <a class="group" title="Inbound Email" href="/utilities/inbound-email">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293h3.172a1 1 0 00.707-.293l2.414-2.414a1 1 0 01.707-.293H20"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Inbound Email</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('mcp-server') && request()->user()->currentTeam->utility_mcp_server)
+                        @can('utility.mcp_server')
                             <a class="group" title="MCP Server" href="/utilities/mcp-server">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -151,9 +153,9 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">MCP Server</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('message-export') && request()->user()->currentTeam->utility_message_export)
+                        @can('utility.message_export')
                             <a class="group" title="Message Export" href="/utilities/message-export">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
@@ -163,9 +165,9 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Message Export</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('voicemail-digest') && request()->user()->currentTeam->utility_voicemail_digest)
+                        @can('utility.voicemail_digest')
                             <a class="group" title="Voicemail Digest" href="/utilities/voicemail-digest">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -175,18 +177,18 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Voicemail Digest</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('script-search') && request()->user()->currentTeam->utility_script_search)
+                        @can('utility.script_search')
                             <a class="group" title="Script Search" href="/utilities/script-search">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg {!! $svgClasses !!} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z"></path></svg>
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">Script Search</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
 
-                        @if(Helpers::isSystemFeatureEnabled('wctp-gateway') && request()->user()->currentTeam->utility_wctp_gateway)
+                        @can('utility.wctp_gateway')
                             <a class="group" title="WCTP Gateway" href="/utilities/wctp-gateway">
                                 <div class="bg-white px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-gray-700 rounded-sm shadow border border-gray-300 text-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
@@ -196,7 +198,7 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-gray-400  group-hover:text-white tr
                                     <small class="mx-auto text-sm group-hover:text-white transform transition duration-700 ease-in-out">WCTP Gateway</small>
                                 </div>
                             </a>
-                        @endif
+                        @endcan
                     </div>
                 </div>
                 </div>

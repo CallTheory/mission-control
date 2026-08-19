@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Actions\Roles\SeedDefaultRolesForTeam;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
@@ -71,4 +73,24 @@ class Team extends JetstreamTeam
         'updated' => TeamUpdated::class,
         'deleted' => TeamDeleted::class,
     ];
+
+    /**
+     * The admin-editable roles defined for this team.
+     */
+    public function roles(): HasMany
+    {
+        return $this->hasMany(Role::class);
+    }
+
+    protected static function booted(): void
+    {
+        // Every non-personal team gets the default role definitions so that
+        // membership roles (team_user.role) and the RoleManager UI resolve to
+        // capabilities from the moment the team exists.
+        static::created(function (Team $team) {
+            if (! $team->personal_team) {
+                (new SeedDefaultRolesForTeam)($team);
+            }
+        });
+    }
 }

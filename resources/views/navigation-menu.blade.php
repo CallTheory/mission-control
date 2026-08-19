@@ -20,27 +20,23 @@ use App\Models\Team;
                         {{ __('Dashboard') }}
                     </x-nav-link >
 
-                    @if(
-                        (request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') ||
-                        request()->user()->hasTeamRole(request()->user()->currentTeam, 'manager') ||
-                        request()->user()->hasTeamRole(request()->user()->currentTeam, 'supervisor') ||
-                        request()->user()->hasTeamRole(request()->user()->currentTeam, 'dispatcher'))
-                        && request()->user()->currentTeam->personal_team === false
-
-                    )
+                    @can('accounts.view')
                         <x-nav-link href="{{ route('accounts') }}" :active="request()->routeIs('accounts')  || request()->routeIs('accounts.*') " >
                             {{ __('Accounts') }}
                         </x-nav-link>
+                    @endcan
+
+                    @can('utilities.access')
                         <x-nav-link href="{{ route('utilities') }}" :active="request()->routeIs('utilities')  || request()->routeIs('utilities.*') " >
                             {{ __('Utilities') }}
                         </x-nav-link>
-                    @endif
+                    @endcan
 
-                    @if(request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') && request()->user()->currentTeam->personal_team === false)
+                    @can('system.access')
                         <x-nav-link href="{{ route('system') }}" :active="request()->routeIs('system') || request()->routeIs('system.*') " >
                             {{ __('System') }}
                         </x-nav-link>
-                    @endif
+                    @endcan
                 </div>
             </div>
 
@@ -74,7 +70,7 @@ use App\Models\Team;
                                             <x-dropdown-link href="{{ route('teams.create') }}">
                                                 {{ __('Create New Team') }}
                                             </x-dropdown-link>
-                                        @elseif( Auth::user()->hasTeamRole(Auth::user()->currentTeam, 'admin') && Auth::user()->currentTeam->personal_team === false )
+                                        @elseif(request()->user()->can('create', Laravel\Jetstream\Jetstream::newTeamModel()))
                                             <x-dropdown-link  href="{{ route('teams.create') }}">
 
                                                 {{ __('Create New Team') }}
@@ -140,18 +136,13 @@ use App\Models\Team;
                                 {{ __('Profile') }}
                             </x-dropdown-link>
 
-                            @if(
-                                 (request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') ||
-                                 request()->user()->hasTeamRole(request()->user()->currentTeam, 'manager') ||
-                                 request()->user()->hasTeamRole(request()->user()->currentTeam, 'technical'))
-                                 && request()->user()->currentTeam->personal_team === false
-                            )
+                            @can('api_tokens.manage')
                                 @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                                     <x-dropdown-link href="{{ route('api-tokens.index') }}">
                                         {{ __('API Tokens') }}
                                     </x-dropdown-link>
                                 @endif
-                            @endif
+                            @endcan
 
 
                             @livewire('menu-break')
@@ -212,18 +203,13 @@ use App\Models\Team;
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
-                @if(
-                    (request()->user()->hasTeamRole(request()->user()->currentTeam, 'admin') ||
-                    request()->user()->hasTeamRole(request()->user()->currentTeam, 'manager') ||
-                    request()->user()->hasTeamRole(request()->user()->currentTeam, 'technical'))
-                    && request()->user()->currentTeam->personal_team === false
-                )
+                @can('api_tokens.manage')
                     @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
                         <x-responsive-nav-link href="{{ route('api-tokens.index') }}" :active="request()->routeIs('api-tokens.index')">
                             {{ __('API Tokens') }}
                         </x-responsive-nav-link>
                     @endif
-                @endif
+                @endcan
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
