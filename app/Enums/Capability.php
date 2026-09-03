@@ -20,6 +20,7 @@ enum Capability: string
     case AdminManageRoles = 'admin.manage_roles';
     case SystemDataSources = 'system.data_sources';
     case SystemIntegrations = 'system.integrations';
+    case SystemObservability = 'system.observability';
 
     // General access areas
     case AnalyticsView = 'analytics.view';
@@ -78,6 +79,7 @@ enum Capability: string
     {
         return match ($this) {
             self::SystemAccess => 'Access System Settings',
+            self::SystemObservability => 'Manage Observability',
             self::AdminManageUsers => 'Manage Users',
             self::AdminManageRoles => 'Manage Roles & Permissions',
             self::SystemDataSources => 'Manage Data Sources',

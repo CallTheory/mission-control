@@ -138,6 +138,8 @@ php artisan db:seed
 - **Payment**: Stripe integration for billing
 - **Authentication**: SAML2, OAuth (various providers)
 - **Audio**: WhisperCPP for transcription, sox/lame for processing
+- **Observability**: optional GlitchTip/Sentry exception reporting — opt-in, off by
+  default, configured at System → Observability (see `docs/observability.md`)
 
 ### Testing Approach
 
@@ -154,6 +156,11 @@ php artisan db:seed
 - Two-factor authentication support
 - CSRF protection on all forms
 - Sanctum for API authentication
+- System Livewire components authorize on every request via
+  `App\Livewire\Concerns\AuthorizesSystemComponent` (Livewire does NOT re-apply a
+  controller's `authorize()` on `POST /livewire/update`)
+- Exception reports are scrubbed by `App\Services\Observability\ScrubSentryEvent`
+  before leaving the app; Livewire payloads are dropped wholesale
 
 ## Development Guidelines
 

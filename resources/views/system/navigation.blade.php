@@ -32,4 +32,12 @@
     </span>
     </a>
 
+    @can('system.observability')
+        <a href="{{ route('system.observability') }}" class="@if(request()->routeIs('system.observability')) {{ $active }} @else {{ $inactive }} @endif">
+        <span class="truncate">
+          Observability
+        </span>
+        </a>
+    @endcan
+
 </nav>

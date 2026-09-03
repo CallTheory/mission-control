@@ -5,6 +5,7 @@ namespace App\Models\System;
 use App\Casts\EncryptedSerialized;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -38,6 +39,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $better_emails_canspam_email
  * @property string|null $better_emails_canspam_phone
  * @property string|null $better_emails_canspam_company
+ * @property bool $observability_errors_enabled
+ * @property string|null $observability_errors_dsn
+ * @property string|null $observability_environment
+ * @property string|null $observability_release
+ * @property float $observability_errors_sample_rate
+ * @property Carbon|null $observability_last_test_at
+ * @property string|null $observability_last_test_status
  */
 class Settings extends Model
 {
@@ -54,6 +62,12 @@ class Settings extends Model
         'mcp_max_response_size',
         'mcp_require_team_context',
         'mcp_cors_origins',
+        'observability_errors_enabled',
+        'observability_environment',
+        'observability_release',
+        'observability_errors_sample_rate',
+        'observability_last_test_at',
+        'observability_last_test_status',
     ];
 
     /**
@@ -66,6 +80,7 @@ class Settings extends Model
         'saml2_metadata_xml',
         'saml2_sp_certificate',
         'saml2_sp_private_key',
+        'observability_errors_dsn',
     ];
 
     protected $casts = [
@@ -77,5 +92,9 @@ class Settings extends Model
         'mcp_require_team_context' => 'boolean',
         'mcp_allowed_tools' => 'array',
         'mcp_cors_origins' => 'array',
+        'observability_errors_dsn' => EncryptedSerialized::class,
+        'observability_errors_enabled' => 'boolean',
+        'observability_errors_sample_rate' => 'float',
+        'observability_last_test_at' => 'datetime',
     ];
 }

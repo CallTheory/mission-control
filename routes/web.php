@@ -24,6 +24,7 @@ use App\Http\Controllers\System\CsvExportController as CsvExportSettingsControll
 use App\Http\Controllers\System\DataSourcesController;
 use App\Http\Controllers\System\IntegrationsController;
 use App\Http\Controllers\System\McpServerController as McpServerSettingsController;
+use App\Http\Controllers\System\ObservabilityController;
 use App\Http\Controllers\System\PermissionsController;
 use App\Http\Controllers\System\PreviewBetterEmailsThemeController;
 use App\Http\Controllers\System\SamlSettingsController;
@@ -45,15 +46,18 @@ use App\Http\Controllers\Utilities\CloudFaxingController;
 use App\Http\Controllers\Utilities\ConfigEditorController;
 use App\Http\Controllers\Utilities\CsvExportController;
 use App\Http\Controllers\Utilities\DatabaseHealthController;
-use App\Http\Controllers\Utilities\MessageExportController;
 use App\Http\Controllers\Utilities\DirectorySearchController;
 use App\Http\Controllers\Utilities\DownloadTBSReport;
+use App\Http\Controllers\Utilities\EnterpriseHostsController;
 use App\Http\Controllers\Utilities\InboundEmailController;
 use App\Http\Controllers\Utilities\McpServerController;
+use App\Http\Controllers\Utilities\MessageExportController;
 use App\Http\Controllers\Utilities\ScriptSearchController;
 use App\Http\Controllers\Utilities\VoicemailDigestController;
 use App\Http\Controllers\Utilities\WctpGatewayController;
+use App\Http\Controllers\Utilities\WctpMessageLogController;
 use App\Http\Controllers\UtilitiesController;
+use App\Http\Middleware\ValidateTwilioRequest;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
 
@@ -82,8 +86,8 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/script-search',
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-report', BoardReportController::class)->name('utilities.board-report');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-activity', BoardActivityController::class)->name('utilities.board-activity');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-gateway', WctpGatewayController::class)->name('utilities.wctp-gateway');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', \App\Http\Controllers\Utilities\EnterpriseHostsController::class)->name('utilities.enterprise-hosts');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', \App\Http\Controllers\Utilities\WctpMessageLogController::class)->name('utilities.wctp-messages');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', EnterpriseHostsController::class)->name('utilities.enterprise-hosts');
+Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', WctpMessageLogController::class)->name('utilities.wctp-messages');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/cloud-faxing/{provider?}', CloudFaxingController::class)->name('utilities.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing', CardProcessingController::class)->name('utilities.card-processing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing/download-tbs-import', DownloadTBSReport::class)->name('utilities.card-processing.download-tbs-import');
@@ -108,6 +112,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/config-editor',
 Route::middleware(['auth:sanctum', 'verified'])->get('/system', SystemController::class)->name('system');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/data-sources', DataSourcesController::class)->name('system.data-sources');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/integrations', IntegrationsController::class)->name('system.integrations');
+Route::middleware(['auth:sanctum', 'verified'])->get('/system/observability', ObservabilityController::class)->name('system.observability');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/permissions', PermissionsController::class)->name('system.permissions');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/board-check', BoardCheckSettingsController::class)->name('system.board-check');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/cloud-faxing', CloudFaxingSettingsController::class)->name('system.cloud-faxing');
@@ -143,7 +148,7 @@ if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
         ->name('wctp');
 
     // Twilio-facing routes with signature validation
-    Route::middleware(\App\Http\Middleware\ValidateTwilioRequest::class)->group(function () {
+    Route::middleware(ValidateTwilioRequest::class)->group(function () {
         Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
             ->name('wctp.callback');
 

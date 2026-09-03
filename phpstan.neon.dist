@@ -172,6 +172,17 @@ parameters:
             path: app/Models/EnterpriseHost.php
 
         # ---------------------------------------------------------------
+        # Settings::first() genuinely CAN return null — the `settings` row is
+        # created by the admin UI, not a seeder, so a fresh install has none.
+        # Larastan's stub types first() as non-nullable, so the defensive
+        # nullsafe reads look redundant to it. Removing them would introduce a
+        # real null dereference (see ObservabilityConfigTest).
+        # ---------------------------------------------------------------
+        -
+            identifier: nullsafe.neverNull
+            path: app/Livewire/System/Observability/*
+
+        # ---------------------------------------------------------------
         # Helpers — strlen > 0 comparison always true in elseif branch
         # ---------------------------------------------------------------
         -

@@ -28,6 +28,7 @@
         "onelogin/php-saml": "^4.2.0",
         "predis/predis": "^3.0.1",
         "ringcentral/ringcentral-php": "^3.0.4",
+        "sentry/sentry-laravel": "^4.27",
         "socialiteproviders/saml2": "^4.7.2",
         "spatie/browsershot": "^5.0",
         "stripe/stripe-php": "^17.2.1",
@@ -79,7 +80,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "sentry/sentry-laravel"
+            ]
         }
     },
     "config": {

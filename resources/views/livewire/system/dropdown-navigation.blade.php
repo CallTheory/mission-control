@@ -53,6 +53,10 @@
 
             <a href="/system/permissions" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-5">Permissions</a>
 
+            @can('system.observability')
+                <a href="/system/observability" class="hover:text-gray-900 hover:bg-gray-100 text-gray-700 block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-6">Observability</a>
+            @endcan
+
             <a class="text-gray-400 font-normal block px-4 py-2 text-xs border-b border-t border-gray-300 mt-4">
                 Utility-Specific Settings
             </a>
