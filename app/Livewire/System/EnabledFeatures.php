@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\Stats\Helpers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -9,6 +11,13 @@ use Livewire\Component;
 
 class EnabledFeatures extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public bool $transcription = false;
 
     public bool $screencaptures = false;

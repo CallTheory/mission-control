@@ -22,9 +22,10 @@ class ValidateTwilioRequest
             return $next($request);
         }
 
-        $dataSource = DataSource::where('type', 'twilio')
-            ->where('enabled', true)
-            ->first();
+        // DataSource is a single-row singleton; providers are column prefixes on
+        // that row, not typed rows. The auth token is decrypted by the
+        // EncryptedSerialized cast — read it as plaintext.
+        $dataSource = DataSource::first();
 
         if (! $dataSource) {
             // Fail closed: without a Twilio data source we cannot verify the
@@ -34,7 +35,7 @@ class ValidateTwilioRequest
             return response('Forbidden', 403);
         }
 
-        $authToken = $dataSource->credentials['auth_token'] ?? null;
+        $authToken = $dataSource->twilio_auth_token ?: null;
         if (! $authToken) {
             Log::warning('Twilio request rejected: no auth token configured to validate signature');
 

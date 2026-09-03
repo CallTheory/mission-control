@@ -13,11 +13,12 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class InboundEmailWebhookAuthTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -38,13 +39,11 @@ class InboundEmailWebhookAuthTest extends TestCase
         });
 
         // Enable the inbound-email system feature (used by the parse endpoint).
-        Storage::makeDirectory('feature-flags');
-        Storage::put('feature-flags/inbound-email.flag', encrypt('inbound-email'));
+        $this->enableSystemFeature('inbound-email');
     }
 
     protected function tearDown(): void
     {
-        Storage::delete('feature-flags/inbound-email.flag');
 
         parent::tearDown();
     }

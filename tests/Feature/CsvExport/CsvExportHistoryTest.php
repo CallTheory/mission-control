@@ -9,12 +9,13 @@ use App\Models\CsvExportLog;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class CsvExportHistoryTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -40,7 +41,6 @@ final class CsvExportHistoryTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::deleteDirectory('feature-flags');
         parent::tearDown();
     }
 
@@ -55,7 +55,7 @@ final class CsvExportHistoryTest extends TestCase
 
     public function test_history_page_returns_404_when_feature_disabled(): void
     {
-        Storage::deleteDirectory('feature-flags');
+        $this->disableAllSystemFeatures();
 
         $response = $this->actingAs($this->user)
             ->get(route('utilities.csv-export.history'));
@@ -332,8 +332,6 @@ final class CsvExportHistoryTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('csv-export');
-        Storage::put('feature-flags/csv-export.flag', $encrypted);
+        $this->enableSystemFeature('csv-export');
     }
 }

@@ -9,12 +9,13 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Mockery;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class CapabilityGateTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private function teamWithRoles(bool $boardCheckEnabled = true): Team
@@ -41,14 +42,8 @@ class CapabilityGateTest extends TestCase
         return $user->fresh();
     }
 
-    private function enableFeature(string $flag): void
-    {
-        Storage::put("feature-flags/{$flag}.flag", encrypt($flag));
-    }
-
     public function test_utility_gate_requires_system_flag(): void
     {
-        Storage::fake();
         $team = $this->teamWithRoles();
         $supervisor = $this->member($team, 'supervisor');
 
@@ -56,14 +51,13 @@ class CapabilityGateTest extends TestCase
         $this->assertFalse(Gate::forUser($supervisor)->check(Capability::UtilityBoardCheck->value));
 
         // System flag ON: allowed.
-        $this->enableFeature('board-check');
+        $this->enableSystemFeature('board-check');
         $this->assertTrue(Gate::forUser($supervisor)->check(Capability::UtilityBoardCheck->value));
     }
 
     public function test_utility_gate_requires_team_flag(): void
     {
-        Storage::fake();
-        $this->enableFeature('board-check');
+        $this->enableSystemFeature('board-check');
 
         $team = $this->teamWithRoles(boardCheckEnabled: false);
         $supervisor = $this->member($team, 'supervisor');
@@ -78,8 +72,7 @@ class CapabilityGateTest extends TestCase
 
     public function test_role_without_capability_is_denied_even_when_flags_on(): void
     {
-        Storage::fake();
-        $this->enableFeature('board-check');
+        $this->enableSystemFeature('board-check');
 
         $team = $this->teamWithRoles();
         // 'technical' does not get board_check in the default template.

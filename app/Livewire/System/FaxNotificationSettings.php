@@ -2,12 +2,21 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use Illuminate\View\View;
 use Livewire\Component;
 
 class FaxNotificationSettings extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public array $state;
 
     public DataSource $datasource;

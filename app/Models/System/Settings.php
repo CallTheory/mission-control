@@ -2,6 +2,7 @@
 
 namespace App\Models\System;
 
+use App\Casts\EncryptedSerialized;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -41,7 +42,7 @@ use Illuminate\Database\Eloquent\Model;
 class Settings extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'switch_data_timezone',
         'mcp_enabled',
@@ -52,10 +53,25 @@ class Settings extends Model
         'mcp_log_level',
         'mcp_max_response_size',
         'mcp_require_team_context',
-        'mcp_cors_origins'
+        'mcp_cors_origins',
     ];
-    
+
+    /**
+     * Credentials are encrypted at rest and transparent to callers: read and
+     * write PLAINTEXT, never encrypt()/decrypt() around them.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'saml2_metadata_xml',
+        'saml2_sp_certificate',
+        'saml2_sp_private_key',
+    ];
+
     protected $casts = [
+        'saml2_metadata_xml' => EncryptedSerialized::class,
+        'saml2_sp_certificate' => EncryptedSerialized::class,
+        'saml2_sp_private_key' => EncryptedSerialized::class,
         'mcp_enabled' => 'boolean',
         'mcp_logging_enabled' => 'boolean',
         'mcp_require_team_context' => 'boolean',

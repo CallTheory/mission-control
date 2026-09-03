@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\System;
 
 use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\Role;
 use App\Models\SuffixRule;
 use App\Models\Team;
@@ -20,6 +21,13 @@ use Livewire\Component;
  */
 class RoleManager extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::AdminManageRoles;
+    }
+
     #[Locked]
     public int $teamId;
 

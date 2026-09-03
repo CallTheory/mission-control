@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\System\Settings;
 use Carbon\Carbon;
 use Exception;
@@ -10,6 +12,13 @@ use Livewire\Component;
 
 class SamlSettings extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public bool $saml_enabled = false;
 
     public bool $stateless_redirect = false;
@@ -37,7 +46,7 @@ class SamlSettings extends Component
         $settings->saml2_enabled = $this->saml_enabled ?? false;
         $settings->saml2_metadata_url = $this->metadata_url ?? null;
         if (strlen($this->metadata_xml)) {
-            $settings->saml2_metadata_xml = encrypt($this->metadata_xml);
+            $settings->saml2_metadata_xml = $this->metadata_xml;
         } else {
             $settings->saml2_metadata_xml = null;
         }
@@ -116,8 +125,8 @@ class SamlSettings extends Component
 
         if ($this->sign_assertions === true) {
             $cert = $this->makeCert();
-            $settings->saml2_sp_certificate = encrypt($cert['certificate']);
-            $settings->saml2_sp_private_key = encrypt($cert['private_key']);
+            $settings->saml2_sp_certificate = $cert['certificate'];
+            $settings->saml2_sp_private_key = $cert['private_key'];
         } else {
             $settings->saml2_sp_certificate = null;
             $settings->saml2_sp_private_key = null;
@@ -167,8 +176,8 @@ class SamlSettings extends Component
         $this->stateless_redirect = $settings->saml2_stateless_redirect ?? false;
         $this->saml_enabled = $settings->saml2_enabled ?? false;
         $this->metadata_url = $settings->saml2_metadata_url ?? null;
-        if (strlen($settings->saml2_metadata_xml)) {
-            $this->metadata_xml = decrypt($settings->saml2_metadata_xml);
+        if (filled($settings->saml2_metadata_xml)) {
+            $this->metadata_xml = $settings->saml2_metadata_xml;
         }
         $this->sign_assertions = $settings->saml2_sp_sign_assertions ?? false;
 
@@ -177,10 +186,10 @@ class SamlSettings extends Component
 
     public function getCertificateDetails(Settings $settings): void
     {
-        if ($settings->saml2_sp_certificate && strlen($settings->saml2_sp_certificate)) {
+        if (filled($settings->saml2_sp_certificate)) {
 
-            $this->cert_fingerprint = openssl_x509_fingerprint(decrypt($settings->saml2_sp_certificate));
-            $cert_details = openssl_x509_parse(decrypt($settings->saml2_sp_certificate));
+            $this->cert_fingerprint = openssl_x509_fingerprint($settings->saml2_sp_certificate);
+            $cert_details = openssl_x509_parse($settings->saml2_sp_certificate);
             $this->cert_valid_from = Carbon::createFromTimestampUTC($cert_details['validFrom_time_t'])->timezone(request()->user()->timezone)->format('m/d/Y g:i:s A T');
             $this->cert_valid_to = Carbon::createFromTimestampUTC($cert_details['validTo_time_t'])->timezone(request()->user()->timezone)->format('m/d/Y g:i:s A T');
         } else {

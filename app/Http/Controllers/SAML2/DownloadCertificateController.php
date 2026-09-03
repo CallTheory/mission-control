@@ -20,14 +20,16 @@ class DownloadCertificateController extends Controller
 
         $settings = Settings::firstOrFail();
         try {
-            if ($settings->saml2_enabled && strlen(decrypt($settings->saml2_sp_certificate))) {
+            // filled() rather than strlen(): the column is null when no SP
+            // certificate has been generated, and strlen(null) is deprecated.
+            if ($settings->saml2_enabled && filled($settings->saml2_sp_certificate)) {
 
                 $headers = [
                     'content-type' => 'application/x-x509-ca-cert',
                     'content-disposition' => 'attachment; filename="mission_control_saml_sp_cert.cer"',
                 ];
 
-                return response(decrypt($settings->saml2_sp_certificate), 200, $headers);
+                return response($settings->saml2_sp_certificate, 200, $headers);
             } else {
                 abort(404);
             }

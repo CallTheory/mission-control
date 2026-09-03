@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
+use App\Http\Controllers\Api\WctpController;
 use App\Jobs\ProcessWctpMessage;
 use App\Models\DataSource;
 use App\Models\EnterpriseHost;
@@ -13,10 +14,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 use Tests\Traits\MocksTwilio;
 
 class WctpControllerComprehensiveTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use MocksTwilio, RefreshDatabase;
 
     protected function setUp(): void
@@ -24,12 +27,12 @@ class WctpControllerComprehensiveTest extends TestCase
         parent::setUp();
 
         // Enable the WCTP gateway feature flag
-        \Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
+        $this->enableSystemFeature('wctp-gateway');
 
         // Register WCTP routes for testing
-        $this->app['router']->post('/wctp', [\App\Http\Controllers\Api\WctpController::class, 'handle'])
+        $this->app['router']->post('/wctp', [WctpController::class, 'handle'])
             ->name('wctp');
-        $this->app['router']->post('/wctp/callback/{messageId}', [\App\Http\Controllers\Api\WctpController::class, 'twilioCallback'])
+        $this->app['router']->post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
             ->name('wctp.callback');
 
         // Set up Twilio mock

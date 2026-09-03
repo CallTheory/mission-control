@@ -4,48 +4,59 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use Tests\TestCase;
+use App\Http\Controllers\Api\WctpController;
+use App\Models\EnterpriseHost;
+use App\Models\User;
+use App\Models\WctpMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
-use App\Services\TwilioService;
-use App\Models\DataSource;
-use Tests\Traits\MocksTwilio;
 use Mockery;
+use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
+use Tests\Traits\MocksTwilio;
 
 class WctpControllerTest extends TestCase
 {
-    use RefreshDatabase, MocksTwilio;
+    use InteractsWithFeatureFlags;
+    use MocksTwilio, RefreshDatabase;
 
     protected $user;
+
     protected $team;
+
     protected $host;
+
     protected $dataSource;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Create the feature flag file for testing
-        $encryptedContent = encrypt('enabled');
-        \Storage::put('feature-flags/wctp-gateway.flag', $encryptedContent);
-        
+
+        // Create the feature flag file for testing. Note this previously wrote
+        // encrypt('enabled'), which never validated (isSystemFeatureEnabled
+        // requires the decrypted content to equal the feature name).
+        $this->enableSystemFeature('wctp-gateway');
+
         // Register WCTP routes for testing since the flag wasn't set at boot time
-        if (!\Route::has('wctp')) {
-            \Route::post('/wctp', [\App\Http\Controllers\Api\WctpController::class, 'handle'])
+        if (! \Route::has('wctp')) {
+            \Route::post('/wctp', [WctpController::class, 'handle'])
                 ->name('wctp');
-            \Route::post('/wctp/callback/{messageId}', [\App\Http\Controllers\Api\WctpController::class, 'twilioCallback'])
+            \Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
                 ->name('wctp.callback');
+
+            // Routes registered at runtime are not in the name lookup table, so
+            // route('wctp.callback') would throw RouteNotFoundException.
+            \Route::getRoutes()->refreshNameLookups();
         }
-        
+
         // Set up Twilio mock
         $this->setUpTwilioMock();
-        
+
         // Create a user and team for the EnterpriseHost
-        $this->user = \App\Models\User::factory()->withPersonalTeam()->create();
+        $this->user = User::factory()->withPersonalTeam()->create();
         $this->team = $this->user->currentTeam;
-        
+
         // Create an EnterpriseHost for testing
-        $this->host = \App\Models\EnterpriseHost::create([
+        $this->host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test@example.com',
             'securityCode' => 'test123', // Test security code
@@ -58,8 +69,7 @@ class WctpControllerTest extends TestCase
     protected function tearDown(): void
     {
         // Clean up the feature flag file
-        Storage::delete('feature-flags/wctp-gateway.flag');
-        
+
         Mockery::close();
         parent::tearDown();
     }
@@ -68,7 +78,7 @@ class WctpControllerTest extends TestCase
     {
         // Test the WCTP endpoint accepts a submit request and returns proper XML response
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -89,7 +99,7 @@ XML;
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        
+
         $responseXml = simplexml_load_string($response->getContent());
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
@@ -101,7 +111,7 @@ XML;
         // Store a test message ID in cache
         cache()->put('wctp_message_test123', 'twilio_sid_123', now()->addHours(1));
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -118,11 +128,11 @@ XML;
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/xml; charset=UTF-8');
-        
+
         $responseXml = simplexml_load_string($response->getContent());
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-StatusInfo'}));
-        $this->assertEquals('test123', (string)$responseXml->{'wctp-StatusInfo'}['messageID']);
+        $this->assertEquals('test123', (string) $responseXml->{'wctp-StatusInfo'}['messageID']);
     }
 
     public function test_wctp_endpoint_returns_error_for_invalid_xml(): void
@@ -136,7 +146,7 @@ XML;
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
-        $this->assertEquals('301', (string)$responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertEquals('301', (string) $responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
     }
 
     public function test_wctp_endpoint_returns_error_for_empty_request(): void
@@ -150,13 +160,13 @@ XML;
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}));
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
-        $this->assertEquals('301', (string)$responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
+        $this->assertEquals('301', (string) $responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}['errorCode']);
     }
 
     public function test_wctp_endpoint_handles_message_reply(): void
     {
         // Create an original message to reply to
-        \App\Models\WctpMessage::create([
+        WctpMessage::create([
             'enterprise_host_id' => $this->host->id,
             'to' => '+15551234567',
             'from' => '+15559999999',
@@ -166,7 +176,7 @@ XML;
             'status' => 'delivered',
         ]);
 
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -189,7 +199,7 @@ XML;
 
     public function test_wctp_message_reply_rejects_invalid_security_code(): void
     {
-        \App\Models\WctpMessage::create([
+        WctpMessage::create([
             'enterprise_host_id' => $this->host->id,
             'to' => '+15551234567',
             'from' => '+15559999999',
@@ -201,7 +211,7 @@ XML;
 
         // Correct senderID but wrong securityCode must be rejected (402), preventing
         // forged inbound replies to the host.
-        $xml = <<<XML
+        $xml = <<<'XML'
 <?xml version="1.0"?>
 <!DOCTYPE wctp-Operation SYSTEM "http://www.wctp.org/release/wctp-dtd-v1r3.dtd">
 <wctp-Operation wctpVersion="1.3">
@@ -217,7 +227,7 @@ XML;
         $this->assertNotNull($responseXml);
         $this->assertTrue(isset($responseXml->{'wctp-Confirmation'}->{'wctp-Failure'}));
         // No forged inbound reply should have been stored.
-        $this->assertEquals(0, \App\Models\WctpMessage::where('direction', 'inbound')->count());
+        $this->assertEquals(0, WctpMessage::where('direction', 'inbound')->count());
     }
 
     public function test_twilio_callback_updates_message_status(): void
@@ -226,11 +236,11 @@ XML;
             'MessageSid' => 'SM123456789',
             'MessageStatus' => 'delivered',
             'To' => '+15551234567',
-            'From' => '+15559999999'
+            'From' => '+15559999999',
         ]);
 
         $response->assertStatus(204);
-        
+
         // Verify the status was cached
         $cachedStatus = cache()->get('wctp_status_test_message_123');
         $this->assertEquals('delivered', $cachedStatus);

@@ -4,11 +4,23 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Livewire\System;
 
+use App\Livewire\System\DataSources\AmtelcoSMTP;
+use App\Livewire\System\DataSources\Intelligent;
+use App\Livewire\System\DataSources\IsUser;
+use App\Livewire\System\DataSources\IsWebApi;
+use App\Livewire\System\DataSources\MarketingSite;
+use App\Livewire\System\DataSources\MiteamWeb;
+use App\Livewire\System\Integrations\Mfax;
+use App\Livewire\System\Integrations\PeoplePraise;
+use App\Livewire\System\Integrations\Ringcentral;
+use App\Livewire\System\Integrations\Sendgrid;
+use App\Livewire\System\Integrations\Stripe;
 use App\Models\DataSource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
+use Tests\Traits\CreatesTeamUsers;
 
 /**
  * Every migrated System settings form must still mount and render after the
@@ -16,28 +28,33 @@ use Tests\TestCase;
  */
 class SettingsRenderTest extends TestCase
 {
+    use CreatesTeamUsers;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
         DataSource::create([]); // single shared row the forms edit.
+
+        // These components are gated by AuthorizesSystemComponent, so they need
+        // an authenticated user holding the relevant System capability.
+        $this->actingAs($this->createUserWithRole($this->createSeededTeam(), 'admin'));
     }
 
     public static function componentProvider(): array
     {
         return [
-            'integrations/Stripe' => [\App\Livewire\System\Integrations\Stripe::class],
-            'integrations/Mfax' => [\App\Livewire\System\Integrations\Mfax::class],
-            'integrations/Ringcentral' => [\App\Livewire\System\Integrations\Ringcentral::class],
-            'integrations/PeoplePraise' => [\App\Livewire\System\Integrations\PeoplePraise::class],
-            'integrations/Sendgrid' => [\App\Livewire\System\Integrations\Sendgrid::class],
-            'datasources/Intelligent' => [\App\Livewire\System\DataSources\Intelligent::class],
-            'datasources/IsUser' => [\App\Livewire\System\DataSources\IsUser::class],
-            'datasources/AmtelcoSMTP' => [\App\Livewire\System\DataSources\AmtelcoSMTP::class],
-            'datasources/MiteamWeb' => [\App\Livewire\System\DataSources\MiteamWeb::class],
-            'datasources/MarketingSite' => [\App\Livewire\System\DataSources\MarketingSite::class],
-            'datasources/IsWebApi' => [\App\Livewire\System\DataSources\IsWebApi::class],
+            'integrations/Stripe' => [Stripe::class],
+            'integrations/Mfax' => [Mfax::class],
+            'integrations/Ringcentral' => [Ringcentral::class],
+            'integrations/PeoplePraise' => [PeoplePraise::class],
+            'integrations/Sendgrid' => [Sendgrid::class],
+            'datasources/Intelligent' => [Intelligent::class],
+            'datasources/IsUser' => [IsUser::class],
+            'datasources/AmtelcoSMTP' => [AmtelcoSMTP::class],
+            'datasources/MiteamWeb' => [MiteamWeb::class],
+            'datasources/MarketingSite' => [MarketingSite::class],
+            'datasources/IsWebApi' => [IsWebApi::class],
         ];
     }
 

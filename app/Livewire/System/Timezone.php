@@ -2,12 +2,21 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\System\Settings;
 use Illuminate\View\View;
 use Livewire\Component;
 
 class Timezone extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public array $state;
 
     public Settings $settings;

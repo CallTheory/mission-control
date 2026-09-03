@@ -12,10 +12,20 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\CreatesTeamUsers;
 
 class SettingsFormsTest extends TestCase
 {
+    use CreatesTeamUsers;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // These components are gated by AuthorizesSystemComponent.
+        $this->actingAs($this->createUserWithRole($this->createSeededTeam(), 'admin'));
+    }
 
     public function test_twilio_hydrates_state_from_datasource_via_trait(): void
     {

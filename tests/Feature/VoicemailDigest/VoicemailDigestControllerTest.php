@@ -7,11 +7,12 @@ namespace Tests\Feature\VoicemailDigest;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class VoicemailDigestControllerTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -35,7 +36,6 @@ final class VoicemailDigestControllerTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::deleteDirectory('feature-flags');
         parent::tearDown();
     }
 
@@ -124,8 +124,6 @@ final class VoicemailDigestControllerTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('voicemail-digest');
-        Storage::put('feature-flags/voicemail-digest.flag', $encrypted);
+        $this->enableSystemFeature('voicemail-digest');
     }
 }

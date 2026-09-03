@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\Role;
 use App\Models\Stats\Agents\Listing;
 use App\Models\Team;
@@ -14,6 +16,13 @@ use Livewire\Component;
 
 class User extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::AdminManageUsers;
+    }
+
     #[Locked]
     public mixed $user;
 

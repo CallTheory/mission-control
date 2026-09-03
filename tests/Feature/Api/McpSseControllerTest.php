@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class McpSseControllerTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -38,7 +40,7 @@ class McpSseControllerTest extends TestCase
         // Fake the default disk so the mcp-server feature flag doesn't pollute
         // real storage across test runs.
         Storage::fake();
-        Storage::put('feature-flags/mcp-server.flag', encrypt('mcp-server'));
+        $this->enableSystemFeature('mcp-server');
 
         // Create settings with MCP enabled
         Settings::create([

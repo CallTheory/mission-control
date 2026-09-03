@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use Exception;
 use Illuminate\Support\Facades\App;
@@ -14,6 +16,13 @@ use PDO;
 
 class ScriptSearch extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public mixed $searchResults = null;
 
     public string $searchStatus = 'loading';

@@ -7,19 +7,19 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class MonitorFaxBuildupPendingTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        Storage::makeDirectory('feature-flags');
-        Storage::put('feature-flags/cloud-faxing.flag', encrypt('cloud-faxing'));
+        $this->enableSystemFeature('cloud-faxing');
 
         config(['cache.default' => 'array']);
         $this->app->forgetInstance('cache');

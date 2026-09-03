@@ -28,8 +28,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $people_praise_basic_auth_user
  * @property string|null $people_praise_basic_auth_pass
  * @property string|null $twilio_from_number
- * @property string|null $type
- * @property bool|null $enabled
  */
 class DataSource extends Model
 {
@@ -65,7 +63,6 @@ class DataSource extends Model
         return [
             'ringcentral_enabled' => 'boolean',
             'mfax_enabled' => 'boolean',
-            'enabled' => 'boolean',
 
             // Credentials: encrypted at rest, transparent to callers. Callers must
             // read/write PLAINTEXT — do NOT wrap these in encrypt()/decrypt().

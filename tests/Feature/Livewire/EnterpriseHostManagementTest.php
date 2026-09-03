@@ -10,12 +10,13 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\WctpMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class EnterpriseHostManagementTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -39,15 +40,13 @@ class EnterpriseHostManagementTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::delete('feature-flags/wctp-gateway.flag');
 
         parent::tearDown();
     }
 
     private function enableWctpFeature(): void
     {
-        Storage::makeDirectory('feature-flags');
-        Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
+        $this->enableSystemFeature('wctp-gateway');
     }
 
     private function makeWctpTeam(): Team
@@ -97,7 +96,7 @@ class EnterpriseHostManagementTest extends TestCase
 
     public function test_disabled_system_feature_is_forbidden(): void
     {
-        Storage::delete('feature-flags/wctp-gateway.flag');
+        $this->disableSystemFeature('wctp-gateway');
 
         $this->get(route('utilities.enterprise-hosts'))->assertForbidden();
     }

@@ -10,9 +10,11 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class MessageExportControllerTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -36,15 +38,14 @@ final class MessageExportControllerTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::deleteDirectory('feature-flags');
         Storage::deleteDirectory('message-exports');
         parent::tearDown();
     }
 
     public function test_it_returns_404_when_system_feature_flag_is_disabled(): void
     {
+        $this->disableAllSystemFeatures();
         // Ensure no feature flag exists
-        Storage::deleteDirectory('feature-flags');
 
         $response = $this->actingAs($this->user)
             ->get(route('utilities.message-export'));
@@ -181,8 +182,6 @@ final class MessageExportControllerTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('message-export');
-        Storage::put('feature-flags/message-export.flag', $encrypted);
+        $this->enableSystemFeature('message-export');
     }
 }

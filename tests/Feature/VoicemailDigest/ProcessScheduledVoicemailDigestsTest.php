@@ -10,11 +10,12 @@ use App\Models\VoicemailDigest;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class ProcessScheduledVoicemailDigestsTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -26,7 +27,6 @@ final class ProcessScheduledVoicemailDigestsTest extends TestCase
     protected function tearDown(): void
     {
         Carbon::setTestNow();
-        Storage::deleteDirectory('feature-flags');
         parent::tearDown();
     }
 
@@ -453,8 +453,6 @@ final class ProcessScheduledVoicemailDigestsTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('voicemail-digest');
-        Storage::put('feature-flags/voicemail-digest.flag', $encrypted);
+        $this->enableSystemFeature('voicemail-digest');
     }
 }

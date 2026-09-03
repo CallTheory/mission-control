@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -9,6 +11,13 @@ use Livewire\Component;
 
 class EnabledUtilities extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public bool $api_gateway = false;
 
     public bool $board_check = false;

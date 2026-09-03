@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\System\Settings;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -9,6 +11,13 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class BetterEmails extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public string $theme = 'standard';
 
     public string $preview_url;

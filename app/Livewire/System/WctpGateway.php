@@ -4,14 +4,24 @@ declare(strict_types=1);
 
 namespace App\Livewire\System;
 
-use App\Models\EnterpriseHost;
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
+use App\Models\EnterpriseHost;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
 
 class WctpGateway extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     // Enterprise Hosts
     public Collection $enterpriseHosts;
 
@@ -28,24 +38,21 @@ class WctpGateway extends Component
 
     // UI State
     public string $activeTab = 'overview';
+
     public bool $twilioConfigured = false;
+
     public string $wctpEndpoint = '';
 
     public function mount(): void
     {
-        // Check if Twilio is configured
-        try {
-            $dataSource = DataSource::where('type', 'twilio')
-                ->where('enabled', true)
-                ->first();
-            
-            $this->twilioConfigured = $dataSource 
-                && !empty($dataSource->twilio_account_sid) 
-                && !empty($dataSource->twilio_auth_token)
-                && !empty($dataSource->twilio_from_number);
-        } catch (\Exception $e) {
-            $this->twilioConfigured = false;
-        }
+        // Check if Twilio is configured. DataSource is a single-row singleton;
+        // providers are column prefixes on that row, not typed rows.
+        $dataSource = DataSource::first();
+
+        $this->twilioConfigured = $dataSource
+            && ! empty($dataSource->twilio_account_sid)
+            && ! empty($dataSource->twilio_auth_token)
+            && ! empty($dataSource->twilio_from_number);
 
         // Set the WCTP endpoint URL
         $this->wctpEndpoint = url('/wctp');
@@ -56,16 +63,16 @@ class WctpGateway extends Component
     protected function loadEnterpriseHosts(): void
     {
         $teamId = auth()->user()->currentTeam->id ?? null;
-        
+
         $query = EnterpriseHost::query();
-        
+
         if ($teamId) {
-            $query->where(function($q) use ($teamId) {
+            $query->where(function ($q) use ($teamId) {
                 $q->where('team_id', $teamId)
-                  ->orWhereNull('team_id'); // Include global hosts
+                    ->orWhereNull('team_id'); // Include global hosts
             });
         }
-        
+
         $this->enterpriseHosts = $query->orderBy('name')->get();
 
         // Load phone number assignments
@@ -117,28 +124,29 @@ class WctpGateway extends Component
     public function toggleEnterpriseHost(int $hostId): void
     {
         $host = $this->findHost($hostId);
-        
+
         if ($host) {
-            $host->update(['enabled' => !$host->enabled]);
+            $host->update(['enabled' => ! $host->enabled]);
             $this->loadEnterpriseHosts();
-            session()->flash('message', 'Enterprise Host ' . ($host->enabled ? 'enabled' : 'disabled'));
+            session()->flash('message', 'Enterprise Host '.($host->enabled ? 'enabled' : 'disabled'));
         }
     }
 
     public function removeEnterpriseHost(int $hostId): void
     {
         $host = $this->findHost($hostId);
-        
+
         if ($host) {
             // Check if host has messages
             if ($host->messages()->exists()) {
                 session()->flash('error', 'Cannot delete host with existing messages. Disable it instead.');
+
                 return;
             }
-            
+
             $hostName = $host->name;
             $host->delete();
-            
+
             $this->loadEnterpriseHosts();
             session()->flash('message', "Enterprise Host '{$hostName}' removed");
         }
@@ -147,7 +155,7 @@ class WctpGateway extends Component
     public function updateHostPhoneNumbers(int $hostId): void
     {
         $host = $this->findHost($hostId);
-        
+
         if ($host) {
             $numbersString = $this->hostPhoneNumbers[$hostId] ?? '';
             $numbers = [];
@@ -159,10 +167,10 @@ class WctpGateway extends Component
                     $cleaned = preg_replace('/\D+/', '', trim($number));
                     if ($cleaned) {
                         // Ensure proper format with country code
-                        if (!str_starts_with($cleaned, '1') && strlen($cleaned) == 10) {
-                            $cleaned = '1' . $cleaned;
+                        if (! str_starts_with($cleaned, '1') && strlen($cleaned) == 10) {
+                            $cleaned = '1'.$cleaned;
                         }
-                        $numbers[] = '+' . $cleaned;
+                        $numbers[] = '+'.$cleaned;
                     }
                 }
             }
@@ -177,22 +185,22 @@ class WctpGateway extends Component
     protected function findHost(int $hostId): ?EnterpriseHost
     {
         $teamId = auth()->user()->currentTeam->id ?? null;
-        
+
         $query = EnterpriseHost::where('id', $hostId);
-        
+
         if ($teamId) {
-            $query->where(function($q) use ($teamId) {
+            $query->where(function ($q) use ($teamId) {
                 $q->where('team_id', $teamId)
-                  ->orWhereNull('team_id');
+                    ->orWhereNull('team_id');
             });
         }
-        
+
         return $query->first();
     }
 
     public function generateSecurityCode(): void
     {
-        $this->newHost['securityCode'] = \Illuminate\Support\Str::random(16);
+        $this->newHost['securityCode'] = Str::random(16);
     }
 
     public function render(): View

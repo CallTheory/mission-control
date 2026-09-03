@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System\DataSources;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use Exception;
 use Illuminate\View\View;
@@ -9,6 +11,13 @@ use Livewire\Component;
 
 class AmtelcoSMTP extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemDataSources;
+    }
+
     public array $state;
 
     public DataSource $datasource;

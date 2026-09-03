@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\VoicemailDigest;
 
+use App\Jobs\SendVoicemailDigest;
 use App\Livewire\Utilities\VoicemailDigestHistory;
 use App\Models\Team;
 use App\Models\User;
@@ -11,12 +12,13 @@ use App\Models\VoicemailDigest;
 use App\Models\VoicemailDigestLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class VoicemailDigestHistoryTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -42,7 +44,6 @@ final class VoicemailDigestHistoryTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::deleteDirectory('feature-flags');
         parent::tearDown();
     }
 
@@ -57,7 +58,7 @@ final class VoicemailDigestHistoryTest extends TestCase
 
     public function test_history_page_returns_404_when_feature_disabled(): void
     {
-        Storage::deleteDirectory('feature-flags');
+        $this->disableAllSystemFeatures();
 
         $response = $this->actingAs($this->user)
             ->get(route('utilities.voicemail-digest.history'));
@@ -191,7 +192,7 @@ final class VoicemailDigestHistoryTest extends TestCase
             ->call('resend', $log->id)
             ->assertHasNoErrors();
 
-        Queue::assertPushed(\App\Jobs\SendVoicemailDigest::class);
+        Queue::assertPushed(SendVoicemailDigest::class);
     }
 
     public function test_resend_flashes_confirmation_message(): void
@@ -376,8 +377,6 @@ final class VoicemailDigestHistoryTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('voicemail-digest');
-        Storage::put('feature-flags/voicemail-digest.flag', $encrypted);
+        $this->enableSystemFeature('voicemail-digest');
     }
 }

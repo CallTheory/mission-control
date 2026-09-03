@@ -10,12 +10,13 @@ use App\Models\MessageExportLog;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 final class MessageExportHistoryTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     private User $user;
@@ -41,7 +42,6 @@ final class MessageExportHistoryTest extends TestCase
 
     protected function tearDown(): void
     {
-        Storage::deleteDirectory('feature-flags');
         parent::tearDown();
     }
 
@@ -150,8 +150,6 @@ final class MessageExportHistoryTest extends TestCase
 
     private function enableSystemFeatureFlag(): void
     {
-        Storage::makeDirectory('feature-flags');
-        $encrypted = encrypt('message-export');
-        Storage::put('feature-flags/message-export.flag', $encrypted);
+        $this->enableSystemFeature('message-export');
     }
 }

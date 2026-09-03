@@ -6,20 +6,22 @@ namespace Tests\Feature\Livewire;
 
 use App\Livewire\System\CloudFaxingProviders;
 use App\Models\DataSource;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\CreatesTeamUsers;
 
 class CloudFaxingProvidersTest extends TestCase
 {
+    use CreatesTeamUsers;
     use RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->actingAs(User::factory()->create());
+        // CloudFaxingProviders is gated by AuthorizesSystemComponent.
+        $this->actingAs($this->createUserWithRole($this->createSeededTeam(), 'admin'));
     }
 
     public function test_it_reflects_existing_enabled_state_and_configuration(): void

@@ -4,34 +4,36 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api;
 
-use App\Models\EnterpriseHost;
-use App\Models\DataSource;
-use App\Models\WctpMessage;
+use App\Http\Controllers\Api\WctpController;
 use App\Jobs\ProcessWctpMessage;
+use App\Models\EnterpriseHost;
+use App\Models\WctpMessage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 use Tests\Traits\MocksTwilio;
 
 class WctpTest extends TestCase
 {
-    use RefreshDatabase, MocksTwilio;
+    use InteractsWithFeatureFlags;
+    use MocksTwilio, RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Enable the WCTP gateway feature flag
-        \Storage::put('feature-flags/wctp-gateway.flag', encrypt('wctp-gateway'));
-        
+        $this->enableSystemFeature('wctp-gateway');
+
         // Register WCTP routes for testing since the flag wasn't set at boot time
-        if (!\Route::has('wctp')) {
-            \Route::post('/wctp', [\App\Http\Controllers\Api\WctpController::class, 'handle'])
+        if (! \Route::has('wctp')) {
+            \Route::post('/wctp', [WctpController::class, 'handle'])
                 ->name('wctp');
-            \Route::post('/wctp/callback/{messageId}', [\App\Http\Controllers\Api\WctpController::class, 'twilioCallback'])
+            \Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
                 ->name('wctp.callback');
         }
-        
+
         // Set up Twilio mock
         $this->setUpTwilioMock();
     }
@@ -53,7 +55,7 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $this->assertStringContainsString('wctp-Failure', $response->content());
     }
@@ -61,7 +63,7 @@ class WctpTest extends TestCase
     public function test_wctp_submit_request_with_valid_host()
     {
         Queue::fake();
-        
+
         // Create an enterprise host
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
@@ -87,15 +89,15 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         // Debug: output response if it fails
         if ($response->status() !== 200) {
             dump($response->content());
         }
-        
+
         $response->assertStatus(200);
         $this->assertStringContainsString('wctp-Confirmation', $response->content());
-        
+
         // Check that a message was created (message is encrypted at rest)
         $this->assertDatabaseHas('wctp_messages', [
             'enterprise_host_id' => $host->id,
@@ -107,7 +109,7 @@ class WctpTest extends TestCase
         // Verify message content via model (encrypted at rest)
         $wctpMessage = WctpMessage::where('wctp_message_id', 'test123')->first();
         $this->assertEquals('Test message', $wctpMessage->message);
-        
+
         // Check that the job was dispatched
         Queue::assertPushed(ProcessWctpMessage::class);
     }
@@ -139,7 +141,7 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(401);
         $this->assertStringContainsString('wctp-Failure', $response->content());
         $this->assertStringContainsString('401', $response->content());
@@ -156,7 +158,7 @@ class WctpTest extends TestCase
             'enabled' => true,
             'phone_numbers' => ['+15551234567'],
         ]);
-        
+
         // Create a message
         $message = WctpMessage::create([
             'enterprise_host_id' => $host->id,
@@ -180,7 +182,7 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
         $this->assertStringContainsString('wctp-StatusInfo', $response->content());
         $this->assertStringContainsString('200', $response->content()); // Delivered status
@@ -189,7 +191,7 @@ class WctpTest extends TestCase
     public function test_wctp_message_with_reply_code()
     {
         Queue::fake();
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'testhost',
@@ -214,9 +216,9 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
-        
+
         // Check that the reply code was extracted
         $this->assertDatabaseHas('wctp_messages', [
             'reply_with' => '123',
@@ -226,7 +228,7 @@ class WctpTest extends TestCase
     public function test_host_message_count_increments()
     {
         Queue::fake();
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'testhost',
@@ -252,9 +254,9 @@ class WctpTest extends TestCase
         </wctp-Operation>';
 
         $response = $this->call('POST', '/wctp', [], [], [], ['CONTENT_TYPE' => 'text/xml'], $xml);
-        
+
         $response->assertStatus(200);
-        
+
         // Check that the message count was incremented
         $host->refresh();
         $this->assertEquals(1, $host->message_count);

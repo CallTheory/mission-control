@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\System\Integrations;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Livewire\Concerns\HasSettingsModal;
 use App\Livewire\Concerns\ManagesDataSourceSettings;
 use Illuminate\View\View;
@@ -11,8 +13,14 @@ use Livewire\Component;
 
 class Twilio extends Component
 {
+    use AuthorizesSystemComponent;
     use HasSettingsModal;
     use ManagesDataSourceSettings;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemIntegrations;
+    }
 
     protected array $settingsFields = [
         'twilio_account_sid',

@@ -2,6 +2,8 @@
 
 namespace App\Livewire\System\Integrations;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use Exception;
 use Illuminate\View\View;
@@ -9,6 +11,13 @@ use Livewire\Component;
 
 class PeoplePraise extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemIntegrations;
+    }
+
     public bool $isOpen = false;
 
     public array $state;

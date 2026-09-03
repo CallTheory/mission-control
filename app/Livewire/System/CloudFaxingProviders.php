@@ -4,12 +4,21 @@ declare(strict_types=1);
 
 namespace App\Livewire\System;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use Illuminate\View\View;
 use Livewire\Component;
 
 class CloudFaxingProviders extends Component
 {
+    use AuthorizesSystemComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::SystemAccess;
+    }
+
     public bool $ringcentral_enabled = false;
 
     public bool $mfax_enabled = false;

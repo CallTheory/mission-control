@@ -31,7 +31,7 @@ class RedirectController extends Controller
             if ($settings->saml2_metadata_url) {
                 Config::set('services.saml2.metadata', $settings->saml2_metadata_url);
             } elseif ($settings->saml2_metadata_xml) {
-                Config::set('services.saml2.metadata', decrypt($settings->saml2_metadata_xml));
+                Config::set('services.saml2.metadata', $settings->saml2_metadata_xml);
             } else {
                 Config::set('services.saml2.metadata', null);
             }
@@ -40,8 +40,8 @@ class RedirectController extends Controller
             Config::set('services.saml2.sp_sign_assertions', $settings->saml2_sp_sign_assertions);
 
             if ($settings->saml2_sp_sign_assertions === 1) {
-                Config::set('services.saml2.sp_certificate', decrypt($settings->saml2_sp_certificate));
-                Config::set('services.saml2.sp_private_key', decrypt($settings->saml2_sp_private_key));
+                Config::set('services.saml2.sp_certificate', $settings->saml2_sp_certificate);
+                Config::set('services.saml2.sp_private_key', $settings->saml2_sp_private_key);
 
             } else {
                 Config::set('services.saml2.sp_certificate', null);

@@ -64,9 +64,6 @@ parameters:
             identifier: deadCode.unreachable
             path: app/Livewire/*
         -
-            identifier: booleanAnd.rightAlwaysTrue
-            path: app/Livewire/*
-        -
             identifier: nullCoalesce.expr
             path: app/Livewire/*
         -

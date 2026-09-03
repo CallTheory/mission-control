@@ -9,11 +9,12 @@ use App\Models\PendingFax;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class CheckPendingFaxesTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
     protected function setUp(): void
@@ -129,12 +130,11 @@ class CheckPendingFaxesTest extends TestCase
 
     private function enableCloudFaxing(): void
     {
-        Storage::makeDirectory('feature-flags');
-        Storage::put('feature-flags/cloud-faxing.flag', encrypt('cloud-faxing'));
+        $this->enableSystemFeature('cloud-faxing');
     }
 
     private function disableCloudFaxing(): void
     {
-        Storage::delete('feature-flags/cloud-faxing.flag');
+        $this->disableSystemFeature('cloud-faxing');
     }
 }
