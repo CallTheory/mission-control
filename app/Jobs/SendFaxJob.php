@@ -6,6 +6,7 @@ use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
+use App\Services\Observability\GuzzleTracing;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
@@ -114,6 +115,8 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             }
 
             $guzzle = new Guzzle([
+                // null when tracing is off, so Guzzle uses its default handler.
+                'handler' => GuzzleTracing::handlerStack(),
                 'base_uri' => 'https://api.documo.com/',
                 'timeout' => 30.0,
                 'headers' => [

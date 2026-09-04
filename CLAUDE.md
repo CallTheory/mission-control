@@ -138,8 +138,9 @@ php artisan db:seed
 - **Payment**: Stripe integration for billing
 - **Authentication**: SAML2, OAuth (various providers)
 - **Audio**: WhisperCPP for transcription, sox/lame for processing
-- **Observability**: optional GlitchTip/Sentry exception reporting — opt-in, off by
-  default, configured at System → Observability (see `docs/observability.md`)
+- **Observability**: optional GlitchTip/Sentry exception reporting and OpenTelemetry
+  tracing to Grafana Tempo — both opt-in, off by default, configured at
+  System → Observability (see `docs/observability.md`)
 
 ### Testing Approach
 

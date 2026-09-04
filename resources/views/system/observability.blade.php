@@ -18,6 +18,8 @@
 
             <div class="w-full min-w-full p-4 mx-auto mb-4">
                 <livewire:system.observability.errors lazy="lazy" />
+
+                <livewire:system.observability.tracing lazy="lazy" />
             </div>
         </div>
     </div>

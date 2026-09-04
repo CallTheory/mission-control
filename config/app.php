@@ -8,6 +8,7 @@ use App\Providers\JetstreamServiceProvider;
 use App\Providers\ObservabilityServiceProvider;
 use App\Providers\RouteServiceProvider;
 use App\Providers\TelescopeServiceProvider;
+use App\Providers\TracingServiceProvider;
 use Illuminate\Auth\AuthServiceProvider;
 use Illuminate\Auth\Passwords\PasswordResetServiceProvider;
 use Illuminate\Broadcasting\BroadcastServiceProvider;
@@ -262,6 +263,7 @@ return [
          */
         AppServiceProvider::class,
         ObservabilityServiceProvider::class,
+        TracingServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         EventServiceProvider::class,

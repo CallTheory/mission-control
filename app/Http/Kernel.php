@@ -7,6 +7,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
+use App\Http\Middleware\TraceRequests;
 use App\Http\Middleware\TrimStrings;
 use App\Http\Middleware\TrustHosts;
 use App\Http\Middleware\TrustProxies;
@@ -37,6 +38,10 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
+        // First, so the root span times the whole request. Attributes are set
+        // after the pipeline returns, once TrustProxies has run and the route
+        // is matched. No-op unless tracing is enabled.
+        TraceRequests::class,
         TrustHosts::class,
         TrustProxies::class,
         PreventRequestsDuringMaintenance::class,

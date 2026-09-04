@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use App\Services\Observability\ObservabilityConfig;
+use App\Services\Observability\SpanRecorder;
+use App\Services\Observability\Tracing;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -64,9 +66,30 @@ class Handler extends ExceptionHandler
          */
         if (ObservabilityConfig::errorsEnabled() && $this->container->bound(HubInterface::class)) {
             $this->reportable(function (Throwable $e): void {
+                // Correlate the GlitchTip issue with its Tempo trace. Laravel
+                // renders most exceptions inside the router pipeline, so they
+                // never reach the tracing middleware's catch — this is the
+                // reliable hook for marking the span as failed.
+                if ($context = app(Tracing::class)->currentTraceContext()) {
+                    \Sentry\configureScope(function ($scope) use ($context): void {
+                        $scope->setTag('trace_id', $context['trace_id']);
+                        $scope->setContext('trace', $context);
+
+                        if ($template = config('observability.tracing.ui_url_template')) {
+                            $scope->setTag('tempo_url', sprintf($template, $context['trace_id']));
+                        }
+                    });
+                }
+
                 Integration::captureUnhandledException($e);
             });
         }
+
+        // Mark the active span as failed regardless of whether error reporting
+        // is on. Does nothing when tracing is disabled.
+        $this->reportable(function (Throwable $e): void {
+            app(SpanRecorder::class)->recordExceptionOnCurrent($e);
+        });
 
         $this->renderable(function (Throwable $e, Request $request): ?JsonResponse {
             if ($request->is('api/*')) {
@@ -76,9 +99,17 @@ class Handler extends ExceptionHandler
                     $errorCode = 400;
                 }
 
-                return response()->json([
+                $body = [
                     'error' => App::environment('local') ? get_class($e).': '.$e->getMessage() : 'An unclassified error occurred.',
-                ], $errorCode);
+                ];
+
+                // Trace ids carry no data, and they turn an opaque error into
+                // something support can actually look up.
+                if ($traceId = app(Tracing::class)->currentTraceId()) {
+                    $body['trace_id'] = $traceId;
+                }
+
+                return response()->json($body, $errorCode);
             }
 
             return null;

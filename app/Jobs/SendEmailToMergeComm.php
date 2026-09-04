@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\DataSource;
 use App\Models\InboundEmail;
 use App\Models\MergeCommISWebTrigger;
+use App\Services\Observability\GuzzleTracing;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
@@ -59,6 +60,8 @@ class SendEmailToMergeComm implements ShouldBeEncrypted, ShouldQueue
         }
 
         $client = new Client([
+            // null when tracing is off, so Guzzle uses its default handler.
+            'handler' => GuzzleTracing::handlerStack(),
             'timeout' => 30.0,
             'verify' => $verify,
         ]);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Logging\AddTraceContext;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -45,6 +46,8 @@ return [
             'driver' => 'single',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
+            // Stamps trace_id/span_id when tracing is active; no-op otherwise.
+            'tap' => [AddTraceContext::class],
         ],
 
         'daily' => [
@@ -52,6 +55,7 @@ return [
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 14,
+            'tap' => [AddTraceContext::class],
         ],
 
         'slack' => [

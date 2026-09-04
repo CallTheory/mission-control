@@ -3,6 +3,7 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\DataSource;
+use App\Services\Observability\GuzzleTracing;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
@@ -47,6 +48,8 @@ class CloudFaxing extends Component
     {
 
         $this->guzzle = new Guzzle([
+            // null when tracing is off, so Guzzle uses its default handler.
+            'handler' => GuzzleTracing::handlerStack(),
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
@@ -84,6 +87,8 @@ class CloudFaxing extends Component
         }
 
         $this->guzzle = new Guzzle([
+            // null when tracing is off, so Guzzle uses its default handler.
+            'handler' => GuzzleTracing::handlerStack(),
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [
@@ -158,6 +163,8 @@ class CloudFaxing extends Component
         }
 
         $this->guzzle = new Guzzle([
+            // null when tracing is off, so Guzzle uses its default handler.
+            'handler' => GuzzleTracing::handlerStack(),
             'base_uri' => 'https://api.documo.com/',
             'timeout' => 30.0,
             'headers' => [

@@ -181,6 +181,9 @@ parameters:
         -
             identifier: nullsafe.neverNull
             path: app/Livewire/System/Observability/*
+        -
+            identifier: nullsafe.neverNull
+            path: app/Services/Observability/*
 
         # ---------------------------------------------------------------
         # Helpers — strlen > 0 comparison always true in elseif branch

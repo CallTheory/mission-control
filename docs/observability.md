@@ -7,7 +7,7 @@ connection, and sends nothing.
 | Feature | Status | Destination |
 | --- | --- | --- |
 | Exception reporting | Implemented | GlitchTip (or Sentry — same wire protocol) |
-| Distributed tracing | Planned | Grafana Tempo via OTLP |
+| Distributed tracing | Implemented | Grafana Tempo via OTLP |
 
 Configured at **System → Observability**, gated by the `system.observability`
 capability.
@@ -138,3 +138,148 @@ noisy; likely candidates here are `Illuminate\Http\Client\ConnectionException`
 - **No Docker/Sail changes are required.** The app container already declares
   `extra_hosts: host.docker.internal:host-gateway`, so a GlitchTip on the host is
   reachable at `http://host.docker.internal:<port>/<projectId>`.
+
+
+---
+
+# Tracing
+
+Manual OpenTelemetry instrumentation exported over OTLP/HTTP. The
+`ext-opentelemetry` PECL extension is **not** required and is deliberately not
+used — the `opentelemetry-auto-*` packages depend on it and silently no-op
+without it, so everything here is explicit instrumentation that works on a
+stock PHP install.
+
+## Topology, and why the endpoint defaults to localhost
+
+The app should export to a collector running **on the same host** — normally a
+Grafana Alloy agent with an `otelcol.receiver.otlp` block, which forwards to
+Tempo. A loopback POST is sub-millisecond; exporting straight to a remote Tempo
+or Grafana Cloud puts a real network round-trip into the export path.
+
+**Nothing here assumes that agent exists.** Alloy is your infrastructure, not
+something this application installs. The admin page has a **Check collector**
+button that probes the endpoint and reports one of:
+
+- *reachable* — something answered
+- *no collector is listening* — with the setup step you still need to do
+- *rejected the credentials* — reachable, but the auth username/token is wrong
+
+Enabling tracing also runs that check automatically, so a misconfiguration
+surfaces immediately instead of spans silently going nowhere.
+
+### Alloy configuration
+
+```river
+otelcol.receiver.otlp "mission_control" {
+  http { endpoint = "0.0.0.0:4318" }   // matches the app default
+  // grpc {} intentionally omitted — the app speaks OTLP/HTTP only
+  output { traces = [otelcol.processor.batch.default.input] }
+}
+
+otelcol.processor.batch "default" {
+  send_batch_size = 512
+  timeout         = "2s"
+  output { traces = [otelcol.exporter.otlp.tempo.input] }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo.internal:4317"
+    // Grafana Cloud instead:
+    // endpoint = "tempo-prod-04-prod-us-east-0.grafana.net:443"
+    // auth     = otelcol.auth.basic.grafana_cloud.handler
+  }
+}
+```
+
+## Sampling, and "always keep errors"
+
+The sampler is `ParentBased(TraceIdRatioBased)`. The decision is made **once**
+at the root span and rides the `traceparent` into queued jobs, so you get whole
+traces or nothing — never a job span orphaned from the request that dispatched
+it. Use one sample rate everywhere; a different rate in the worker would break
+that.
+
+Head sampling cannot "always keep errors" — the decision precedes the outcome.
+The correct answer is **tail sampling in Alloy**: set the app's sample rate to
+`1.0`, export everything over loopback (cheap), and let Alloy decide:
+
+```river
+otelcol.processor.tail_sampling "policy" {
+  decision_wait = "10s"
+  policy { name = "errors"      type = "status_code"   status_code { status_codes = ["ERROR"] } }
+  policy { name = "slow"        type = "latency"       latency { threshold_ms = 1000 } }
+  policy { name = "sample-rest" type = "probabilistic" probabilistic { sampling_percentage = 5 } }
+  output { traces = [otelcol.processor.batch.default.input] }
+}
+```
+
+Caveat: tail sampling buffers by trace id for `decision_wait`, so a queued job
+that runs minutes after its parent request arrives after the window and is
+evaluated as its own trace.
+
+## What is instrumented
+
+| Signal | Notes |
+| --- | --- |
+| HTTP requests | Root span per request, named by **route template** (`GET /system/users/{user}`), never the raw URL. Livewire updates are named by component (`LIVEWIRE system.role-manager`) instead of collapsing into one bucket. |
+| Queue jobs | Trace context is injected into the payload (~60 bytes), so a job is a child of whatever dispatched it. None of the job classes needed changes. |
+| Artisan commands | Plus scheduled tasks. |
+| Database queries | **Off by default**, behind its own toggle with an optional slow-query threshold. |
+| Outbound HTTP | Laravel's `Http` facade, plus the raw Guzzle sites that opt in via `GuzzleTracing::handlerStack()`. |
+
+### Un-traced gaps, stated plainly
+
+The **Twilio, RingCentral and Stripe SDKs** use their own internal Guzzle
+clients and are **not** instrumented. Calls through them appear as unexplained
+gaps inside their parent span — if you see four seconds unaccounted for inside a
+`SendFaxJob` span, that is an un-traced RingCentral call, not a mystery.
+
+`$schedule->command()` forks a separate process, so the child command is a
+separate trace root rather than a child of the `schedule` span. The command span
+does read a `TRACEPARENT` environment variable if one is present, so a cron
+wrapper can join them.
+
+## Volume and safety
+
+- `max_spans_per_trace` (500) caps child spans; on overflow the root span gets
+  `laravel.spans_dropped` so truncation is visible rather than silent.
+- **DB spans are the highest-volume signal by far** — one N+1 page can emit
+  hundreds. Keep the sample rate low if you turn them on.
+- Long-running commands (`horizon`, `queue:work`, `schedule:work`) are on a hard
+  ignore list. Without it their span would never end, never export, and would
+  become the parent of every job the worker processes — one multi-day trace.
+- The Horizon dashboard, Telescope and asset paths are in `ignore_paths`; the
+  dashboard polls several times a second per open tab.
+
+## Failure behavior
+
+A broken, slow or absent collector must never break a request or fail a job.
+
+- Connect timeout 0.5s, request timeout 2s.
+- **Retries are set to 0.** The SDK defaults to 3 with backoff, which against a
+  dead collector turns a 2s timeout into ~6s of added latency for no benefit,
+  since the collector is meant to be on localhost.
+- After 3 consecutive failed exports, tracing switches itself off for the rest
+  of the process and logs one warning. Note `forceFlush()` returns `true` even
+  when the transport failed, so failures are observed through
+  `ObservedSpanExporter` rather than the flush result.
+- Every method on the `Tracing` facade swallows its own errors. This matters
+  most in the queue listeners: a throwing `JobProcessed` handler would propagate
+  into the worker loop.
+
+Production runs PHP-FPM, so `fastcgi_finish_request()` exists and the export in
+`terminating()` happens **after** the response has been sent — it costs the user
+nothing. That function is checked at runtime rather than assumed, so under
+`artisan serve`, IIS FastCGI or the CLI the export is synchronous and the tight
+timeouts above are what bound the cost.
+
+## Correlation
+
+- Log lines carry `trace_id` and `span_id` via a Monolog tap
+  (`App\Logging\AddTraceContext`), so an id from a log can be pasted into Tempo.
+- GlitchTip events carry a `trace_id` tag, plus a `tempo_url` tag when
+  `OBSERVABILITY_TRACE_UI_URL` is set — one click from issue to trace.
+- API error responses include `trace_id`, finally giving the opaque
+  `"An unclassified error occurred."` message a handle support can look up.

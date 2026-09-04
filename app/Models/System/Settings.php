@@ -46,6 +46,16 @@ use Illuminate\Support\Carbon;
  * @property float $observability_errors_sample_rate
  * @property Carbon|null $observability_last_test_at
  * @property string|null $observability_last_test_status
+ * @property bool $observability_tracing_enabled
+ * @property string|null $observability_tracing_endpoint
+ * @property string|null $observability_tracing_protocol
+ * @property string|null $observability_tracing_auth_username
+ * @property string|null $observability_tracing_auth_token
+ * @property string|null $observability_tracing_service_name
+ * @property float|null $observability_tracing_sample_rate
+ * @property bool $observability_tracing_db_spans_enabled
+ * @property int|null $observability_tracing_db_slow_query_ms
+ * @property int|null $observability_tracing_export_timeout_ms
  */
 class Settings extends Model
 {
@@ -68,6 +78,15 @@ class Settings extends Model
         'observability_errors_sample_rate',
         'observability_last_test_at',
         'observability_last_test_status',
+        'observability_tracing_enabled',
+        'observability_tracing_endpoint',
+        'observability_tracing_protocol',
+        'observability_tracing_auth_username',
+        'observability_tracing_service_name',
+        'observability_tracing_sample_rate',
+        'observability_tracing_db_spans_enabled',
+        'observability_tracing_db_slow_query_ms',
+        'observability_tracing_export_timeout_ms',
     ];
 
     /**
@@ -81,6 +100,7 @@ class Settings extends Model
         'saml2_sp_certificate',
         'saml2_sp_private_key',
         'observability_errors_dsn',
+        'observability_tracing_auth_token',
     ];
 
     protected $casts = [
@@ -96,5 +116,9 @@ class Settings extends Model
         'observability_errors_enabled' => 'boolean',
         'observability_errors_sample_rate' => 'float',
         'observability_last_test_at' => 'datetime',
+        'observability_tracing_auth_token' => EncryptedSerialized::class,
+        'observability_tracing_enabled' => 'boolean',
+        'observability_tracing_db_spans_enabled' => 'boolean',
+        'observability_tracing_sample_rate' => 'float',
     ];
 }
