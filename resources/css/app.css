@@ -4,6 +4,26 @@
 @plugin "@tailwindcss/aspect-ratio";
 @source "../views";
 
+/*
+ * Filament (tables / schemas / actions / notifications) is used as a component
+ * library only -- no Panel Builder. Its stylesheet is authored in Tailwind 4, so it
+ * compiles into this build rather than loading a second one. Its Blade views live in
+ * vendor/, so Tailwind has to be told to scan them for class names.
+ *
+ * Filament's own colour scales are supplied at runtime by @filamentStyles and mapped
+ * to the palette registered in AppServiceProvider::registerFilamentColors(), which
+ * points them at the same colours the tokens below use.
+ */
+@import "../../vendor/filament/support/resources/css/index.css";
+@import "../../vendor/filament/actions/resources/css/index.css";
+@import "../../vendor/filament/forms/resources/css/index.css";
+@import "../../vendor/filament/infolists/resources/css/index.css";
+@import "../../vendor/filament/notifications/resources/css/index.css";
+@import "../../vendor/filament/schemas/resources/css/index.css";
+@import "../../vendor/filament/tables/resources/css/index.css";
+@source "../../vendor/filament/**/src/**/*.php";
+@source "../../vendor/filament/**/resources/views/**/*.blade.php";
+
 /* Class-based dark mode: `.dark` on <html> (driven by User.dark_mode). */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -31,6 +51,28 @@
  *                                     and the text colour that sits on it.
  */
 @theme {
+    /*
+     * Private neutral ramp.
+     *
+     * Filament's stylesheet remaps --color-gray-* onto variables it supplies at
+     * runtime via @filamentStyles. If the app's surfaces referenced --color-gray-*
+     * they would inherit that indirection and lose every neutral on any page that
+     * did not render the directive. These are Tailwind's own gray values, copied so
+     * the two systems stay independent: Filament themes its components, the tokens
+     * below theme the app, and neither can break the other.
+     */
+    --mc-gray-50: oklch(98.5% 0.002 247.839);
+    --mc-gray-100: oklch(96.7% 0.003 264.542);
+    --mc-gray-200: oklch(92.8% 0.006 264.531);
+    --mc-gray-300: oklch(87.2% 0.01 258.338);
+    --mc-gray-400: oklch(70.7% 0.022 261.325);
+    --mc-gray-500: oklch(55.1% 0.027 264.364);
+    --mc-gray-600: oklch(44.6% 0.03 256.802);
+    --mc-gray-700: oklch(37.3% 0.034 259.733);
+    --mc-gray-800: oklch(27.8% 0.033 256.848);
+    --mc-gray-900: oklch(21% 0.034 264.665);
+    --mc-gray-950: oklch(13% 0.028 261.692);
+
     /* Brand -------------------------------------------------------------- */
     --color-primary: var(--color-indigo-600);
     --color-primary-hover: var(--color-indigo-700);
@@ -39,27 +81,27 @@
     --color-primary-soft-fg: var(--color-indigo-700);
 
     /* Page canvas (the app shell gradient) -------------------------------- */
-    --color-canvas: var(--color-gray-200);
-    --color-canvas-2: var(--color-gray-100);
+    --color-canvas: var(--mc-gray-200);
+    --color-canvas-2: var(--mc-gray-100);
 
     /* Surfaces ------------------------------------------------------------ */
     --color-surface: #ffffff;
-    --color-surface-2: var(--color-gray-50);
-    --color-surface-3: var(--color-gray-200);
-    --color-surface-inverse: var(--color-gray-800);
-    --color-surface-inverse-fg: var(--color-gray-100);
-    --color-surface-inverse-hover: var(--color-gray-900);
+    --color-surface-2: var(--mc-gray-50);
+    --color-surface-3: var(--mc-gray-200);
+    --color-surface-inverse: var(--mc-gray-800);
+    --color-surface-inverse-fg: var(--mc-gray-100);
+    --color-surface-inverse-hover: var(--mc-gray-900);
 
     /* Text ---------------------------------------------------------------- */
-    --color-surface-fg: var(--color-gray-900);
-    --color-surface-fg-soft: var(--color-gray-700);
-    --color-muted: var(--color-gray-500);
-    --color-subtle: var(--color-gray-300);
+    --color-surface-fg: var(--mc-gray-900);
+    --color-surface-fg-soft: var(--mc-gray-700);
+    --color-muted: var(--mc-gray-500);
+    --color-subtle: var(--mc-gray-300);
 
     /* Borders -------------------------------------------------------------- */
-    --color-border-soft: var(--color-gray-200);
-    --color-border: var(--color-gray-300);
-    --color-border-strong: var(--color-gray-400);
+    --color-border-soft: var(--mc-gray-200);
+    --color-border: var(--mc-gray-300);
+    --color-border-strong: var(--mc-gray-400);
 
     /* Status --------------------------------------------------------------- */
     --color-danger: var(--color-red-600);
@@ -76,7 +118,7 @@
 
     --color-warning: var(--color-amber-500);
     --color-warning-hover: var(--color-amber-600);
-    --color-warning-fg: var(--color-gray-900);
+    --color-warning-fg: var(--mc-gray-900);
     --color-warning-soft: var(--color-amber-50);
     --color-warning-soft-fg: var(--color-amber-800);
 
@@ -107,60 +149,60 @@
 .dark {
     --color-primary: var(--color-indigo-400);
     --color-primary-hover: var(--color-indigo-300);
-    --color-primary-fg: var(--color-gray-900);
+    --color-primary-fg: var(--mc-gray-900);
     --color-primary-soft: --alpha(var(--color-indigo-400) / 15%);
     --color-primary-soft-fg: var(--color-indigo-200);
 
-    --color-canvas: var(--color-gray-900);
-    --color-canvas-2: var(--color-gray-800);
+    --color-canvas: var(--mc-gray-900);
+    --color-canvas-2: var(--mc-gray-800);
 
-    --color-surface: var(--color-gray-800);
-    --color-surface-2: var(--color-gray-700);
-    --color-surface-3: var(--color-gray-600);
-    --color-surface-inverse: var(--color-gray-950);
-    --color-surface-inverse-fg: var(--color-gray-100);
+    --color-surface: var(--mc-gray-800);
+    --color-surface-2: var(--mc-gray-700);
+    --color-surface-3: var(--mc-gray-600);
+    --color-surface-inverse: var(--mc-gray-950);
+    --color-surface-inverse-fg: var(--mc-gray-100);
     --color-surface-inverse-hover: var(--color-black);
 
-    --color-surface-fg: var(--color-gray-100);
-    --color-surface-fg-soft: var(--color-gray-300);
-    --color-muted: var(--color-gray-400);
-    --color-subtle: var(--color-gray-600);
+    --color-surface-fg: var(--mc-gray-100);
+    --color-surface-fg-soft: var(--mc-gray-300);
+    --color-muted: var(--mc-gray-400);
+    --color-subtle: var(--mc-gray-600);
 
-    --color-border-soft: var(--color-gray-700);
-    --color-border: var(--color-gray-600);
-    --color-border-strong: var(--color-gray-500);
+    --color-border-soft: var(--mc-gray-700);
+    --color-border: var(--mc-gray-600);
+    --color-border-strong: var(--mc-gray-500);
 
     --color-danger: var(--color-red-400);
     --color-danger-hover: var(--color-red-300);
-    --color-danger-fg: var(--color-gray-900);
+    --color-danger-fg: var(--mc-gray-900);
     --color-danger-soft: --alpha(var(--color-red-400) / 15%);
     --color-danger-soft-fg: var(--color-red-200);
 
     --color-success: var(--color-green-400);
     --color-success-hover: var(--color-green-300);
-    --color-success-fg: var(--color-gray-900);
+    --color-success-fg: var(--mc-gray-900);
     --color-success-soft: --alpha(var(--color-green-400) / 15%);
     --color-success-soft-fg: var(--color-green-200);
 
     --color-warning: var(--color-amber-400);
     --color-warning-hover: var(--color-amber-300);
-    --color-warning-fg: var(--color-gray-900);
+    --color-warning-fg: var(--mc-gray-900);
     --color-warning-soft: --alpha(var(--color-amber-400) / 15%);
     --color-warning-soft-fg: var(--color-amber-200);
 
     --color-info: var(--color-blue-400);
     --color-info-hover: var(--color-blue-300);
-    --color-info-fg: var(--color-gray-900);
+    --color-info-fg: var(--mc-gray-900);
     --color-info-soft: --alpha(var(--color-blue-400) / 15%);
     --color-info-soft-fg: var(--color-blue-200);
 
     --color-accent: var(--color-violet-400);
-    --color-accent-fg: var(--color-gray-900);
+    --color-accent-fg: var(--mc-gray-900);
     --color-accent-soft: --alpha(var(--color-violet-400) / 15%);
     --color-accent-soft-fg: var(--color-violet-200);
 
     --color-accent-2: var(--color-teal-400);
-    --color-accent-2-fg: var(--color-gray-900);
+    --color-accent-2-fg: var(--mc-gray-900);
     --color-accent-2-soft: --alpha(var(--color-teal-400) / 15%);
     --color-accent-2-soft-fg: var(--color-teal-200);
 }

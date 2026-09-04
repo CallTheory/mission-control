@@ -12,6 +12,10 @@
         "ext-openssl": "*",
         "ext-pdo": "*",
         "ext-simplexml": "*",
+        "filament/actions": "^5.0",
+        "filament/notifications": "^5.7",
+        "filament/schemas": "^5.7",
+        "filament/tables": "^5.7",
         "guzzlehttp/guzzle": "^7.9.3",
         "jfcherng/php-diff": "^6.16.2",
         "laravel/framework": "^12.15.0",
@@ -67,13 +71,14 @@
         }
     },
     "scripts": {
-        "post-update-cmd" : [
+        "post-update-cmd": [
             "@php artisan telescope:publish --ansi",
             "@php artisan vendor:publish --tag=livewire:assets --ansi --force"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""

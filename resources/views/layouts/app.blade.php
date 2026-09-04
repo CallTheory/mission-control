@@ -9,6 +9,8 @@
 
         @vite(['resources/css/app.css', 'resources/scss/diff-table.scss', 'resources/js/app.js'])
 
+        @filamentStyles
+
         <link rel="shortcut icon" type="image/png" href="/images/mission-control.png"/>
 
     </head>
@@ -55,5 +57,6 @@
 
         @livewire('wire-elements-modal')
 
+        @filamentScripts
     </body>
 </html>

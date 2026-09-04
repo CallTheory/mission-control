@@ -2,6 +2,8 @@
 /public/hot
 /public/storage
 /public/build
+/public/js/filament
+/public/css/filament
 /storage/*.key
 /vendor
 .env

@@ -9,6 +9,8 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+        @filamentStyles
+
         <link rel="shortcut icon" type="image/png" href="/images/mission-control.png"/>
 
         @yield('head')
@@ -25,5 +27,6 @@
 
         </div>
         @stack('scripts')
+        @filamentScripts
     </body>
 </html>
