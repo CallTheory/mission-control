@@ -60,6 +60,20 @@ class TraceRequests
 
             $this->describe($span, $request, $response);
 
+            /*
+             * Trace ids carry no data, and exposing one turns "something broke"
+             * into a support request someone can actually look up in Tempo.
+             */
+            try {
+                $traceId = $span->getContext()->getTraceId();
+
+                if ($traceId !== '' && $response->headers !== null) {
+                    $response->headers->set('X-Trace-Id', $traceId);
+                }
+            } catch (Throwable) {
+                // header is best-effort
+            }
+
             return $response;
         } catch (Throwable $e) {
             try {

@@ -12,6 +12,9 @@ use App\Services\Observability\TracerFactory;
 use App\Services\Observability\Tracing;
 use Illuminate\Console\Events\CommandFinished;
 use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Console\Events\ScheduledTaskFinished;
+use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
@@ -178,6 +181,25 @@ class TracingServiceProvider extends ServiceProvider
             }
 
             app(SpanRecorder::class)->startCommandSpan($event);
+        });
+
+        /*
+         * Scheduled tasks are cheap (~19 tasks/minute in schedule:run) and give
+         * the cron surface visibility. Note $schedule->command() forks a
+         * separate process, so that child is its own trace root unless a
+         * TRACEPARENT env var is provided.
+         */
+        Event::listen(ScheduledTaskStarting::class, function ($event) {
+            app(SpanRecorder::class)->startScheduledTaskSpan($event);
+        });
+
+        Event::listen(ScheduledTaskFinished::class, function ($event) {
+            app(SpanRecorder::class)->endScheduledTaskSpan($event);
+        });
+
+        Event::listen(ScheduledTaskFailed::class, function ($event) {
+            app(SpanRecorder::class)
+                ->endScheduledTaskSpan($event, $event->exception);
         });
 
         Event::listen(CommandFinished::class, function (CommandFinished $event) use ($ignore) {

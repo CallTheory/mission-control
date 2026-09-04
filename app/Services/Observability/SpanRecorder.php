@@ -204,6 +204,69 @@ class SpanRecorder
         });
     }
 
+    public function startScheduledTaskSpan(object $event): void
+    {
+        $this->tracing->safely(function () use ($event) {
+            $summary = method_exists($event->task, 'getSummaryForDisplay')
+                ? (string) $event->task->getSummaryForDisplay()
+                : 'task';
+
+            $span = $this->tracing->tracer()
+                ->spanBuilder('schedule '.$summary)
+                ->setSpanKind(SpanKind::KIND_INTERNAL)
+                ->startSpan();
+
+            $span->setAttribute('laravel.schedule.task', $summary);
+
+            if (property_exists($event->task, 'expression')) {
+                $span->setAttribute('laravel.schedule.expression', (string) $event->task->expression);
+            }
+
+            $scope = $span->activate();
+            $this->tracing->setRoot($span, $scope);
+            $this->tracing->stash($this->scheduleKey($event), $span, $scope);
+        });
+    }
+
+    public function endScheduledTaskSpan(object $event, ?Throwable $exception = null): void
+    {
+        $this->tracing->safely(function () use ($event, $exception) {
+            $entry = $this->tracing->unstash($this->scheduleKey($event));
+
+            if ($entry === null) {
+                return;
+            }
+
+            $span = $entry['span'];
+
+            if ($exception !== null) {
+                $span->recordException($exception);
+                $span->setStatus(StatusCode::STATUS_ERROR, $exception->getMessage());
+            }
+
+            if (property_exists($event, 'runtime')) {
+                $span->setAttribute('laravel.schedule.runtime_ms', (int) round($event->runtime * 1000));
+            }
+
+            $entry['scope']->detach();
+            $span->end();
+            $this->tracing->clearRoot();
+        });
+
+        $this->tracing->flush();
+    }
+
+    /**
+     * Scheduled tasks run sequentially in one schedule:run process, so the
+     * summary is a stable enough key.
+     */
+    private function scheduleKey(object $event): string
+    {
+        return 'schedule:'.(method_exists($event->task, 'getSummaryForDisplay')
+            ? $event->task->getSummaryForDisplay()
+            : spl_object_hash($event->task));
+    }
+
     public function recordExceptionOnCurrent(Throwable $e): void
     {
         $this->tracing->safely(function () use ($e) {

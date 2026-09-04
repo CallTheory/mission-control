@@ -225,7 +225,8 @@ evaluated as its own trace.
 | --- | --- |
 | HTTP requests | Root span per request, named by **route template** (`GET /system/users/{user}`), never the raw URL. Livewire updates are named by component (`LIVEWIRE system.role-manager`) instead of collapsing into one bucket. |
 | Queue jobs | Trace context is injected into the payload (~60 bytes), so a job is a child of whatever dispatched it. None of the job classes needed changes. |
-| Artisan commands | Plus scheduled tasks. |
+| Artisan commands | Long-running workers excluded (see below). |
+| Scheduled tasks | `schedule <summary>` spans with the cron expression and runtime. |
 | Database queries | **Off by default**, behind its own toggle with an optional slow-query threshold. |
 | Outbound HTTP | Laravel's `Http` facade, plus the raw Guzzle sites that opt in via `GuzzleTracing::handlerStack()`. |
 
@@ -283,3 +284,6 @@ timeouts above are what bound the cost.
   `OBSERVABILITY_TRACE_UI_URL` is set — one click from issue to trace.
 - API error responses include `trace_id`, finally giving the opaque
   `"An unclassified error occurred."` message a handle support can look up.
+- Every traced response carries an **`X-Trace-Id`** header, so "send me the trace
+  id from your browser devtools" is a viable support workflow. Trace ids carry no
+  data, so exposing them is safe.

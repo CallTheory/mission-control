@@ -6,6 +6,9 @@ namespace Tests\Feature\Observability;
 
 use Illuminate\Console\Events\CommandFinished;
 use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Console\Events\ScheduledTaskFinished;
+use Illuminate\Console\Events\ScheduledTaskStarting;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Input\ArrayInput;
@@ -57,6 +60,27 @@ class ConsoleTracingTest extends TestCase
         }
 
         $this->assertSame([], $this->spans());
+    }
+
+    public function test_a_scheduled_task_produces_a_span(): void
+    {
+        $this->enableTracing();
+
+        // Build a real scheduled Event through the scheduler rather than
+        // constructing one by hand (its mutex is not container-resolvable).
+        $task = app(Schedule::class)
+            ->command('inspire')
+            ->everyMinute();
+
+        Event::dispatch(new ScheduledTaskStarting($task));
+        Event::dispatch(new ScheduledTaskFinished($task, 0.25));
+
+        $span = collect($this->spans())->first(
+            fn ($s) => str_starts_with($s->getName(), 'schedule ')
+        );
+
+        $this->assertNotNull($span);
+        $this->assertSame(250, $span->getAttributes()->toArray()['laravel.schedule.runtime_ms']);
     }
 
     private function fireCommand(string $command, int $exitCode): void
