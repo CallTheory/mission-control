@@ -4,8 +4,8 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="sm:flex sm:items-center">
                 <div class="sm:flex-auto">
-                    <h1 class="text-base font-semibold leading-6 text-gray-900">Script Issues</h1>
-                    <p class="mt-2 text-sm text-gray-700">
+                    <h1 class="text-base font-semibold leading-6 text-surface-fg">Script Issues</h1>
+                    <p class="mt-2 text-sm text-surface-fg-soft">
                         The following scripts have problems with being decompressed.
                         Try to open and save the script in question through Intelligent Series Supervisor.
                         Scripts without a client can be System Scripts or Templates.
@@ -22,40 +22,40 @@
             <div class="mt-8 flow-root">
                 <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                        <table class="min-w-full divide-y divide-gray-300">
+                        <table class="min-w-full divide-y divide-border">
                             <thead>
                             <tr>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">PageID</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Client Number</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Client Name</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">System Script</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Script Name</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Page Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">PageID</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Client Number</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Client Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">System Script</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Script Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Page Name</th>
                             </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200">
+                            <tbody class="divide-y divide-border-soft">
                             @foreach($searchResults as $result)
                                 <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-400 sm:pl-0">
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-muted sm:pl-0">
                                         {{ $result->PageID ?? '' }}
                                     </td>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-surface-fg sm:pl-0">
                                         {{ $result->ClientNumber ?? '' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         {{ $result->ClientName ?? '' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         @if($result->SystemScript ?? false)
                                             Yes
                                         @else
                                             No
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         {{ $result->ScriptName ?? '' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         {{ $result->PageName ?? '' }}
                                     </td>
                                 </tr>

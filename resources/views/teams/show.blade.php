@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl leading-tight ">
-            {{ Auth::user()->currentTeam->name ?? 'Current Team'  }}'s <span class="text-gray-500">Settings</span>
+            {{ Auth::user()->currentTeam->name ?? 'Current Team'  }}'s <span class="text-muted">Settings</span>
         </h2>
     </x-slot>
 

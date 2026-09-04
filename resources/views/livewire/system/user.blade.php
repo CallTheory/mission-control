@@ -1,53 +1,53 @@
-<div class="mt-8 bg-gray-100  p-4">
+<div class="mt-8 bg-surface-2 p-4">
     <x-form-section submit="saveUserDetails">
         <x-slot name="title">
             <a class="font-semibold hover:underline" href="/system/users">Users</a> &rarr; {{  $user->name }}
-            <code class="bg-indigo-50 px-2 py-0.5 border border-indigo-300 rounded">{{ $user->id }}</code>
+            <code class="bg-primary-soft px-2 py-0.5 border border-primary rounded">{{ $user->id }}</code>
         </x-slot>
 
         <x-slot name="description">
-            <div class="text-indigo-700 block mb-4">{{ __('Update the selected user details, information, and assignment') }}</div>
-            <hr class="border border-gray-300" />
-            <dl class="text-sm text-gray-500 font-sans">
+            <div class="text-primary block mb-4">{{ __('Update the selected user details, information, and assignment') }}</div>
+            <hr class="border border-border" />
+            <dl class="text-sm text-muted font-sans">
                 <div class="my-2">
-                    <dt class="font-semibold text-gray-700">Created</dt>
+                    <dt class="font-semibold text-surface-fg-soft">Created</dt>
                     <dd>
                         {{ $user->created_at->timezone(request()->user()->timezone)->format('m/d/Y g:i:s A T') }}
-                        <small class="block text-gray-400">
+                        <small class="block text-muted">
                             {{ $user->created_at->timezone(request()->user()->timezone)->diffForHumans() }}
                         </small>
                     </dd>
                 </div>
                 <div class="my-2">
-                    <dt class="font-semibold text-gray-700">Updated</dt>
+                    <dt class="font-semibold text-surface-fg-soft">Updated</dt>
                     <dd>
                         {{$user->updated_at->timezone(request()->user()->timezone)->format('m/d/Y g:i:s A T') }}
-                        <small class="block  text-gray-400">
+                        <small class="block text-muted">
                             {{ $user->updated_at->timezone(request()->user()->timezone)->diffForHumans() }}
                         </small>
                     </dd>
                 </div>
                 <div class="my-2">
-                    <dt class="font-semibold text-gray-700">SAML2 SSO</dt>
-                    <dd>{!! $user->saml_linked_id ? "<span class=\"text-green-500\">{$user->saml_linked_id}</span>" : '<span class="text-gray500">Not Linked</span>' !!}</dd>
+                    <dt class="font-semibold text-surface-fg-soft">SAML2 SSO</dt>
+                    <dd>{!! $user->saml_linked_id ? "<span class=\"text-success\">{$user->saml_linked_id}</span>" : '<span class="text-muted">Not Linked</span>' !!}</dd>
                 </div>
                 @if(!$user->saml_linked_id)
                     <div class="my-2">
-                        <dt class="font-semibold text-gray-700">2FA/MFA</dt>
-                        <dd>{!! $user->two_factor_secret ? '<span class="text-green-500">Enabled</span>' : '<span class="text-red-500">Disabled</span>' !!}</dd>
+                        <dt class="font-semibold text-surface-fg-soft">2FA/MFA</dt>
+                        <dd>{!! $user->two_factor_secret ? '<span class="text-success">Enabled</span>' : '<span class="text-danger">Disabled</span>' !!}</dd>
                     </div>
                     <div class="my-2">
-                        <dt class="font-semibold text-gray-700">Email Verification</dt>
-                        <dd>{!! $user->email_verified_at ? '<span class="text-green-500">Verified</span>' : '<span class="text-red-500">Not Verified</span>' !!}</dd>
+                        <dt class="font-semibold text-surface-fg-soft">Email Verification</dt>
+                        <dd>{!! $user->email_verified_at ? '<span class="text-success">Verified</span>' : '<span class="text-danger">Not Verified</span>' !!}</dd>
                     </div>
                 @endif
 
                 <div class="my-2">
-                    <dt class="font-semibold text-gray-700">Current Team(s)</dt>
+                    <dt class="font-semibold text-surface-fg-soft">Current Team(s)</dt>
                     <dd class="mt-1">
                         @foreach($user->allTeams() as $team)
                             <span class="my-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border
-                            @if($team->personal_team)  bg-gray-200 border-gray-300 text-gray-800 @else bg-indigo-100 border-indigo-400 text-indigo-800 @endif mr-1">
+                            @if($team->personal_team)  bg-surface-3 border-border text-surface-fg @else bg-primary-soft border-primary text-primary @endif mr-1">
                                 {{ $team->name }}
                             </span>
                         @endforeach
@@ -62,7 +62,7 @@
             <div class="col-span-6 lg:col-span-4">
                 <x-label class="mb-2 font-semibold" for="user_name" value="User Name" />
                 <x-input class="w-full" type="text" name="user_name" wire:model="user_name" />
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The display name of the user account in Mission Control
                 </small>
                 <x-input-error for="user_name" class="mt-2" />
@@ -71,7 +71,7 @@
             <div class="col-span-6 lg:col-span-4">
                 <x-label class="mb-2 font-semibold" for="user_email" value="Email Address" />
                 <x-input class="w-full" type="email" name="email" wire:model="user_email" />
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The email address of the user account
                 </small>
                 <x-input-error for="user_email" class="mt-2" />
@@ -80,7 +80,7 @@
             <!-- Email -->
             <div class="col-span-6 sm:col-span-4">
                 <x-label class="mb-2 font-semibold" for="user_timezone" value="{{ __('Timezone') }}" />
-                <x-input list="timezone_list" value="" id="user_timezone" type="timezone" class="p-2 mt-1 block w-full border border-gray-300 rounded" wire:model.live="user_timezone" />
+                <x-input list="timezone_list" value="" id="user_timezone" type="timezone" class="p-2 mt-1 block w-full border border-border rounded" wire:model.live="user_timezone" />
                 <datalist id="timezone_list" class="min-w-full">
                     <option value="UTC">Coordinated Universal Time </option>
                     @php
@@ -132,7 +132,7 @@
                     @endforeach
 
                 </datalist>
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The timezone to display application timestamps and date/times in
                 </small>
                 <x-input-error for="user_timezone" class="mt-2" />
@@ -149,7 +149,7 @@
                         @endforeach
                     @endif
                 </datalist>
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The Intelligent Series agtId of the user (i.e., the raw database id)
                 </small>
                 <x-input-error for="user_agtId" class="mt-2" />
@@ -180,31 +180,31 @@
 
             <x-input-error for="remove_error" class="my-4" />
             <div class="w-full mt-4">
-                <table class="table-auto min-w-full divide-y divide-gray-300">
-                    <thead class="text-gray-500">
-                        <tr class="text-left border-b border-gray-300">
+                <table class="table-auto min-w-full divide-y divide-border">
+                    <thead class="text-muted">
+                        <tr class="text-left border-b border-border">
                             <th>Team</th>
                             <th>Role</th>
                             <th></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-border-soft">
                     @foreach($user->allTeams() as $team)
                         <tr>
-                            <td class="text-sm py-2 font-semibold text-indigo-900">{{ $team->name }}</td>
-                            <td class="text-sm py-2  text-gray-600">
+                            <td class="text-sm py-2 font-semibold text-primary">{{ $team->name }}</td>
+                            <td class="text-sm py-2 text-surface-fg-soft">
                                 @if($team->personal_team)
-                                    <span class="text-gray-400">&mdash;</span>
+                                    <span class="text-muted">&mdash;</span>
                                 @else
                                     @forelse($user->rolesForTeam($team) as $role)
-                                        <span class="my-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-indigo-100 border-indigo-400 text-indigo-800 mr-1">
+                                        <span class="my-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-primary-soft border-primary text-primary-soft-fg mr-1">
                                             {{ $role->label }}
                                             <button title="Remove the {{ $role->label }} role"
                                                     wire:click="removeRole({{ $role->id }})"
-                                                    class="cursor-pointer text-indigo-500 hover:text-red-600">&times;</button>
+                                                    class="cursor-pointer text-primary hover:text-danger">&times;</button>
                                         </span>
                                     @empty
-                                        <span class="text-gray-400">No roles</span>
+                                        <span class="text-muted">No roles</span>
                                     @endforelse
                                 @endif
                             </td>
@@ -212,7 +212,7 @@
                                 @if(!$team->personal_team)
                                     <a title="Remove {{ $user->name }} from the {{ $team->name }} team"
                                         wire:confirm="Remove {{ $user->name }} from the {{ $team->name }} team?"
-                                        class="cursor-pointer text-red-400 hover:text-red-600 border border-gray-300 hover:bg-red-100 border hover:border-red-400 rounded-full text-xs px-1.5"
+                                        class="cursor-pointer text-danger hover:text-danger border border-border hover:bg-danger-soft border hover:border-danger rounded-full text-xs px-1.5"
                                         wire:click="removeFromTeam({{ $team->id }})">
                                         Remove
                                     </a>
@@ -224,7 +224,7 @@
                 </table>
             </div>
 
-            <small class="block text-xs text-gray-400 mt-4">
+            <small class="block text-xs text-muted mt-4">
                 Team owners and owner roles cannot be removed or changed - if you need to re-assign a team owner please contact support.
             </small>
         </x-slot>
@@ -232,26 +232,26 @@
         <x-slot name="form">
             <div class="col-span-6 lg:col-span-4">
                 <x-label class="mb-2 font-semibold" for="new_team" value="Team Assignment" />
-                <select class="w-full border border-gray-300 rounded shadow"  wire:model="new_team">
+                <select class="w-full border border-border rounded shadow"  wire:model="new_team">
                     <option value="">Select a Team</option>
                     @foreach($teams as $team)
                         <option value="{{ $team->id }}">{{ $team->name }}</option>
                     @endforeach
                 </select>
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The team to assign to the user
                 </small>
                 <x-input-error for="new_team" class="mt-2" />
             </div>
             <div class="col-span-6 lg:col-span-4">
                 <x-label class="mb-2 font-semibold" for="new_role" value="Role Assignment" />
-                <select class="w-full border border-gray-300 rounded shadow" id="new_role" wire:model="new_role">
+                <select class="w-full border border-border rounded shadow" id="new_role" wire:model="new_role">
                     <option value="">Select a Role</option>
                     @foreach($roles as $key => $label)
                         <option value="{{ $key }}">{{ $label }}</option>
                     @endforeach
                 </select>
-                <small class="block my-2 text-xs text-gray-500">
+                <small class="block my-2 text-xs text-muted">
                     The role on the team to assign to the user.
                 </small>
                 <x-input-error for="new_role" class="mt-2" />
@@ -283,7 +283,7 @@
         </x-slot>
 
         <x-slot name="content">
-            <div class="max-w-xl text-sm text-gray-600 ">
+            <div class="max-w-xl text-sm text-surface-fg-soft ">
                 Once the account is deleted, <strong>all of its resources and data will be permanently deleted</strong>.
                 <span class="italic">Before deleting the account</span>, please download any data or information that you wish to retain.
             </div>

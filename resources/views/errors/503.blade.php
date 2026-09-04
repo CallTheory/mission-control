@@ -13,7 +13,7 @@
         </x-slot>
 
         <h3 class="text-2xl mx-auto text-center font-semibold">
-            <code class="text-indigo-500 font-bold font-mono">503</code> Service Unavailable
+            <code class="text-primary font-bold font-mono">503</code> Service Unavailable
         </h3>
         <p class="my-2 text-xs text-center ">
             This usually means we're updating the web application.

@@ -1,6 +1,6 @@
 @php
     use App\Models\MergeCommISWebTrigger;
-$warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 group-hover:text-white ease-in-out duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+$warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary group-hover:text-surface-inverse-fg ease-in-out duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
 
 @endphp
 
@@ -21,7 +21,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                         x-transition:leave="transform transition ease-in-out duration-1000"
                         x-transition:leave-start="opacity-100"
                         x-transition:leave-end="opacity-0"
-                        class="transform transition absolute inset-0 bg-black transition-opacity fixed-bottom" aria-hidden="true"></div>
+                        class="transform transition absolute inset-0 bg-surface-inverse transition-opacity fixed-bottom" aria-hidden="true"></div>
                     </template>
 
                     <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex z-100">
@@ -46,14 +46,14 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
 
                             <!--
                              -->
-                            <div class="group h-full flex flex-col py-6 bg-white  shadow
-                            overflow-y-scroll transform transition duration-700 ease-in-out border-l-4 shadow hover:border-white border-indigo-300 z-100">
+                            <div class="group h-full flex flex-col py-6 bg-surface  shadow
+                            overflow-y-scroll transform transition duration-700 ease-in-out border-l-4 shadow hover:border-surface border-primary z-100">
 
 
                                 <div class="px-4 sm:px-6 z-100">
 
 
-                                    <h2 class="text-lg font-medium text-gray-900
+                                    <h2 class="text-lg font-medium text-surface-fg
                                     transform transition duration-700 ease-in-out"
                                         id="slide-over-title">
                                         <template x-if="$wire.isOpen = true">
@@ -66,7 +66,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                             x-transition:leave-end="opacity-0"
 
                                             class="inline-flex">
-                                            <button  wire:click="$toggle('isOpen')" class="rounded-md text-gray-500 hover:text-black focus:outline-hidden focus:ring-2 focus:ring-white align-text-bottom">
+                                            <button  wire:click="$toggle('isOpen')" class="rounded-md text-muted hover:text-surface-fg focus:outline-hidden focus:ring-2 focus:ring-surface align-text-bottom">
                                                 <span class="sr-only">Close panel</span>
                                                 <!-- Heroicon name: outline/x -->
                                                 <svg class="h-4 w-4 " xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -81,7 +81,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                 <div class="mt-6 relative flex-1 px-4 sm:px-6 z-100">
                                     <!-- Replace with your content -->
                                     <div class="absolute inset-0 px-4 sm:px-6">
-                                        <!--border-2 border-dashed border-gray-300 -->
+                                        <!--border-2 border-dashed border-border -->
                                         <div class="h-full " aria-hidden="true">
                                             <form wire:submit="$toggle('isOpen')">
 
@@ -111,11 +111,11 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                 <div class="my-4">
                                                     <x-label for="text" value="{{ __('Email Body') }}" />
 
-                                                    <textarea rows="10" disabled id="text" class="mt-1 block w-full h-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow ">{{ $this->state['text'] }}</textarea>
+                                                    <textarea rows="10" disabled id="text" class="mt-1 block w-full h-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow ">{{ $this->state['text'] }}</textarea>
 
                                                 </div>
 
-                                                <div class="flex items-center justify-end px-4 py-3 bg-gray-50    text-right
+                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-2    text-right
                                                 sm:px-6 shadow sm:rounded-md sm:rounded-md">
 
                                                     <x-action-message class="mr-3 " on="forwarded">

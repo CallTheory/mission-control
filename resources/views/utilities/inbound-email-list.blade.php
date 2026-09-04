@@ -9,23 +9,23 @@
 
             <h3 class="font-semibold text-2xl my-2 0 my-4">Received Emails</h3>
 
-                <div class="table min-w-full divide-y divide-gray-200 shadow border border-gray-300  sm:rounded-lg">
-                    <div class="bg-gray-50   table-row-group">
+                <div class="table min-w-full divide-y divide-border-soft shadow border border-border sm:rounded-lg">
+                    <div class="bg-surface-2 table-row-group">
 
                         <div class="table-row">
-                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 0 uppercase tracking-wider">
+                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-muted 0 uppercase tracking-wider">
                                 Processed
                             </div>
-                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 0 uppercase tracking-wider">
+                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-muted 0 uppercase tracking-wider">
                                 Subject
                             </div>
-                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 0 uppercase tracking-wider">
+                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-muted 0 uppercase tracking-wider">
                                 From
                             </div>
-                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 0 uppercase tracking-wider">
+                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-muted 0 uppercase tracking-wider">
                                 To
                             </div>
-                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 0 uppercase tracking-wider">
+                            <div scope="col" class="table-cell px-6 py-3 text-left text-xs font-medium text-muted 0 uppercase tracking-wider">
                                 Status
                             </div>
 
@@ -33,29 +33,29 @@
 
                         @foreach($emails as $email )
 
-                            <div class="bg-white group
-                                                 hover:bg-gray-100 transform transition duration-500 ease-in-out table-row ">
-                                <div class="table-cell px-6 py-4 whitespace-nowrap text-xs font-semibold text-gray-700">
+                            <div class="bg-surface group
+                                                 hover:bg-surface-2 transform transition duration-500 ease-in-out table-row ">
+                                <div class="table-cell px-6 py-4 whitespace-nowrap text-xs font-semibold text-surface-fg-soft">
 
                                     {{ $email->created_at->timezone(Auth::user()->timezone)->format('m/d/Y g:i:s A T') }}
 
                                 </div>
-                                <div class="table-cell px-6 py-4 text-sm font-medium text-gray-700">
+                                <div class="table-cell px-6 py-4 text-sm font-medium text-surface-fg-soft">
                                     <livewire:open-email-button :email="$email" :wire.key="$email->id"/>
                                 </div>
-                                <div class="table-cell px-6 py-4 whitespace-nowrap text-xs font-normal text-gray-700">
+                                <div class="table-cell px-6 py-4 whitespace-nowrap text-xs font-normal text-surface-fg-soft">
 
                                     {{ $email->from }}
 
                                 </div>
-                                <div class="table-cell px-6 py-4 text-xs font-normal text-gray-700">
+                                <div class="table-cell px-6 py-4 text-xs font-normal text-surface-fg-soft">
                                    {{ $email->to  }}
                                 </div>
 
-                                <div class="table-cell px-6 py-4 whitespace-nowrap text-sm font-normal text-gray-700">
+                                <div class="table-cell px-6 py-4 whitespace-nowrap text-sm font-normal text-surface-fg-soft">
                                     @if($email->processed_at)
 
-                                        <span class="px-2 inline-flex text-xs leading-5 rounded bg-green-600 text-white border border-green-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 rounded bg-success text-success-fg border border-success">
                                          Processed
                                         </span>
 
@@ -67,7 +67,7 @@
 
                                     @else
 
-                                        <span class="px-2 inline-flex text-xs leading-5 font-normal rounded bg-red-600 text-white border border-red-500">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-normal rounded bg-danger text-danger-fg border border-danger">
                                           Pending
                                         </span>
 

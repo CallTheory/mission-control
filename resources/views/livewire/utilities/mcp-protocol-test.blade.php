@@ -1,44 +1,44 @@
 <div>
     <div class="p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">MCP Protocol Test - JSON-RPC & vCon Tool</h3>
+        <h3 class="text-lg font-medium text-surface-fg mb-4">MCP Protocol Test - JSON-RPC & vCon Tool</h3>
         
         <div class="mb-4">
-            <p class="text-sm text-gray-600 mb-2">API Token required for authentication. Generate one from your profile settings.</p>
+            <p class="text-sm text-surface-fg-soft mb-2">API Token required for authentication. Generate one from your profile settings.</p>
             <input type="text" id="apiToken" placeholder="Enter your API token" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-info">
         </div>
 
         <div class="mb-4">
-            <label class="text-sm text-gray-600 mb-1 block">Call ID for vCon test:</label>
+            <label class="text-sm text-surface-fg-soft mb-1 block">Call ID for vCon test:</label>
             <input type="text" id="callId" placeholder="Enter a call ID (e.g., CALL-12345)" value="CALL-12345"
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-info">
         </div>
 
         <div class="mb-4 space-x-2">
             <button id="initBtn" 
-                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="px-4 py-2 bg-info text-info-fg rounded-md hover:bg-info-hover focus:outline-none focus:ring-2 focus:ring-info">
                 Initialize MCP
             </button>
             <button id="listToolsBtn" 
-                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    class="px-4 py-2 bg-success text-success-fg rounded-md hover:bg-success-hover focus:outline-none focus:ring-2 focus:ring-success"
                     disabled>
                 List Tools
             </button>
             <button id="getVconBtn" 
-                    class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    class="px-4 py-2 bg-accent text-accent-fg rounded-md hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent"
                     disabled>
                 Get vCon Record
             </button>
             <button id="clearBtn" 
-                    class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                    class="px-4 py-2 bg-surface-3 text-surface-fg rounded-md hover:bg-border-strong focus:outline-none focus:ring-2 focus:ring-border">
                 Clear Log
             </button>
         </div>
 
         <div class="mb-4">
-            <h4 class="text-md font-medium text-gray-900 mb-2">Request/Response Log</h4>
-            <div id="requestLog" class="p-3 bg-gray-100 rounded-md h-96 overflow-y-auto font-mono text-xs">
-                <div class="text-gray-500">No requests sent yet...</div>
+            <h4 class="text-md font-medium text-surface-fg mb-2">Request/Response Log</h4>
+            <div id="requestLog" class="p-3 bg-surface-2 rounded-md h-96 overflow-y-auto font-mono text-xs">
+                <div class="text-muted">No requests sent yet...</div>
             </div>
         </div>
     </div>
@@ -58,11 +58,11 @@
         function addLogEntry(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
             const entry = document.createElement('div');
-            entry.className = type === 'error' ? 'text-red-600 mb-2' : 
-                            type === 'success' ? 'text-green-600 mb-2' : 
-                            type === 'request' ? 'text-blue-600 mb-2' :
-                            type === 'response' ? 'text-purple-600 mb-2' :
-                            'text-gray-700 mb-2';
+            entry.className = type === 'error' ? 'text-danger mb-2' : 
+                            type === 'success' ? 'text-success mb-2' : 
+                            type === 'request' ? 'text-info mb-2' :
+                            type === 'response' ? 'text-accent mb-2' :
+                            'text-surface-fg-soft mb-2';
             
             if (type === 'request' || type === 'response') {
                 const pre = document.createElement('pre');
@@ -195,7 +195,7 @@
         });
 
         clearBtn.addEventListener('click', () => {
-            requestLog.innerHTML = '<div class="text-gray-500">Log cleared...</div>';
+            requestLog.innerHTML = '<div class="text-muted">Log cleared...</div>';
         });
     </script>
 </div>

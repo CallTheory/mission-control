@@ -23,44 +23,44 @@
                             @click="showDatepicker = !showDatepicker"
                             @keydown.escape="showDatepicker = false"
                             class="w-full pl-4 pr-10 py-3 leading-none rounded-lg shadow focus:outline-hidden focus:shadow-outline font-medium
-border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow "
+border-border     focus:border-primary focus:ring focus:ring-primary rounded-md shadow "
                             placeholder="Select date">
 
                         <div class="absolute top-0 right-0 px-3 py-2">
-                            <svg class="h-6 w-6 text-gray-400 0"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-6 w-6 text-muted"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
 
                         <div
-                            class="bg-white  mt-12 rounded-lg shadow border  p-4 absolute top-0 left-0 z-10"
+                            class="bg-surface mt-12 rounded-lg shadow border p-4 absolute top-0 left-0 z-10"
                             style="width: 17rem"
                             x-show.transition="showDatepicker"
                             @click.away="showDatepicker = false">
 
                             <div class="flex justify-between items-center mb-2">
                                 <div>
-                                    <span x-text="MONTH_NAMES[month]" class="text-lg font-bold text-gray-800 "></span>
-                                    <span x-text="year" class="ml-1 text-lg text-gray-600  font-normal"></span>
+                                    <span x-text="MONTH_NAMES[month]" class="text-lg font-bold text-surface-fg "></span>
+                                    <span x-text="year" class="ml-1 text-lg text-surface-fg-soft font-normal"></span>
                                 </div>
                                 <div>
                                     <button
                                         type="button"
-                                        class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200  p-1 rounded-full"
+                                        class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-surface-3 p-1 rounded-full"
                                         :class="{'cursor-not-allowed opacity-25': month == 0 }"
                                         :disabled="month == 0 ? true : false"
                                         @click="month--; getNoOfDays()">
-                                        <svg class="h-6 w-6 text-gray-500  inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-6 w-6 text-muted inline-flex"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                                         </svg>
                                     </button>
                                     <button
                                         type="button"
-                                        class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-gray-200  p-1 rounded-full"
+                                        class="transition ease-in-out duration-100 inline-flex cursor-pointer hover:bg-surface-3 p-1 rounded-full"
                                         :class="{'cursor-not-allowed opacity-25': month == 11 }"
                                         :disabled="month == 11 ? true : false"
                                         @click="month++; getNoOfDays()">
-                                        <svg class="h-6 w-6 text-gray-500  inline-flex hover:text-indigo-300"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-6 w-6 text-muted inline-flex hover:text-primary"  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                         </svg>
                                     </button>
@@ -72,7 +72,7 @@ border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rou
                                     <div style="width: 14.26%" class="px-1">
                                         <div
                                             x-text="day"
-                                            class="text-gray-800  font-medium text-center text-xs"></div>
+                                            class="text-surface-fg font-medium text-center text-xs"></div>
                                     </div>
                                 </template>
                             </div>
@@ -90,7 +90,7 @@ border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rou
                                             @click="getDateValue(date)"
                                             x-text="date"
                                             class="cursor-pointer text-center text-sm leading-none rounded-full leading-loose transition ease-in-out duration-100"
-                                            :class="{'bg-blue-500  text-white': isToday(date) == true, 'text-gray-700   hover:bg-blue-200': isToday(date) == false }"
+                                            :class="{'bg-info text-info-fg': isToday(date) == true, 'text-surface-fg-soft hover:bg-info-soft': isToday(date) == false }"
                                         ></div>
                                     </div>
                                 </template>

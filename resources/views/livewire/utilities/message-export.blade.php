@@ -1,17 +1,17 @@
 <div class="w-full">
 
     @if (session()->has('message'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <div class="bg-success-soft border border-success text-success-soft-fg px-4 py-3 rounded relative mb-4" role="alert">
             <span class="block sm:inline">{{ session('message') }}</span>
         </div>
     @endif
 
-    <div class="block bg-white rounded border border-gray-300 shadow space-y-2 w-full my-4 py-4">
+    <div class="block bg-surface rounded border border-border shadow space-y-2 w-full my-4 py-4">
         <div class="px-4">
             <div class="sm:flex sm:items-center">
                 <div class="sm:flex-auto">
-                    <h1 class="text-base font-semibold leading-6 text-gray-900">Message Export Configurations</h1>
-                    <p class="mt-2 text-sm text-gray-700">
+                    <h1 class="text-base font-semibold leading-6 text-surface-fg">Message Export Configurations</h1>
+                    <p class="mt-2 text-sm text-surface-fg-soft">
                         Configure message exports to CSV with selectable fields. Run on-demand or on a recurring schedule.
                     </p>
                 </div>
@@ -27,41 +27,41 @@
             <div class="mt-8 flow-root">
                 <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div class="inline-block min-w-full py-2 align-middle px-4">
-                        <table class="min-w-full divide-y divide-gray-300">
+                        <table class="min-w-full divide-y divide-border">
                             <thead>
                             <tr>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Name</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Account</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Fields</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Schedule</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Last Run</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Enabled</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Account</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Fields</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Schedule</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Last Run</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Enabled</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-surface-fg">Actions</th>
                             </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200">
+                            <tbody class="divide-y divide-border-soft">
                             @forelse($exports as $export)
                                 <tr>
-                                    <td class="whitespace-nowrap py-4 px-3 text-sm font-medium text-gray-900">
+                                    <td class="whitespace-nowrap py-4 px-3 text-sm font-medium text-surface-fg">
                                         <x-button wire:click="edit({{ $export->id }})" class="text-sm">
                                             {{ $export->name }}
                                         </x-button>
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         {{ $export->client_number }}
                                         @if($export->client_name)
-                                            <br><span class="text-xs text-gray-400">{{ $export->client_name }}</span>
+                                            <br><span class="text-xs text-muted">{{ $export->client_name }}</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-4 text-sm text-gray-500">
+                                    <td class="px-3 py-4 text-sm text-muted">
                                         <span class="text-xs">{{ count($export->selected_fields) }} field(s)</span>
                                         @if($export->filter_field)
-                                            <br><span class="text-xs text-indigo-500">Filter: {{ $export->filter_field }} = {{ $export->filter_value }}</span>
+                                            <br><span class="text-xs text-primary">Filter: {{ $export->filter_field }} = {{ $export->filter_value }}</span>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         @if($export->schedule_type === 'manual')
-                                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">Manual</span>
+                                            <span class="inline-flex items-center rounded-md bg-surface-2 px-2 py-1 text-xs font-medium text-surface-fg-soft ring-1 ring-inset ring-border/20">Manual</span>
                                         @else
                                             <span class="capitalize">{{ $export->schedule_type }}</span>
                                             @if($export->schedule_time)
@@ -74,23 +74,23 @@
                                             @endif
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-muted">
                                         {{ $export->last_run_at?->format('M j, g:i A') ?? 'Never' }}
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                                         @if(!$export->isManual())
                                         <button
                                             wire:click="toggleEnabled({{ $export->id }})"
-                                            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 {{ $export->enabled ? 'bg-indigo-600' : 'bg-gray-200' }}"
+                                            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 {{ $export->enabled ? 'bg-primary' : 'bg-surface-3' }}"
                                             role="switch"
                                             aria-checked="{{ $export->enabled ? 'true' : 'false' }}"
                                         >
                                             <span
-                                                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $export->enabled ? 'translate-x-5' : 'translate-x-0' }}"
+                                                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out {{ $export->enabled ? 'translate-x-5' : 'translate-x-0' }}"
                                             ></span>
                                         </button>
                                         @else
-                                            <span class="text-xs text-gray-400">N/A</span>
+                                            <span class="text-xs text-muted">N/A</span>
                                         @endif
                                     </td>
                                     <td class="whitespace-nowrap px-3 py-4 text-sm space-x-2">
@@ -105,7 +105,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="text-gray-500 text-sm p-4">No message export configurations found. Click "New Export" to create one.</td></tr>
+                                <tr><td colspan="7" class="text-muted text-sm p-4">No message export configurations found. Click "New Export" to create one.</td></tr>
                             @endforelse
                             </tbody>
                         </table>
@@ -124,7 +124,7 @@
         <div class="absolute z-100">
             <x-dialog-modal wire:model.live="showCreateModal">
                 <x-slot name="title">
-                    <div class="flex text-2xl text-gray-900 font-bold">
+                    <div class="flex text-2xl text-surface-fg font-bold">
                         Message Export &middot; New Configuration
                     </div>
                 </x-slot>
@@ -150,7 +150,7 @@
         <div class="absolute z-100">
             <x-dialog-modal wire:model.live="editingRecord">
                 <x-slot name="title">
-                    <div class="flex text-2xl text-gray-900 font-bold">
+                    <div class="flex text-2xl text-surface-fg font-bold">
                         Message Export &middot; Edit Configuration
                     </div>
                 </x-slot>
@@ -176,12 +176,12 @@
         <div class="absolute z-100">
             <x-dialog-modal wire:model.live="showRunNowModal">
                 <x-slot name="title">
-                    <div class="flex text-2xl text-gray-900 font-bold">
+                    <div class="flex text-2xl text-surface-fg font-bold">
                         Run Message Export Now
                     </div>
                 </x-slot>
                 <x-slot name="content">
-                    <p class="text-sm text-gray-600 mb-4">
+                    <p class="text-sm text-surface-fg-soft mb-4">
                         Select the date range for messages to include in this export.
                     </p>
 

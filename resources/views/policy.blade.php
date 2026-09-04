@@ -6,7 +6,7 @@
             </a>
         </div>
 
-            <div class="w-full sm:max-w-2xl mt-6 p-6 bg-white border border-gray-300 shadow overflow-hidden sm:rounded-lg prose">
+            <div class="w-full sm:max-w-2xl mt-6 p-6 bg-surface border border-border shadow overflow-hidden sm:rounded-lg prose">
                 {!! $policy !!}
             </div>
         </div>

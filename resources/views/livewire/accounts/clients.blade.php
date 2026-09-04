@@ -1,13 +1,13 @@
 @php
-$sortIconAsc= '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"class="h-3 ml-1 text-indigo-700 my-1 align-text-bottom">
+$sortIconAsc= '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"class="h-3 ml-1 text-primary my-1 align-text-bottom">
   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25 12 21m0 0-3.75-3.75M12 21V3" />
 </svg>';
-$sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3  ml-1 text-indigo-700  my-1 align-text-bottom">
+$sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-3 ml-1 text-primary my-1 align-text-bottom">
   <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75 12 3m0 0 3.75 3.75M12 3v18" />
 </svg>';
 @endphp
 <div class="w-full inline-block">
-    <div class="p-4 bg-gray-50 rounded shadow mb-2">
+    <div class="p-4 bg-surface-2 rounded shadow mb-2">
         <div class="inline-flex flex flex-wrap">
             <div class="mr-4 pr-4 my-2">
                 <x-label for="client_number">Client Number</x-label>
@@ -32,7 +32,7 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
             <div class="flex my-2">
                 <div class="mr-2 pr-2">
                     <x-label for="account_setting">Account Setting</x-label>
-                    <select id="account_setting" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model="account_setting">
+                    <select id="account_setting" wire:loading.attr="disabled" class="mt-1 border border-border shadow rounded" wire:model="account_setting">
                         <option value=""></option>
                         <option value="SaveDiscardedMessages">Save Discarded Messages</option>
                         <option value="CheckinPending">Checkin Pending</option>
@@ -84,7 +84,7 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
 
                 <div class="mr-4 pr-4">
                     <x-label for="account_setting_value">Setting Value</x-label>
-                    <select id="account_setting_value" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model="account_setting_value">
+                    <select id="account_setting_value" wire:loading.attr="disabled" class="mt-1 border border-border shadow rounded" wire:model="account_setting_value">
                         <option value=""></option>
                         <option value="0">Off</option>
                         <option value="1">On</option>
@@ -103,7 +103,7 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
                 </x-secondary-button>
 
                 <x-action-message class="ml-2 inline" on="saved">
-                    <span class="text-green-500">&checkmark;</span>
+                    <span class="text-success">&checkmark;</span>
                 </x-action-message>
             </div>
         </div>
@@ -118,41 +118,41 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
                     <div class="my-2">
                         {{ $clients->links() }}
                     </div>
-                    <div class="shadow overflow-hidden border border-gray-300  sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200  text-left">
-                            <thead class="bg-gray-50">
+                    <div class="shadow overflow-hidden border border-border sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-border-soft text-left">
+                            <thead class="bg-surface-2">
                             <tr class="sticky top-0">
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     cltId
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     <a class="cursor-pointer flex whitespace-nowrap" wire:click="orderBy('ClientNumber')">
                                         Client Number @if($order_by === 'ClientNumber')  @if($order_direction === 'asc') {!! $sortIconAsc !!} @else {!! $sortIconDesc !!} @endif @endif
                                     </a>
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     <a class="cursor-pointer flex whitespace-nowrap" wire:click="orderBy('BillingCode')">
                                         Billing Code @if($order_by === 'BillingCode')  @if($order_direction === 'asc') {!! $sortIconAsc !!} @else {!! $sortIconDesc !!} @endif @endif
                                     </a>
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     <a class="cursor-pointer flex whitespace-nowrap" wire:click="orderBy('ClientName')">
                                         Client Name @if($order_by === 'ClientName')  @if($order_direction === 'asc') {!! $sortIconAsc !!} @else {!! $sortIconDesc !!} @endif @endif
                                     </a>
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     Directory Subject
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 tracking-wider whitespace-nowrap">
+                                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted tracking-wider whitespace-nowrap">
                                     Sources
                                 </th>
                             </tr>
                             </thead>
-                            <tbody class="bg-white  divide-y divide-gray-200 ">
+                            <tbody class="bg-surface divide-y divide-border-soft ">
 
                             @foreach($clients as $client)
                                 <tr class="group  transform transition duration-700 ease-in-out">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400   transform transition duration-700 ease-in-out">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-muted transform transition duration-700 ease-in-out">
                                         {{ $client->cltId }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
@@ -161,19 +161,19 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
                                             {{ $client->ClientNumber }}
                                         </a>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900   transform transition duration-700 ease-in-out">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-surface-fg transform transition duration-700 ease-in-out">
                                         {{ $client->BillingCode }}
                                     </td>
-                                    <td class="px-6 py-4 font-medium text-gray-900   transform transition duration-700 ease-in-out">
+                                    <td class="px-6 py-4 font-medium text-surface-fg transform transition duration-700 ease-in-out">
                                         <a class="hover:cursor-pointer hover:underline transform transition duration-700 ease-in-out font-semibold"
                                            href="/accounts/{{ $client->ClientNumber }}">
                                             {{ $client->ClientName }}
                                         </a>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900   transform transition duration-700 ease-in-out">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-surface-fg transform transition duration-700 ease-in-out">
                                         {{ $client->Directory ?? '' }}
                                     </td>
-                                    <td class="px-6 py-4 text-xs text-gray-900 transform transition duration-700 ease-in-out">
+                                    <td class="px-6 py-4 text-xs text-surface-fg transform transition duration-700 ease-in-out">
                                         @foreach($sources as $source)
                                             @if($source->cltId === $client->cltId)
                                                <x-client-source source="{{ $source->Source }}" />

@@ -1,5 +1,5 @@
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900">
+    <div class="col-span-1 flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover">
         <a wire:click="$toggle('isOpen')" href="#">
             <img class="h-12 grayscale" src="/images/stripe.svg" alt="Stripe">
         </a>
@@ -8,7 +8,7 @@
     @if($isOpen)
         <x-dialog-modal wire:model.live="isOpen">
             <x-slot name="title">
-                <img class="h-12 rounded-sm bg-gray-800" src="/images/stripe.svg" alt="Stripe">
+                <img class="h-12 rounded-sm bg-surface-inverse" src="/images/stripe.svg" alt="Stripe">
                 <br>
                 Stripe Billing API
             </x-slot>

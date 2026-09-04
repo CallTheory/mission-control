@@ -12,15 +12,15 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="overflow-hidden  sm:rounded-lg  flex">
 
-                <div class="inline-flex w-full p-12 border border-gray-300 border-double bg-white  shadow  mx-auto rounded-lg">
+                <div class="inline-flex w-full p-12 border border-border border-double bg-surface shadow mx-auto rounded-lg">
 
                     <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
                         <div class="lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
                             <div>
-                                <h2 class="text-3xl font-extrabold text-gray-900  sm:text-4xl">
+                                <h2 class="text-3xl font-extrabold text-surface-fg sm:text-4xl">
                                    System API Integrations
                                 </h2>
-                                <p class="mt-3 max-w-3xl text-lg text-gray-500 ">
+                                <p class="mt-3 max-w-3xl text-lg text-muted ">
                                     Used in first-party integrations built directly into the Mission Control application.
                                 </p>
                             </div>

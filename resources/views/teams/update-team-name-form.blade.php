@@ -17,7 +17,7 @@
 
                 <div class="ml-4 leading-tight">
                     <div class="">{{ $team->owner->name }}</div>
-                    <div class="text-gray-700  text-sm">{{ $team->owner->email }}</div>
+                    <div class="text-surface-fg-soft text-sm">{{ $team->owner->email }}</div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ auth()->user()?->dark_mode === 'dark' ? 'dark' : '' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,9 +17,9 @@
 
         <script>let FFOUC;</script>
     </head>
-    <body class="bg-gradient-to-b from-gray-200 to-gray-50">
+    <body class="bg-gradient-to-b from-canvas to-canvas-2">
 
-        <div class="font-sans text-gray-900 antialiased">
+        <div class="font-sans text-surface-fg antialiased">
 
             {{ $slot }}
 

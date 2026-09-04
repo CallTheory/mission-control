@@ -3,8 +3,8 @@
     $imageAlt = 'mFax by Documo';
 @endphp
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900">
-        <a wire:click="$toggle('isOpen')" href="#" class="flex text-4xl text-white font-extrabold">
+    <div class="col-span-1 flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover">
+        <a wire:click="$toggle('isOpen')" href="#" class="flex text-4xl text-surface-inverse-fg font-extrabold">
             <img class="h-12 rounded-sm grayscale invert mr-2" src="{{ $imageSrc }}" alt="{{ $imageAlt }}"> mFax
         </a>
     </div>
@@ -13,7 +13,7 @@
         <x-dialog-modal wire:model.live="isOpen">
             <x-slot name="title">
                 <div class="flex text-4xl text-surface-fg font-extrabold">
-                    <img class="h-12 bg-gray-800 rounded-sm mr-2" src="{{ $imageSrc }}" alt="{{ $imageAlt }}">
+                    <img class="h-12 bg-surface-inverse rounded-sm mr-2" src="{{ $imageSrc }}" alt="{{ $imageAlt }}">
                     mFax
                 </div>
                 <br>

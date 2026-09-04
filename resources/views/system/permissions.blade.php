@@ -10,7 +10,7 @@
     <div class="p-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="sm:rounded-lg flex">
-                <div class="w-full p-8 border border-gray-300 border-double bg-white shadow mx-auto rounded-lg">
+                <div class="w-full p-8 border border-border border-double bg-surface shadow mx-auto rounded-lg">
 
                     <div class="block mb-6">
                         Roles and their permissions are defined per team. Adjust which utilities and admin areas each role

@@ -8,7 +8,7 @@
     </x-slot>
 
     <x-slot name="content">
-        <div class="max-w-xl text-sm text-gray-600 ">
+        <div class="max-w-xl text-sm text-surface-fg-soft ">
             Once your account is deleted, <strong>all of its resources and data will be permanently deleted</strong>.
             <span class="italic">Before deleting your account</span>, please download any data or information that you wish to retain.
 

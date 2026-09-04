@@ -4,7 +4,7 @@
     $parseUrl = $parseSecret ? secure_url('/webhooks/sendgrid/parse/'.$parseSecret) : null;
 @endphp
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900">
+    <div class="col-span-1 flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover">
         <a wire:click="$toggle('isOpen')" href="#">
             <img class="h-12 rounded-sm grayscale" src="/images/sendgrid.svg" alt="SendGrid">
         </a>
@@ -13,7 +13,7 @@
     @if($isOpen)
         <x-dialog-modal wire:model.live="isOpen">
             <x-slot name="title">
-                <img class="h-12 bg-gray-800 rounded-sm" src="/images/sendgrid.svg" alt="SendGrid">
+                <img class="h-12 bg-surface-inverse rounded-sm" src="/images/sendgrid.svg" alt="SendGrid">
                 <br>
                 SendGrid Inbound Parse API
             </x-slot>
@@ -26,7 +26,7 @@
 
                 <x-label>Destination URL</x-label>
                 @if($parseUrl)
-                    <code class="block break-all rounded-md shadow my-4 p-4 bg-black text-white">{{ $parseUrl }}</code>
+                    <code class="block break-all rounded-md shadow my-4 p-4 bg-surface-inverse text-surface-inverse-fg">{{ $parseUrl }}</code>
                 @else
                     <x-alert-warning
                         title="Parse webhook secret not configured"
@@ -35,7 +35,7 @@
 
                 <x-label>Scripting API Key</x-label>
                 @if($forwardSecret)
-                    <code class="block break-all rounded-md shadow my-4 p-4 bg-black text-white">{{ $forwardSecret }}</code>
+                    <code class="block break-all rounded-md shadow my-4 p-4 bg-surface-inverse text-surface-inverse-fg">{{ $forwardSecret }}</code>
                 @else
                     <x-alert-warning
                         title="Forward API key not configured"

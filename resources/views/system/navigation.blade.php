@@ -1,8 +1,8 @@
 
 <nav class="space-y-1" aria-label="Sidebar">
     @php
-        $active = 'bg-gray-100     text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-md';
-        $inactive = 'text-gray-600 0   hover:bg-gray-50 hover:text-gray-900 flex items-center px-3 py-2 text-sm font-medium rounded-md';
+        $active = 'bg-surface-2 text-surface-fg flex items-center px-3 py-2 text-sm font-medium rounded-md';
+        $inactive = 'text-surface-fg-soft 0 hover:bg-surface-2 hover:text-surface-fg flex items-center px-3 py-2 text-sm font-medium rounded-md';
     @endphp
 
 

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
                 @include('analytics.navigation')
             </div>
 
-            <div class="inline-flex w-full p-2 border border-double bg-gray-50  shadow   mx-auto rounded-lg  mb-4">
+            <div class="inline-flex w-full p-2 border border-double bg-surface-2 shadow mx-auto rounded-lg mb-4">
                 <livewire:analytics.call-log />
             </div>
 

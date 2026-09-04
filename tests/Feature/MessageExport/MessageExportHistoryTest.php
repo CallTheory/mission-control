@@ -86,13 +86,13 @@ final class MessageExportHistoryTest extends TestCase
             ->test(MessageExportHistory::class);
 
         $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
-        $this->assertEquals(1, substr_count($html, 'bg-red-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+        $this->assertEquals(1, substr_count($html, 'bg-danger-soft'));
 
         $component->set('filterStatus', 'completed');
         $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
-        $this->assertEquals(0, substr_count($html, 'bg-red-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+        $this->assertEquals(0, substr_count($html, 'bg-danger-soft'));
     }
 
     public function test_history_component_filters_by_export(): void
@@ -130,7 +130,7 @@ final class MessageExportHistoryTest extends TestCase
         $html = $component->html();
         // "Export Two" still appears in the filter dropdown, but should not appear in table rows
         // Count the number of completed badges — should only be 1 when filtered
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
     }
 
     public function test_history_component_only_shows_team_logs(): void

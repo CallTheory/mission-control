@@ -12,7 +12,7 @@
             <div class="overflow-hidden  sm:rounded-lg flex">
                 <div>
 
-                    <div class="rounded-lg w-full p-12 border border-gray-300 bg-white  shadow mx-auto rounded-md">
+                    <div class="rounded-lg w-full p-12 border border-border bg-surface shadow mx-auto rounded-md">
 
                         <livewire:system.tools></livewire:system.tools>
 

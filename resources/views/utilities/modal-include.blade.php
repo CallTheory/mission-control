@@ -3,16 +3,16 @@
     <div class="mx-2 my-4 p-6" x-data="{ openTab: 1 }">
         <ul class="flex">
             <li @click="openTab = 1" class="-mb-px mr-1">
-                <a class="bg-white inline-block py-2 px-4 rounded shadow  font-semibold" :class="openTab === 1 ? 'text-white ':'text-indigo-400 '" href="#">General</a>
+                <a class="bg-surface inline-block py-2 px-4 rounded shadow font-semibold" :class="openTab === 1 ? 'text-surface-fg ':'text-primary '" href="#">General</a>
             </li>
             <li @click="openTab = 2" class="mr-1">
-                <a class="bg-white  inline-block py-2 px-4 rounded shadow  hover:text-indigo-200 font-semibold" :class="openTab === 2 ? 'text-white ':'text-indigo-400 '" href="#">Message</a>
+                <a class="bg-surface inline-block py-2 px-4 rounded shadow hover:text-primary font-semibold" :class="openTab === 2 ? 'text-surface-fg ':'text-primary '" href="#">Message</a>
             </li>
             <li @click="openTab = 3" class="mr-1">
-                <a class="bg-white inline-block py-2 px-4 rounded shadow  hover:text-indigo-200 font-semibold" :class="openTab === 3 ? 'text-white ':'text-indigo-400 '" href="#">Tracker</a>
+                <a class="bg-surface inline-block py-2 px-4 rounded shadow hover:text-primary font-semibold" :class="openTab === 3 ? 'text-surface-fg ':'text-primary '" href="#">Tracker</a>
             </li>
             <li @click="openTab = 4" class="mr-1">
-                <a class="bg-white  inline-block py-2 px-4 rounded shadow  hover:text-indigo-200 font-semibold" :class="openTab === 4 ?'text-white ':'text-indigo-400 '" href="#">Statistics</a>
+                <a class="bg-surface inline-block py-2 px-4 rounded shadow hover:text-primary font-semibold" :class="openTab === 4 ?'text-surface-fg ':'text-primary '" href="#">Statistics</a>
             </li>
         </ul>
         <div class="w-full pt-4">

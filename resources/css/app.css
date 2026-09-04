@@ -8,41 +8,206 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Semantic design tokens. Shared components consume these (bg-primary, text-muted,
- * border-border, ...) so the app has one source of truth for color instead of the
- * previously competing gray-700 / blue-500 / indigo-600 dialects.
+ * Semantic design tokens — the single source of truth for colour in the app.
  *
- * Surface / text / border / muted tokens are re-declared under `.dark` below, so any
- * component built on them adapts to dark mode automatically — no per-component `dark:`
- * variants required.
+ * Components consume the semantic name (bg-surface, text-muted, border-border,
+ * bg-primary, ...) and never a raw palette step. Every token below is redeclared
+ * under `.dark`, so a component built on tokens adapts to dark mode with no
+ * `dark:` variants of its own. That is the whole mechanism: if a screen needs
+ * `dark:` to look right, it is still using raw palette classes somewhere.
+ *
+ * Ramps, and what each step is for:
+ *
+ *   surface / surface-2 / surface-3   elevation. In light mode they get darker
+ *                                     as they raise; in dark mode they get
+ *                                     lighter. Never assume a direction — use
+ *                                     the step, not the shade.
+ *   surface-inverse                   deliberately-inverted tiles (integration
+ *                                     logos, dark headers) that stay dark in
+ *                                     both themes.
+ *   surface-fg / -soft / muted / subtle   text, strongest to faintest.
+ *   border-soft / border / border-strong  hairline to emphasised.
+ *   {status} / -hover / -soft / -soft-fg  solid fill, hover, tinted background,
+ *                                     and the text colour that sits on it.
  */
 @theme {
+    /* Brand -------------------------------------------------------------- */
     --color-primary: var(--color-indigo-600);
     --color-primary-hover: var(--color-indigo-700);
     --color-primary-fg: #ffffff;
+    --color-primary-soft: var(--color-indigo-50);
+    --color-primary-soft-fg: var(--color-indigo-700);
 
+    /* Page canvas (the app shell gradient) -------------------------------- */
+    --color-canvas: var(--color-gray-200);
+    --color-canvas-2: var(--color-gray-100);
+
+    /* Surfaces ------------------------------------------------------------ */
     --color-surface: #ffffff;
     --color-surface-2: var(--color-gray-50);
-    --color-surface-fg: var(--color-gray-900);
-    --color-muted: var(--color-gray-500);
-    --color-border: var(--color-gray-200);
+    --color-surface-3: var(--color-gray-200);
+    --color-surface-inverse: var(--color-gray-800);
+    --color-surface-inverse-fg: var(--color-gray-100);
+    --color-surface-inverse-hover: var(--color-gray-900);
 
+    /* Text ---------------------------------------------------------------- */
+    --color-surface-fg: var(--color-gray-900);
+    --color-surface-fg-soft: var(--color-gray-700);
+    --color-muted: var(--color-gray-500);
+    --color-subtle: var(--color-gray-300);
+
+    /* Borders -------------------------------------------------------------- */
+    --color-border-soft: var(--color-gray-200);
+    --color-border: var(--color-gray-300);
+    --color-border-strong: var(--color-gray-400);
+
+    /* Status --------------------------------------------------------------- */
     --color-danger: var(--color-red-600);
     --color-danger-hover: var(--color-red-700);
+    --color-danger-fg: #ffffff;
+    --color-danger-soft: var(--color-red-50);
+    --color-danger-soft-fg: var(--color-red-800);
+
     --color-success: var(--color-green-600);
+    --color-success-hover: var(--color-green-700);
+    --color-success-fg: #ffffff;
+    --color-success-soft: var(--color-green-50);
+    --color-success-soft-fg: var(--color-green-800);
+
     --color-warning: var(--color-amber-500);
+    --color-warning-hover: var(--color-amber-600);
+    --color-warning-fg: var(--color-gray-900);
+    --color-warning-soft: var(--color-amber-50);
+    --color-warning-soft-fg: var(--color-amber-800);
+
+    --color-info: var(--color-blue-600);
+    --color-info-hover: var(--color-blue-700);
+    --color-info-fg: #ffffff;
+    --color-info-soft: var(--color-blue-50);
+    --color-info-soft-fg: var(--color-blue-800);
+
+    /* Categorical accents — for distinguishing kinds of thing (badge colours,
+       analytics chips), never for conveying good/bad. Status tokens do that. */
+    --color-accent: var(--color-violet-600);
+    --color-accent-fg: #ffffff;
+    --color-accent-soft: var(--color-violet-50);
+    --color-accent-soft-fg: var(--color-violet-800);
+
+    --color-accent-2: var(--color-teal-600);
+    --color-accent-2-fg: #ffffff;
+    --color-accent-2-soft: var(--color-teal-50);
+    --color-accent-2-soft-fg: var(--color-teal-800);
 }
 
+/*
+ * Dark theme. Only the token values change — no component rules live here, by
+ * design. Note the elevation ramps inverting: surface-2/-3 are *lighter* than
+ * surface in dark mode, because raised things catch more light.
+ */
 .dark {
+    --color-primary: var(--color-indigo-400);
+    --color-primary-hover: var(--color-indigo-300);
+    --color-primary-fg: var(--color-gray-900);
+    --color-primary-soft: --alpha(var(--color-indigo-400) / 15%);
+    --color-primary-soft-fg: var(--color-indigo-200);
+
+    --color-canvas: var(--color-gray-900);
+    --color-canvas-2: var(--color-gray-800);
+
     --color-surface: var(--color-gray-800);
-    --color-surface-2: var(--color-gray-900);
+    --color-surface-2: var(--color-gray-700);
+    --color-surface-3: var(--color-gray-600);
+    --color-surface-inverse: var(--color-gray-950);
+    --color-surface-inverse-fg: var(--color-gray-100);
+    --color-surface-inverse-hover: var(--color-black);
+
     --color-surface-fg: var(--color-gray-100);
+    --color-surface-fg-soft: var(--color-gray-300);
     --color-muted: var(--color-gray-400);
-    --color-border: var(--color-gray-700);
+    --color-subtle: var(--color-gray-600);
+
+    --color-border-soft: var(--color-gray-700);
+    --color-border: var(--color-gray-600);
+    --color-border-strong: var(--color-gray-500);
+
+    --color-danger: var(--color-red-400);
+    --color-danger-hover: var(--color-red-300);
+    --color-danger-fg: var(--color-gray-900);
+    --color-danger-soft: --alpha(var(--color-red-400) / 15%);
+    --color-danger-soft-fg: var(--color-red-200);
+
+    --color-success: var(--color-green-400);
+    --color-success-hover: var(--color-green-300);
+    --color-success-fg: var(--color-gray-900);
+    --color-success-soft: --alpha(var(--color-green-400) / 15%);
+    --color-success-soft-fg: var(--color-green-200);
+
+    --color-warning: var(--color-amber-400);
+    --color-warning-hover: var(--color-amber-300);
+    --color-warning-fg: var(--color-gray-900);
+    --color-warning-soft: --alpha(var(--color-amber-400) / 15%);
+    --color-warning-soft-fg: var(--color-amber-200);
+
+    --color-info: var(--color-blue-400);
+    --color-info-hover: var(--color-blue-300);
+    --color-info-fg: var(--color-gray-900);
+    --color-info-soft: --alpha(var(--color-blue-400) / 15%);
+    --color-info-soft-fg: var(--color-blue-200);
+
+    --color-accent: var(--color-violet-400);
+    --color-accent-fg: var(--color-gray-900);
+    --color-accent-soft: --alpha(var(--color-violet-400) / 15%);
+    --color-accent-soft-fg: var(--color-violet-200);
+
+    --color-accent-2: var(--color-teal-400);
+    --color-accent-2-fg: var(--color-gray-900);
+    --color-accent-2-soft: --alpha(var(--color-teal-400) / 15%);
+    --color-accent-2-soft-fg: var(--color-teal-200);
 }
 
-/* Page background also follows the surface tokens so dark mode covers the shell. */
-.dark body {
-    background: var(--color-gray-900);
+/*
+ * Shell defaults. The <body> and the app gradient both read from the canvas
+ * tokens so the page ground follows the theme without per-layout `dark:` pairs.
+ */
+body {
+    background-color: var(--color-canvas-2);
     color: var(--color-surface-fg);
+}
+
+/*
+ * Form controls. @tailwindcss/forms resets inputs to a fixed white background
+ * and hardcoded border, which survives into dark mode and produces white inputs
+ * on a dark card. Re-point that reset at the tokens once, here, rather than
+ * annotating several hundred individual controls.
+ */
+@layer base {
+    input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']),
+    select,
+    textarea {
+        background-color: var(--color-surface);
+        border-color: var(--color-border);
+        color: var(--color-surface-fg);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--color-muted);
+    }
+
+    [type='checkbox'],
+    [type='radio'] {
+        background-color: var(--color-surface);
+        border-color: var(--color-border-strong);
+    }
+
+    [type='checkbox']:checked,
+    [type='radio']:checked {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+    }
+
+    /* Native pickers ship a dark-on-light glyph; flip it with the theme. */
+    .dark ::-webkit-calendar-picker-indicator {
+        filter: invert(1);
+    }
 }

@@ -69,7 +69,7 @@
         <!-- Email -->
         <div class="col-span-6 sm:col-span-4">
             <x-label for="timezone" value="{{ __('Timezone') }}" />
-            <x-input list="timezone_list" value="" id="timezone" type="timezone" class=" p-2 mt-1 block w-full border border-gray-300" wire:model.live="state.timezone" />
+            <x-input list="timezone_list" value="" id="timezone" type="timezone" class=" p-2 mt-1 block w-full border border-border" wire:model.live="state.timezone" />
             <datalist id="timezone_list" class="min-w-full">
                 <option value="UTC">Coordinated Universal Time </option>
                 @php

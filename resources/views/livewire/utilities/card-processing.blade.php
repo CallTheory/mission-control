@@ -1,5 +1,5 @@
 <div class="p-4 w-full">
-    <div class="inline-flex min-w-full p-4 mx-auto mb-4 bg-indigo-100 border border-indigo-500 rounded text-indigo-900">
+    <div class="inline-flex min-w-full p-4 mx-auto mb-4 bg-primary-soft border border-primary rounded text-primary-soft-fg">
         <div class="flex">
             <div class="shrink-0">
                 <svg class="h-5 w-5 " xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -27,9 +27,9 @@
         </div>
     </div>
 
-    <form wire:submit="save" class="my-4 py-4 px-2 bg-gray-100 border border-gray-300 shadow rounded">
+    <form wire:submit="save" class="my-4 py-4 px-2 bg-surface-2 border border-border shadow rounded">
 
-        <input name="tbsExportFile" type="file" wire:model="tbsExportFile" class="text-gray-500 ">
+        <input name="tbsExportFile" type="file" wire:model="tbsExportFile" class="text-muted ">
 
         @if(session()->has('utilities.card-processing.process_results'))
             <x-secondary-button wire:loading.attr="disabled" wire:click.prevent="downloadExportFile">
@@ -49,14 +49,14 @@
         @endif
 
         @error('tbsExportFile')
-        <span class="error block my-2 text-red-700">{{ $message }}</span>
+        <span class="error block my-2 text-danger">{{ $message }}</span>
         @enderror
 
     </form>
 
     @if($records)
         <table class="min-w-full text-left">
-            <thead class="text-gray-500 uppercase">
+            <thead class="text-muted uppercase">
             <tr class="sticky top-0">
                 <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">{{ $headers[0] }}</th>
                 <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">{{ $headers[1] }}</th>
@@ -70,7 +70,7 @@
 
             </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-white ">
+            <tbody class="bg-surface divide-y divide-border-soft ">
             @php
                 $stats['records_to_process'] = 0;
                 $stats['amount_to_process'] = 0;
@@ -86,9 +86,9 @@
                        $stats['records_to_process'] += 1;
                        $stats['amount_to_process'] += $fmt->parseCurrency($row[7], $curr);
                 @endphp
-                    <tr class="group bg-blue-200 font-semibold text-blue-800 ">
+                    <tr class="group bg-info-soft font-semibold text-info-soft-fg ">
                 @else
-                    <tr class="group bg-gray-100 text-gray-500">
+                    <tr class="group bg-surface-2 text-muted">
                 @endif
 
                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $row[0] }}</td>
@@ -106,47 +106,47 @@
         </table>
 
         <dl class="rounded-lg shadow sm:grid sm:grid-cols-3 mx-auto my-8 ">
-            <div class="flex flex-col bg-gray-800 p-6 text-center">
-                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-gray-200 ">
+            <div class="flex flex-col bg-surface-inverse p-6 text-center">
+                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-subtle ">
                     Records
                 </dt>
-                <dd class="order-1 text-4xl font-bold text-blue-500">
+                <dd class="order-1 text-4xl font-bold text-info">
                     {{ $stats['records_to_process'] }}
                 </dd>
             </div>
-            <div class="flex flex-col bg-gray-800 p-6 text-center">
-                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-gray-200 ">
+            <div class="flex flex-col bg-surface-inverse p-6 text-center">
+                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-subtle ">
                     Dollar Amount
                 </dt>
-                <dd class="order-1 text-3xl font-extrabold text-green-500">
+                <dd class="order-1 text-3xl font-extrabold text-success">
                     {{ $fmt->formatCurrency($stats['amount_to_process'], $curr) }}
                 </dd>
             </div>
-            <div class="flex flex-col bg-gray-800 p-6 text-center">
-                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-gray-500 ">
-                    <small class="text-xs text-white block mb-2">Batch Size: 10</small>
+            <div class="flex flex-col bg-surface-inverse p-6 text-center">
+                <dt class="order-2 mt-2 text-lg leading-6 font-medium text-muted ">
+                    <small class="text-xs text-surface-inverse-fg block mb-2">Batch Size: 10</small>
                     @if(strlen(decrypt($datasource->stripe_test_secret_key)) )
-                        <x-secondary-button onclick="confirm('Run test mode?') || event.stopImmediatePropagation()" wire:click="processCardsSmallBatch(false)" wire:loading.attr="disabled" wire:loading.class="bg-red-500">
+                        <x-secondary-button onclick="confirm('Run test mode?') || event.stopImmediatePropagation()" wire:click="processCardsSmallBatch(false)" wire:loading.attr="disabled" wire:loading.class="bg-danger">
                             <span class="whitespace-nowrap">Test Mode</span>
                         </x-secondary-button>
 
-                    <div wire:loading class="text-yellow-300 block">
+                    <div wire:loading class="text-warning block">
                         Running...
                     </div>
 
                     @error('processing')
-                    <span class="text-red-500">{{ $errors->first('processing') }}</span>
+                    <span class="text-danger">{{ $errors->first('processing') }}</span>
                     @enderror
                     @endif
                 </dt>
-                <dd class="order-1 text-5xl font-extrabold text-indigo-600">
+                <dd class="order-1 text-5xl font-extrabold text-primary">
 
                     @if(strlen(decrypt($datasource->stripe_prod_secret_key)))
                         <x-button onclick="confirm('Run LIVE mode?') || event.stopImmediatePropagation()" wire:click="processCardsSmallBatch(true)" wire:loading.class="disabled">
                             Live Mode
                         </x-button>
                         @error('processing')
-                        <span class="text-red-500">{{ $errors->first('processing') }}</span>
+                        <span class="text-danger">{{ $errors->first('processing') }}</span>
                         @enderror
                     @endif
 
@@ -160,8 +160,8 @@
     @if($processResults)
 
         @if(isset($processResults['charges']) && count($processResults['charges']) > 0)
-            <table class="min-w-full  text-left mb-8">
-                <thead class="text-gray-500 uppercase">
+            <table class="min-w-full text-left mb-8">
+                <thead class="text-muted uppercase">
                 <tr class="sticky top-0">
                     <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">Client</th>
                     <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">Account</th>
@@ -172,7 +172,7 @@
 
                 </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-white ">
+                <tbody class="bg-surface divide-y divide-border-soft ">
             @foreach($processResults['charges'] as $successfulCharge)
                 @php
                     if(!is_array($successfulCharge)){
@@ -193,17 +193,17 @@
                 @endphp
 
                 <tr>
-                    <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $record[3] ?? '0000' }}</td>
-                    <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $record[4] ?? 'Unknown' }}</td>
-                    <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $successfulCharge['id'] ?? 'Unknown' }}</td>
-                    <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ ucwords($successfulCharge['status'] ?? 'Unknown') }}</td>
+                    <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $record[3] ?? '0000' }}</td>
+                    <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $record[4] ?? 'Unknown' }}</td>
+                    <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $successfulCharge['id'] ?? 'Unknown' }}</td>
+                    <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ ucwords($successfulCharge['status'] ?? 'Unknown') }}</td>
                     @if(isset($successfulCharge['amount']))
-                        <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $fmt->formatCurrency($successfulCharge['amount']/100, 'USD' ) }}</td>
+                        <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $fmt->formatCurrency($successfulCharge['amount']/100, 'USD' ) }}</td>
                     @else
-                        <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $fmt->formatCurrency(0, 'USD' ) }}</td>
+                        <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $fmt->formatCurrency(0, 'USD' ) }}</td>
                     @endif
 
-                    <td class="px-6 py-4 bg-green-200 text-green-800 whitespace-nowrap text-sm font-semibold">{{ $successfulCharge['description'] ?? ''}}</td>
+                    <td class="px-6 py-4 bg-success-soft text-success-soft-fg whitespace-nowrap text-sm font-semibold">{{ $successfulCharge['description'] ?? ''}}</td>
                 </tr>
             @endforeach
             </tbody>
@@ -211,8 +211,8 @@
         @endif
 
         @if(isset($processResults['failures']) && count($processResults['failures']) > 0)
-            <table class="min-w-full  text-left mb-8">
-                <thead class="text-gray-500 uppercase">
+            <table class="min-w-full text-left mb-8">
+                <thead class="text-muted uppercase">
                 <tr class="sticky top-0">
                     <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">BlCy</th>
                     <th scope="col" class="px-6 py-3 text-sm font-semibold whitespace-nowrap">Ofc</th>
@@ -223,14 +223,14 @@
                     <th scope="col" class="ppx-6 py-3 text-sm font-semibold whitespace-nowrap">Error</th>
                 </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-white ">
+                <tbody class="bg-surface divide-y divide-border-soft ">
             @foreach($processResults['failures'] as $failedCharge)
                 @php
                     if(!is_array($failedCharge)){
                            $failedCharge = json_decode($failedCharge, true);
                        }
                 @endphp
-                <tr class="group bg-red-200 text-red-800 font-semibold ">
+                <tr class="group bg-danger-soft text-danger-soft-fg font-semibold ">
                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $failedCharge[0] }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $failedCharge[1] }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">{{ $failedCharge[2] }}</td>

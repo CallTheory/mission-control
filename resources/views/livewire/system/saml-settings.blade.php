@@ -13,15 +13,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.saml_enabled }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="saml_support-enabled-label">SAML Support</span>
-                    <span class="text-sm text-gray-500 mt-1" id="saml_support-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="saml_support-enabled-label">SAML Support</span>
+                    <span class="text-sm text-muted mt-1" id="saml_support-description">
                         Use Mission Control <strong>SAML2 Service Provider (SP)</strong> for SSO
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="saml_support-enabled-label"
@@ -31,7 +31,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
 
@@ -58,7 +58,7 @@
                         <dt class="font-semibold">Relay State (Start URL)</dt>
                         <dd><code class="text-sm">{{ secure_url('/dashboard') }}</code></dd>
                     </div>
-                    <div class="mt-2 text-gray-400">
+                    <div class="mt-2 text-muted">
                         <dt class="font-semibold">Logout URL</dt>
                         <dd class="text-sm">
                             This feature is not supported for security considerations<br>
@@ -67,21 +67,21 @@
                 </dl>
             </div>
 
-            <hr class="col-span-6 my-2 border border-gray-300">
+            <hr class="col-span-6 my-2 border border-border">
 
             <div class="col-span-6">
-                <h3 class="text-gray-800">Mission Control SP Metadata URL</h3>
-                <p class="mb-4 text-gray-500 text-sm">{{ secure_url('/sso/saml2/metadata') }}</p>
+                <h3 class="text-surface-fg">Mission Control SP Metadata URL</h3>
+                <p class="mb-4 text-muted text-sm">{{ secure_url('/sso/saml2/metadata') }}</p>
                 <a href="/sso/saml2/metadata"
-                   class="inline-flex flex whitespace-nowrap text-sm px-2 py-1 bg-indigo-700 text-indigo-50 hover:bg-indigo-600 hover:text-white mb-2 font-semibold rounded-lg shadow transition duration-700 ease-in-out">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-white h-4 my-1 mr-1">
+                   class="inline-flex flex whitespace-nowrap text-sm px-2 py-1 bg-primary text-primary-fg hover:bg-primary-hover hover:text-primary-fg mb-2 font-semibold rounded-lg shadow transition duration-700 ease-in-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-primary-fg h-4 my-1 mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9.75 16.5 12l-2.25 2.25m-4.5 0L7.5 12l2.25-2.25M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z" />
                     </svg>
                     View SP Metadata XML
                 </a>
             </div>
 
-            <hr class="col-span-6 my-2 border border-gray-300">
+            <hr class="col-span-6 my-2 border border-border">
 
             <div class="col-span-6 my-4">
                 <p class="mb-4">
@@ -93,21 +93,21 @@
                 </ul>
             </div>
 
-            <hr class="col-span-6 my-2 border border-gray-300">
+            <hr class="col-span-6 my-2 border border-border">
 
             <!-- SAML Stateless Redirect -->
             <div class="col-span-6 sm:col-span-4">
                 <div x-data="{ isEnabled: $wire.stateless_redirect }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="stateless_redirect-enabled-label">Stateless Redirect</span>
-                    <span class="text-sm text-gray-500 mt-1" id="saml_support-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="stateless_redirect-enabled-label">Stateless Redirect</span>
+                    <span class="text-sm text-muted mt-1" id="saml_support-description">
                         Enable stateless redirect for SAML2 SSO
                     </span>
                 </span>
                     <button
                         type="button"
-                        :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
                         role="switch"
                         :aria-checked="isEnabled.toString()"
                         aria-labelledby="stateless_redirect-enabled-label"
@@ -117,7 +117,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                     </button>
 
@@ -130,15 +130,15 @@
             <div class="col-span-6 sm:col-span-4">
                 <div x-data="{ isEnabled: $wire.stateless_callback }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="stateless_callback-enabled-label">Stateless Callback</span>
-                    <span class="text-sm text-gray-500 mt-1" id="stateless_callback-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="stateless_callback-enabled-label">Stateless Callback</span>
+                    <span class="text-sm text-muted mt-1" id="stateless_callback-description">
                         Enable stateless callback for SAML2 SSO (IdP initiated logins)
                     </span>
                 </span>
                     <button
                         type="button"
-                        :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
                         role="switch"
                         :aria-checked="isEnabled.toString()"
                         aria-labelledby="stateless_callback-enabled-label"
@@ -148,7 +148,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                     </button>
 
@@ -161,15 +161,15 @@
             <div class="col-span-6 sm:col-span-4">
                 <div x-data="{ isEnabled: $wire.sign_assertions }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="sign_assertions-enabled-label">Sign Assertions</span>
-                    <span class="text-sm text-gray-500 mt-1" id="sign_assertions-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="sign_assertions-enabled-label">Sign Assertions</span>
+                    <span class="text-sm text-muted mt-1" id="sign_assertions-description">
                         Enable signing of SAML2 assertions
                     </span>
                 </span>
                     <button
                         type="button"
-                        :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
                         role="switch"
                         :aria-checked="isEnabled.toString()"
                         aria-labelledby="sign_assertions-enabled-label"
@@ -180,7 +180,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                     </button>
 
@@ -195,18 +195,18 @@
                 <dl>
                     <div class="mb-2">
                         <dt class="font-semibold">Certificate Thumbprint</dt>
-                        <dd><code class="text-sm text-gray-500">{{ strtoupper($cert_fingerprint ?? '') }}</code></dd>
+                        <dd><code class="text-sm text-muted">{{ strtoupper($cert_fingerprint ?? '') }}</code></dd>
                     </div>
                     <div class="my-2">
                         <dt class="font-semibold">Certificate Valid Dates</dt>
-                        <dd class="text-sm text-gray-500">
+                        <dd class="text-sm text-muted">
                             <span>{{ $cert_valid_from ?? '' }}</span> &mdash;
                             <span>{{ $cert_valid_to ?? '' }}</span></dd>
                     </div>
                 </dl>
                 <a href="/system/saml-settings/download-cert"
-                   class="inline-flex flex whitespace-nowrap text-sm px-2 py-1 bg-indigo-700 text-indigo-50 hover:bg-indigo-600 hover:text-white mb-2 font-semibold rounded-lg shadow transition duration-700 ease-in-out">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-white h-4 my-1 mr-1">
+                   class="inline-flex flex whitespace-nowrap text-sm px-2 py-1 bg-primary text-primary-fg hover:bg-primary-hover hover:text-primary-fg mb-2 font-semibold rounded-lg shadow transition duration-700 ease-in-out">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="text-primary-fg h-4 my-1 mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
                     Public Certificate
@@ -224,17 +224,17 @@
         @if($saml_enabled)
             <div class="mb-4">
                 <div class="hidden sm:block">
-                    <div class="border-b border-gray-300">
+                    <div class="border-b border-border">
                         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                             <a @click="currentTab = 'metadata_url_tab'" href="#"
-                               class="whitespace-nowrap border-b-2  px-1 py-4 text-sm font-medium"
-                               :class="{'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': currentTab !== 'metadata_url_tab', 'text-indigo-600 border-indigo-500': currentTab === 'metadata_url_tab'}"
+                               class="whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium"
+                               :class="{'border-transparent text-muted hover:border-border hover:text-surface-fg-soft': currentTab !== 'metadata_url_tab', 'text-primary border-primary': currentTab === 'metadata_url_tab'}"
                             >
                                 Metadata URL
                             </a>
                             <a @click="currentTab = 'metadata_xml_tab'" href="#"
                                class="whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium"
-                               :class="{'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': currentTab !== 'metadata_xml_tab', 'text-indigo-600 border-indigo-500': currentTab === 'metadata_xml_tab'}"
+                               :class="{'border-transparent text-muted hover:border-border hover:text-surface-fg-soft': currentTab !== 'metadata_xml_tab', 'text-primary border-primary': currentTab === 'metadata_xml_tab'}"
                             >
                                 Metadata XML
                             </a>
@@ -248,7 +248,7 @@
                 <x-alert-info title="Recommended" description="Use the Metadata URL option if your Identity Provider (IdP) supports it" />
                 <x-label for="metadata_url" value="{{ __('Metadata URL') }}" />
                 <x-input type="text" wire:model="metadata_url" id="metadata_url" class="mt-1 w-full" />
-                <small class="block text-sm text-gray-500 my-2">
+                <small class="block text-sm text-muted my-2">
                     The URL to the SAML2 metadata file for the Identity Provider (IdP)
                 </small>
                 <x-input-error for="metadata_url" class="mt-2" />
@@ -256,8 +256,8 @@
 
             <div x-show="currentTab === 'metadata_xml_tab'" id="metadata_xml_tab"  class="col-span-6 sm:col-span-4">
                 <x-label for="metadata_xml" value="{{ __('Metadata XML') }}" />
-                <textarea rows="10" wire:model="metadata_xml" id="metadata_xml" class="mt-1 block w-full  border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow "></textarea>
-                <small class="block text-sm text-gray-500 my-2">
+                <textarea rows="10" wire:model="metadata_xml" id="metadata_xml" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow "></textarea>
+                <small class="block text-sm text-muted my-2">
                     The XML content of the SAML2 metadata file for your Identity Provider (IdP)
                 </small>
                 <x-input-error for="metadata_xml" class="mt-2" />

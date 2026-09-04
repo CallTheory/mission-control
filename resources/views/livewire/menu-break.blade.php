@@ -1,1 +1,1 @@
-<div class="border-t border-indigo-500"></div>
+<div class="border-t border-primary"></div>

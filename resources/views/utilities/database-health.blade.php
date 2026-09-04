@@ -11,7 +11,7 @@
 
     <div class="p-4">
         <div id="toggleScreenWidthContent"
-             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded border bg-white shadow border-gray-300">
+             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded border bg-surface shadow border-border">
             <div class="m-2">
                 @include('layouts.width-toggle')
             </div>

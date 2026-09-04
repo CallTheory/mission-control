@@ -10,7 +10,7 @@
         <x-validation-errors class="mb-4" />
 
         @if (session('status'))
-            <div class="mb-4 font-medium text-sm text-green-600">
+            <div class="mb-4 font-medium text-sm text-success">
                 {{ session('status') }}
             </div>
         @endif
@@ -31,13 +31,13 @@
             <div class="block mt-4">
                 <label for="remember_me" class="flex items-center">
                     <x-checkbox id="remember_me" name="remember" />
-                    <span class="ml-2 text-sm text-gray-700W">{{ __('Remember me') }}</span>
+                    <span class="ml-2 text-sm text-surface-fg-soft">{{ __('Remember me') }}</span>
                 </label>
             </div>
 
             <div class="flex items-center justify-end mt-4">
                 @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900 " href="{{ route('password.request') }}">
+                    <a class="underline text-sm text-surface-fg-soft hover:text-surface-fg " href="{{ route('password.request') }}">
                         {{ __('Forgot your password?') }}
                     </a>
                 @endif
@@ -59,15 +59,15 @@
                 <div class="block mt-4">
                     <div class="relative mt-6 mb-2">
                         <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                            <div class="w-full border-t border-gray-300"></div>
+                            <div class="w-full border-t border-border"></div>
                         </div>
                         <div class="relative flex justify-center text-sm font-medium leading-6">
-                            <span class="bg-white px-6 text-gray-500">Enterprise SAML2 SSO</span>
+                            <span class="bg-surface px-6 text-muted">Enterprise SAML2 SSO</span>
                         </div>
                     </div>
-                    <a class="underline hover:bg-gray-300 hover:border-gray-300 bg-gray-200 border border-gray-300
+                    <a class="underline hover:bg-surface-3 hover:border-border bg-surface-3 border border-border
                             transition duration-700 ease-in-out
-                            text-sm py-2 text-gray-600 hover:text-gray-900 text-center block w-full rounded"
+                            text-sm py-2 text-surface-fg-soft hover:text-surface-fg text-center block w-full rounded"
                        href="{{ route('sso.saml2.redirect') }}">
                         {{ __('Login with Single Sign-On') }}
                     </a>

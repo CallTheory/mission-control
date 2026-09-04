@@ -4,12 +4,12 @@
             <x-authentication-card-logo />
         </x-slot>
 
-        <div class="mb-4 text-sm text-gray-600">
+        <div class="mb-4 text-sm text-surface-fg-soft">
             {{ __('Forgot your password? Send a password reset link to your registered email address.') }}
         </div>
 
         @if (session('status'))
-            <div class="mb-4 font-medium text-sm rounded-md p-4 text-green-100 shadow-inner bg-gradient-to-br from-green-700 to-green-900 border border-green-800">
+            <div class="mb-4 font-medium text-sm rounded-md p-4 text-success-soft-fg shadow-inner bg-success-soft border border-success">
                 {{ session('status') }}
             </div>
         @endif
@@ -25,7 +25,7 @@
             </div>
 
             <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('login') }}">
+                <a class="underline text-sm text-surface-fg-soft hover:text-surface-fg" href="{{ route('login') }}">
                     {{ __('Back to login') }}
                 </a>
                 <x-button class="ml-4">

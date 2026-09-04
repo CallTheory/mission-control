@@ -12,13 +12,13 @@
         <link rel="shortcut icon" type="image/png" href="/images/mission-control.png"/>
 
     </head>
-    <body class="font-sans antialiased bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <body class="font-sans antialiased bg-gradient-to-br from-canvas to-canvas-2 ">
 
         <x-banner />
 
-        <div class="min-h-screen bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div class="min-h-screen bg-gradient-to-br from-canvas to-canvas-2 ">
 
-            <div class="sticky top-0 bg-gradient-to-br from-gray-200 to-gray-100 dark:from-gray-900 dark:to-gray-800 z-10">
+            <div class="sticky top-0 bg-gradient-to-br from-canvas to-canvas-2 z-10">
 
                 <div class="block">
                     @livewire('navigation-menu')

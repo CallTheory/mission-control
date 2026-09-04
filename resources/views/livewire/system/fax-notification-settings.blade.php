@@ -12,7 +12,7 @@
         <div class="col-span-6 sm:col-span-4">
             <x-label for="fax_failure_notification_email" value="{{ __('Fax Failure Notification Email') }}" />
             <x-input id="fax_failure_notification_email" type="text" class="mt-1 block w-full " wire:model.live="state.fax_failure_notification_email" />
-            <small class="text-xs text-gray-400 0">
+            <small class="text-xs text-muted">
                 Email address for fax submission failures. For normal fax failures, please use the built-in notifications in your mFax or RingCentral portal.
             </small>
             <x-input-error for="state.fax_failure_notification_email" class="mt-2" />
@@ -21,7 +21,7 @@
         <div class="col-span-6 sm:col-span-4">
             <x-label for="fax_buildup_notification_email" value="{{ __('Fax Failure Buildup Email') }}" />
             <x-input id="fax_buildup_notification_email" type="text" class="mt-1 block w-full " wire:model.live="state.fax_buildup_notification_email" />
-            <small class="text-xs text-gray-400 0">
+            <small class="text-xs text-muted">
                 Email address to send notifications when the fax processing folders have files older than 15 minutes. This indicates that ISFax or one of the mFax/RingCentral integrations is not processing files.
             </small>
             <x-input-error for="state.fax_buildup_notification_email" class="mt-2" />

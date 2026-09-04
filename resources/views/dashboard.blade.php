@@ -27,7 +27,7 @@
         @else
             <div class="max-w-9xl mx-auto px-4">
                 @if(request()->user()->currentTeam->allowed_accounts || request()->user()->currentTeam->allowed_billing)
-                    <div class="bg-indigo-50 text-indigo-500 flex mb-2 rounded-lg px-2 py-2 shadow border border-indigo-300 text-xs">
+                    <div class="bg-primary-soft text-primary flex mb-2 rounded-lg px-2 py-2 shadow border border-primary text-xs">
                         @if(request()->user()->currentTeam->allowed_accounts)
                             <div class="mr-2">
                                 <span class="font-semibold">Account(s)</span> &ndash; {{ implode(',', array_filter(explode("\n", request()->user()->currentTeam->allowed_accounts))) }}

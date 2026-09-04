@@ -12,13 +12,13 @@
             <div class="my-4 w-full">
                 <x-label for="name" value="{{ __('User Name') }}" />
                 <x-input type="text" name="name" wire:model="state.name" class="mt-1 block w-full" />
-                <small class="text-gray-400">The users name (or nickname)</small>
+                <small class="text-muted">The users name (or nickname)</small>
                 <x-input-error for="state.name" class="mt-2" />
             </div>
             <div class="my-4 w-full">
                 <x-label for="email" value="{{ __('User Email') }}" />
                 <x-input type="email" name="email" wire:model="state.email"  class="mt-1 block w-full" />
-                <small class="text-gray-400">The users email address</small>
+                <small class="text-muted">The users email address</small>
                 <x-input-error for="state.email" class="mt-2" />
             </div>
             <div class="my-4 w-full">
@@ -38,7 +38,7 @@
                     @endif
 
                 </datalist>
-                <small class="text-gray-400">The Intelligent Series agtId for the users login. Used to populate the user's personal dashboard.</small>
+                <small class="text-muted">The Intelligent Series agtId for the users login. Used to populate the user's personal dashboard.</small>
                 <x-input-error for="agtId" class="mt-2" />
             </div>
         </x-slot>

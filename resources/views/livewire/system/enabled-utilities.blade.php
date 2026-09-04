@@ -13,15 +13,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.api_gateway }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="api-gateway-enabled-label">API Gateway</span>
-                    <span class="text-sm text-gray-500 pr-2" id="transcription-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="api-gateway-enabled-label">API Gateway</span>
+                    <span class="text-sm text-muted pr-2" id="transcription-description">
                         BYOK (Bring Your Own Keys) <strong>API Gateway</strong> for multi-tenant systems
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="api-gateway-enabled-label"
@@ -31,7 +31,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -42,15 +42,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.better_emails }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="better_emails-enabled-label">Better Emails <span class="text-white text-xs font-normal bg-indigo-500 rounded-lg px-2 py-0.5">beta</span></span>
-                    <span class="text-sm text-gray-500 pr-2" id="better_emails-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="better_emails-enabled-label">Better Emails <span class="text-primary-fg text-xs font-normal bg-primary rounded-lg px-2 py-0.5">beta</span></span>
+                    <span class="text-sm text-muted pr-2" id="better_emails-description">
                         Send HTML-enhanced emails with <strong>Better Emails</strong> for Intelligent Series messages
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="better_emails-enabled-label"
@@ -60,7 +60,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -71,15 +71,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.board_check }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="board-check-enabled-label">Board Check</span>
-                    <span class="text-sm text-gray-500 pr-2" id="transcription-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="board-check-enabled-label">Board Check</span>
+                    <span class="text-sm text-muted pr-2" id="transcription-description">
                         Message review <strong>Board Check</strong> with PeopleSoft integration for Intelligent Series messages
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="board-check-enabled-label"
@@ -89,7 +89,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -100,15 +100,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.call_lookup }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="call-lookup-enabled-label">Call Lookup</span>
-                    <span class="text-sm text-gray-500 pr-2" id="call-lookup-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="call-lookup-enabled-label">Call Lookup</span>
+                    <span class="text-sm text-muted pr-2" id="call-lookup-description">
                         Advanced call log filter and lookup for Amtelco Genesis systems
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="call-lookup-enabled-label"
@@ -118,7 +118,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -129,15 +129,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.card_processing }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="card-processing-enabled-label">Card Processing</span>
-                    <span class="text-sm text-gray-500 pr-2" id="card-processing-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="card-processing-enabled-label">Card Processing</span>
+                    <span class="text-sm text-muted pr-2" id="card-processing-description">
                         Credit <strong>Card Processing</strong> with Stripe for TBS Billing
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="card-processing-enabled-label"
@@ -147,7 +147,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -158,15 +158,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.cloud_faxing }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="cloud-faxing-enabled-label">Cloud Faxing</span>
-                    <span class="text-sm text-gray-500 pr-2" id="transcription-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="cloud-faxing-enabled-label">Cloud Faxing</span>
+                    <span class="text-sm text-muted pr-2" id="transcription-description">
                         Copia-compatible <strong>Cloud Faxing</strong> using mFax and RingCentral
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="cloud-faxing-enabled-label"
@@ -176,7 +176,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -187,15 +187,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.csv_export }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="csv-export-enabled-label">CSV Export <span class="text-white text-xs font-normal bg-indigo-500 rounded-lg px-2 py-0.5">beta</span></span>
-                    <span class="text-sm text-gray-500 pr-2" id="csv-export-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="csv-export-enabled-label">CSV Export <span class="text-primary-fg text-xs font-normal bg-primary rounded-lg px-2 py-0.5">beta</span></span>
+                    <span class="text-sm text-muted pr-2" id="csv-export-description">
                         Export CSV files based on Intelligent Series message fields.
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="csv-export-enabled-label"
@@ -205,7 +205,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -216,15 +216,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.database_health }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="database-health-enabled-label">Database Health</span>
-                    <span class="text-sm text-gray-500 pr-2" id="database-health-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="database-health-enabled-label">Database Health</span>
+                    <span class="text-sm text-muted pr-2" id="database-health-description">
                         Review the health of your database server and Intelligent database.
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="database-health-enabled-label"
@@ -234,7 +234,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -245,15 +245,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.directory_search }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="directory-search-enabled-label">Directory Search</span>
-                    <span class="text-sm text-gray-500 pr-2" id="directory-search-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="directory-search-enabled-label">Directory Search</span>
+                    <span class="text-sm text-muted pr-2" id="directory-search-description">
                         Search globally across all Intelligent Series contact methods.
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="directory-search-enabled-label"
@@ -263,7 +263,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -274,15 +274,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.inbound_email }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="inbound-email-enabled-label">Inbound Email <span class="text-white text-xs font-normal bg-indigo-500 rounded-lg px-2 py-0.5">beta</span></span>
-                    <span class="text-sm text-gray-500 pr-2" id="transcription-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="inbound-email-enabled-label">Inbound Email <span class="text-primary-fg text-xs font-normal bg-primary rounded-lg px-2 py-0.5">beta</span></span>
+                    <span class="text-sm text-muted pr-2" id="transcription-description">
                         Modern <strong>Inbound Email</strong> parsing using Sendgrid
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="inbound-email-enabled-label"
@@ -292,7 +292,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -303,15 +303,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.config_editor }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="config-editor-enabled-label">Config Editor</span>
-                    <span class="text-sm text-gray-500 pr-2" id="config-editor-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="config-editor-enabled-label">Config Editor</span>
+                    <span class="text-sm text-muted pr-2" id="config-editor-description">
                         Decrypt and encrypt Amtelco <strong>TripleDES XML configuration</strong> data
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="config-editor-enabled-label"
@@ -321,7 +321,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -332,15 +332,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.message_export }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="message-export-enabled-label">Message Export</span>
-                    <span class="text-sm text-gray-500 pr-2" id="message-export-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="message-export-enabled-label">Message Export</span>
+                    <span class="text-sm text-muted pr-2" id="message-export-description">
                         Export Intelligent Series <strong>message data</strong> to CSV with selectable fields and scheduling
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="message-export-enabled-label"
@@ -350,7 +350,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -361,15 +361,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.voicemail_digest }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="voicemail-digest-enabled-label">Voicemail Digest <span class="text-white text-xs font-normal bg-indigo-500 rounded-lg px-2 py-0.5">beta</span></span>
-                    <span class="text-sm text-gray-500 pr-2" id="voicemail-digest-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="voicemail-digest-enabled-label">Voicemail Digest <span class="text-primary-fg text-xs font-normal bg-primary rounded-lg px-2 py-0.5">beta</span></span>
+                    <span class="text-sm text-muted pr-2" id="voicemail-digest-description">
                         Schedule automated emails with <strong>call recordings</strong> and transcriptions
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="voicemail-digest-enabled-label"
@@ -379,7 +379,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>
@@ -390,15 +390,15 @@
         <div class="col-span-6 sm:col-span-4">
             <div x-data="{ isEnabled: $wire.script_search }" class="flex items-center justify-between">
                 <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-gray-900" id="script-search-enabled-label">Script Search</span>
-                    <span class="text-sm text-gray-500 pr-2" id="transcription-description">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="script-search-enabled-label">Script Search</span>
+                    <span class="text-sm text-muted pr-2" id="transcription-description">
                         Find (almost) anything with global <strong>Script Search</strong> for Intelligent Series scripting
                     </span>
                 </span>
                 <button
                     type="button"
-                    :class="{ 'bg-indigo-600': isEnabled, 'bg-gray-200': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                     role="switch"
                     :aria-checked="isEnabled.toString()"
                     aria-labelledby="script-search-enabled-label"
@@ -408,7 +408,7 @@
                     <span
                         aria-hidden="true"
                         :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
                     ></span>
                 </button>
             </div>

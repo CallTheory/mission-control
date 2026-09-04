@@ -9,7 +9,7 @@
         </x-slot>
 
         <h3 class="text-2xl mx-auto text-center font-semibold">
-            <code class="text-indigo-500 font-bold font-mono">403</code> Forbidden
+            <code class="text-primary font-bold font-mono">403</code> Forbidden
         </h3>
 
         <div class="w-full mx-auto pb-8">

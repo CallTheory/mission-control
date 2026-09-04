@@ -5,27 +5,27 @@ use App\Models\Stats\Helpers;
 @endphp
 <div>
     @if($account->Inactive)
-        <h2 class="text-2xl font-bold text-indigo-700 px-2">Account Inactive</h2>
-        <p class="text-indigo-900 px-2">
+        <h2 class="text-2xl font-bold text-primary px-2">Account Inactive</h2>
+        <p class="text-primary px-2">
             This account will busy any inbound call because it is marked as <strong><i>Inactive</i></strong>
         </p>
-        <hr class="w-full mt-2 border border-gray-300"/>
+        <hr class="w-full mt-2 border border-border"/>
     @endif
-    <div class="p-2 @if($account->Inactive) opacity-50 bg-gray-200 @endif">
+    <div class="p-2 @if($account->Inactive) opacity-50 bg-surface-3 @endif">
         <div class="w-full flex flex-wrap">
             <div class="px-4 sm:px-0 w-full lg:w-1/2">
-                <h3 class="text-2xl font-semibold leading-7 text-gray-900 my-1">
-                    {{ $account->ClientName }} @if($account->Emergency) <span class="align-middle text-white bg-red-500 rounded-md px-2 py-0.5 text-xs uppercase">Emergency</span>  @endif
+                <h3 class="text-2xl font-semibold leading-7 text-surface-fg my-1">
+                    {{ $account->ClientName }} @if($account->Emergency) <span class="align-middle text-danger-fg bg-danger rounded-md px-2 py-0.5 text-xs uppercase">Emergency</span>  @endif
                 </h3>
-                <p class="mt-1 text-xl max-w-2xl text-sm leading-6 text-gray-500 my-1">
+                <p class="mt-1 text-xl max-w-2xl text-sm leading-6 text-muted my-1">
                     Account Number {{ $account->ClientNumber }}
                 </p>
                 @if($account->BillingCode)
-                    <p class="text-xl max-w-2xl text-sm leading-6 text-gray-400 my-1">
+                    <p class="text-xl max-w-2xl text-sm leading-6 text-muted my-1">
                         Billing Code {{ $account->BillingCode }}
                     </p>
                 @endif
-                <p class="text-sm max-w-2xl text-sm leading-4 text-indigo-800 my-1">
+                <p class="text-sm max-w-2xl text-sm leading-4 text-primary my-1">
                     @php
                         $accountCreated = Carbon::parse($account->Stamp, $switch_timezone)->timezone(request()->user()->timezone ?? 'UTC')
                     @endphp
@@ -41,19 +41,19 @@ use App\Models\Stats\Helpers;
                     @endforelse
                 </div>
 
-                <span class="text-sm max-w-2xl text-sm leading-4 text-gray-400 my-2 border border-gray-200 rounded-full py-0 px-1.5 inline">
+                <span class="text-sm max-w-2xl text-sm leading-4 text-muted my-2 border border-border-soft rounded-full py-0 px-1.5 inline">
                     cltId <code>{{ $account->cltId }}</code>
                 </span>
             </div>
             @if($account->AnswerPhrase)
                 <div class="w-full lg:w-1/2">
-                    <span class="text-xs text-gray-400">Answer Phrase</span>
-                    <iframe class="w-full bg-gray-50 border border-gray-300 max-h-48 rounded-lg shadow p-1" src="{!!  htmlspecialchars("data:text/html," . rawurlencode($account->AnswerPhrase)) !!}"></iframe>
+                    <span class="text-xs text-muted">Answer Phrase</span>
+                    <iframe class="w-full bg-surface-2 border border-border max-h-48 rounded-lg shadow p-1" src="{!!  htmlspecialchars("data:text/html," . rawurlencode($account->AnswerPhrase)) !!}"></iframe>
                 </div>
             @endif
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Account Details</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Account Details</h3>
+                <dl class="divide-y divide-border-soft">
 
                     @php
                     if($account->TimezoneOffset == 0){
@@ -74,9 +74,9 @@ use App\Models\Stats\Helpers;
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Account Peripherals</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Account Peripherals</h3>
+                <dl class="divide-y divide-border-soft">
                     <x-client-detail-list-item label="Show Specials" :details="$account->ShowSpecials ? 'Yes' : 'No'" />
                     <x-client-detail-list-item label="New Specials" :details="$account->SpecialOldToNew ? 'Yes' : 'No'" />
                     <x-client-detail-list-item label="Save Edited Special" :details="$account->SaveEditedSpecial ? 'Yes' : 'No'" />
@@ -84,17 +84,17 @@ use App\Models\Stats\Helpers;
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Inbound Call Handling</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Inbound Call Handling</h3>
+                <dl class="divide-y divide-border-soft">
 
                     <x-client-detail-list-item label="DID Limit" :details=" $account->DIDLimit ? $account->DIDLimit : 'None'" />
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Outbound Call Handling</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Outbound Call Handling</h3>
+                <dl class="divide-y divide-border-soft">
                     <x-client-detail-list-item label="Default Route" :details="$account->DefaultRoute " />
                     @if($account->CallerIdName)
                         <x-client-detail-list-item label="Caller ID Name" :details="$account->CallerIdName" />
@@ -106,9 +106,9 @@ use App\Models\Stats\Helpers;
             </div>
 
             @if($greetings)
-                <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                    <h3 class="text-xs text-gray-400">Greetings</h3>
-                    <dl class="divide-y divide-gray-100">
+                <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                    <h3 class="text-xs text-muted">Greetings</h3>
+                    <dl class="divide-y divide-border-soft">
                         @foreach($greetings as $greeting)
                             <!-- /*label="Carbon::parse($greeting->Stamp, $switch_timezone)->timezone(request()->user()->timezone ?? 'UTC')->format('l, F jS Y A T')"*/ -->
                             @if(strlen($greeting->GreetingName))
@@ -130,9 +130,9 @@ use App\Models\Stats\Helpers;
                 </div>
             @endif
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Agent Interface</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Agent Interface</h3>
+                <dl class="divide-y divide-border-soft">
                     <x-client-detail-list-item label="Log Voice" :details="$account->LogVoice ? 'Yes' : 'No'" />
                     <x-client-detail-list-item label="Screen Capture" :details="$account->ScreenCapture ? 'Yes' : 'No' " />
                     <x-client-detail-list-item label="Perfect Answer" :details="$account->PerfectAnswer ? 'Yes' : 'No' " />
@@ -140,18 +140,18 @@ use App\Models\Stats\Helpers;
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Voice Details</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Voice Details</h3>
+                <dl class="divide-y divide-border-soft">
                     <x-client-detail-list-item label="Logger Beep" :details="$account->LoggerBeep ? $account->LoggerBeepInterval . 's' : 'No'"/>
                     <x-client-detail-list-item label="PCI Compliance" :details="$account->PciCompliance ? 'Yes' : 'No'"/>
                     <x-client-detail-list-item label="Play Quality Prompt" :details="$account->PlayQualityPrompt ? 'Yes' : 'No'"/>
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Auto-Answer</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Auto-Answer</h3>
+                <dl class="divide-y divide-border-soft">
 
                     <x-client-detail-list-item label="Re-Assign Time" :details="$account->ReassignTime" />
                     <x-client-detail-list-item label="Auto-Answer Rings" :details="$account->AutoAnswerRings " />
@@ -163,9 +163,9 @@ use App\Models\Stats\Helpers;
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Script Assignments</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Script Assignments</h3>
+                <dl class="divide-y divide-border-soft">
 
                     <x-client-detail-list-item label="Operator Script" :details="$account->ScriptName" />
 
@@ -184,9 +184,9 @@ use App\Models\Stats\Helpers;
                 </dl>
             </div>
 
-            <div class="mt-6 border-t border-gray-300 w-full lg:w-1/2">
-                <h3 class="text-xs text-gray-400">Message Handling</h3>
-                <dl class="divide-y divide-gray-100">
+            <div class="mt-6 border-t border-border w-full lg:w-1/2">
+                <h3 class="text-xs text-muted">Message Handling</h3>
+                <dl class="divide-y divide-border-soft">
 
                     <x-client-detail-list-item label="Select Next Undelivered Message When Deleted" :details="$account->SelectNextUndelMsgWhenDel ? 'Yes' : 'No'" />
                     <x-client-detail-list-item label="Done Key Cancels Script" :details="$account->DoneKeyCancelsScript ? 'Yes' : 'No'" />
@@ -197,8 +197,8 @@ use App\Models\Stats\Helpers;
 
         </div>
 
-        <div class="mt-6 border-t border-gray-300">
-            <dl class="divide-y divide-gray-100">
+        <div class="mt-6 border-t border-border">
+            <dl class="divide-y divide-border-soft">
                 @foreach($account as $label => $detail)
                     @if(!in_array($label,
                         ['cltId', 'ClientName','ClientNumber', 'BillingCode', 'Stamp', 'MsgPurgeTime', 'AutoAnswerRings',
@@ -212,8 +212,8 @@ use App\Models\Stats\Helpers;
                         'TimezoneOffset','Inactive'
                         ]))
                         <div class="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                            <dt class="text-sm font-semibold leading-6 text-gray-900">{{ Str::headline($label) }}</dt>
-                            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2  lg:col-span-1 sm:mt-0">
+                            <dt class="text-sm font-semibold leading-6 text-surface-fg">{{ Str::headline($label) }}</dt>
+                            <dd class="mt-1 text-sm leading-6 text-surface-fg-soft sm:col-span-2 lg:col-span-1 sm:mt-0">
                                 {!! $detail !!}
                             </dd>
                         </div>

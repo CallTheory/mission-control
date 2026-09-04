@@ -1,18 +1,18 @@
 <div class="w-full inline-block">
 
-    <div class="p-4 bg-gray-50 rounded shadow">
+    <div class="p-4 bg-surface-2 rounded shadow">
 
         <div class="inline-flex flex">
             <div class="mr-4 pr-4">
                 <x-label for="start_date">
-                    Start Date <small class="text-gray-400">({{ $timezone }})</small>
+                    Start Date <small class="text-muted">({{ $timezone }})</small>
                 </x-label>
                 <x-input id="start_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model="start_date" />
                 <x-input-error for="start_date" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="end_date">
-                    End Date <small class="text-gray-400">({{ $timezone }})</small>
+                    End Date <small class="text-muted">({{ $timezone }})</small>
                 </x-label>
                 <x-input id="end_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model="end_date" />
                 <x-input-error for="end_date" class="mt-2" />
@@ -31,7 +31,7 @@
                     Reset
                 </x-secondary-button>
                 <x-action-message class="ml-2 inline" on="saved">
-                    <span class="text-green-500">&checkmark;</span>
+                    <span class="text-success">&checkmark;</span>
                 </x-action-message>
             </div>
         </div>
@@ -44,7 +44,7 @@
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="call_type">Call Type</x-label>
-                <select id="call_type" wire:loading.attr="disabled" class="mt-1 rounded border border-gray-300 shadow" wire:model="call_type">
+                <select id="call_type" wire:loading.attr="disabled" class="mt-1 rounded border border-border shadow" wire:model="call_type">
                     <option value=""></option>
                     @foreach($ck as $ctid => $ctname)
                         <option value="{{ $ctid }}">{{ $ctname }}</option>
@@ -54,12 +54,12 @@
             </div>
 
             <div class="mr-2 pr-2">
-                <x-label for="min_duration">Min. Duration <small class="text-gray-400">second(s)</small></x-label>
+                <x-label for="min_duration">Min. Duration <small class="text-muted">second(s)</small></x-label>
                 <x-input id="min_duration" wire:loading.attr="disabled" type="text" class="mt-1" wire:model="min_duration" />
                 <x-input-error for="min_duration" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
-                <x-label for="max_duration">Max. Duration <small class="text-gray-400">second(s)</small></x-label>
+                <x-label for="max_duration">Max. Duration <small class="text-muted">second(s)</small></x-label>
                 <x-input id="max_duration" wire:loading.attr="disabled" type="text" class="mt-1" wire:model="max_duration" />
                 <x-input-error for="max_duration" class="mt-2" />
             </div>
@@ -69,7 +69,7 @@
             @if($agents)
                 <div class="mr-4 pr-4">
                     <x-label for="agent">Agent</x-label>
-                    <select id="agent" wire:loading.attr="disabled" class="mt-1 rounded border border-gray-300 shadow" wire:model="agent">
+                    <select id="agent" wire:loading.attr="disabled" class="mt-1 rounded border border-border shadow" wire:model="agent">
                         <option value=""></option>
                         @foreach($agents as $agentDetails)
                             <option value="{{ $agentDetails->agtId }}">{{ $agentDetails->Name }}</option>
@@ -82,7 +82,7 @@
             @if($keywords)
                 <div class="mr-2 pr-2">
                     <x-label for="keyword">Keyword Label</x-label>
-                    <select id="keyword" wire:loading.attr="disabled" class="mt-1 rounded border border-gray-300 shadow" wire:model="keyword">
+                    <select id="keyword" wire:loading.attr="disabled" class="mt-1 rounded border border-border shadow" wire:model="keyword">
                         <option value=""></option>
                         @foreach($keywords as $kw)
                             <option value="{{ $kw->Keywords }}">{{ $kw->Keywords }}</option>
@@ -101,55 +101,55 @@
 
         <div class="block mt-4">
             <fieldset class="flex">
-                <legend class="text-sm text-gray-500 sr-only">
+                <legend class="text-sm text-muted sr-only">
                     Record Attributes
                 </legend>
                 <div class="space-x-5 flex">
                     <div class="relative flex items-start">
                         <div class="flex h-6 items-center">
-                            <input x-on:click="$wire.has_messages=false;$wire.has_recordings=false;$wire.has_video=false;" wire:model="has_any" id="has_any" aria-describedby="has_any-description" name="has_any" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            <input x-on:click="$wire.has_messages=false;$wire.has_recordings=false;$wire.has_video=false;" wire:model="has_any" id="has_any" aria-describedby="has_any-description" name="has_any" type="checkbox" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                         </div>
                         <div class="ml-1 text-sm leading-6">
-                            <label for="has_any" class="font-medium text-gray-900 flex whitespace-nowrap align-text-top">
-                                <svg title="Any attribute" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-gray-400 m-1">
+                            <label for="has_any" class="font-medium text-surface-fg flex whitespace-nowrap align-text-top">
+                                <svg title="Any attribute" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-muted m-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 7.125C2.25 6.504 2.754 6 3.375 6h6c.621 0 1.125.504 1.125 1.125v3.75c0 .621-.504 1.125-1.125 1.125h-6a1.125 1.125 0 0 1-1.125-1.125v-3.75ZM14.25 8.625c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v8.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-8.25ZM3.75 16.125c0-.621.504-1.125 1.125-1.125h5.25c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125h-5.25a1.125 1.125 0 0 1-1.125-1.125v-2.25Z" />
                                 </svg> Any
                             </label>
-                            <p id="has_any-description" class="text-gray-500 sr-only">Include any attribute</p>
+                            <p id="has_any-description" class="text-muted sr-only">Include any attribute</p>
                         </div>
                     </div>
                     <div class="relative flex items-start">
                         <div class="flex h-6 items-center">
-                            <input x-on:click="$wire.has_any=false;" wire:model="has_messages" id="has_messages" aria-describedby="has_messages-description" name="has_messages" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            <input x-on:click="$wire.has_any=false;" wire:model="has_messages" id="has_messages" aria-describedby="has_messages-description" name="has_messages" type="checkbox" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                         </div>
                         <div class="ml-1 text-sm leading-6">
-                            <label for="has_messages" class="font-medium text-gray-900 flex whitespace-nowrap align-text-top"><svg title="Message(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-gray-400 m-1">
+                            <label for="has_messages" class="font-medium text-surface-fg flex whitespace-nowrap align-text-top"><svg title="Message(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-muted m-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                                 </svg> Message(s)</label>
-                            <p id="has_messages-description" class="text-gray-500 sr-only">The call has at least one associated message taken.</p>
+                            <p id="has_messages-description" class="text-muted sr-only">The call has at least one associated message taken.</p>
                         </div>
                     </div>
                     <div class="relative flex items-start ml-4">
                         <div class="flex h-6 items-center">
-                            <input x-on:click="$wire.has_any=false;" wire:model="has_recordings" id="has_recordings" aria-describedby="has_recordings-description" name="has_recordings" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            <input x-on:click="$wire.has_any=false;" wire:model="has_recordings" id="has_recordings" aria-describedby="has_recordings-description" name="has_recordings" type="checkbox" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                         </div>
                         <div class="ml-1 text-sm leading-6">
-                            <label for="has_recordings" class="font-medium text-gray-900 flex whitespace-nowrap"> <svg title="Recording(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-gray-400 m-1">
+                            <label for="has_recordings" class="font-medium text-surface-fg flex whitespace-nowrap"> <svg title="Recording(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-muted m-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 0 1 0 .656l-5.603 3.113a.375.375 0 0 1-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112Z" />
                                 </svg> Recording(s)</label>
-                            <p id="has_recordings-description" class="text-gray-500 sr-only">The call has at least one associated recording.</p>
+                            <p id="has_recordings-description" class="text-muted sr-only">The call has at least one associated recording.</p>
                         </div>
                     </div>
                     <div class="relative flex items-start ml-4">
                         <div class="flex h-6 items-center">
-                            <input x-on:click="$wire.has_any=false;" wire:model="has_video" id="has_video" aria-describedby="has_video-description" name="has_video" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                            <input x-on:click="$wire.has_any=false;" wire:model="has_video" id="has_video" aria-describedby="has_video-description" name="has_video" type="checkbox" class="h-4 w-4 rounded border-border text-primary focus:ring-primary">
                         </div>
                         <div class="ml-1 text-sm leading-6">
-                            <label for="has_video" class="font-medium text-gray-900 flex whitespace-nowrap"> <svg title="Screen Capture(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-gray-400 m-1">
+                            <label for="has_video" class="font-medium text-surface-fg flex whitespace-nowrap"> <svg title="Screen Capture(s)" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 text-sm text-muted m-1">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h1.5C5.496 19.5 6 18.996 6 18.375m-3.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-1.5A1.125 1.125 0 0 1 18 18.375M20.625 4.5H3.375m17.25 0c.621 0 1.125.504 1.125 1.125M20.625 4.5h-1.5C18.504 4.5 18 5.004 18 5.625m3.75 0v1.5c0 .621-.504 1.125-1.125 1.125M3.375 4.5c-.621 0-1.125.504-1.125 1.125M3.375 4.5h1.5C5.496 4.5 6 5.004 6 5.625m-3.75 0v1.5c0 .621.504 1.125 1.125 1.125m0 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m1.5-3.75C5.496 8.25 6 7.746 6 7.125v-1.5M4.875 8.25C5.496 8.25 6 8.754 6 9.375v1.5m0-5.25v5.25m0-5.25C6 5.004 6.504 4.5 7.125 4.5h9.75c.621 0 1.125.504 1.125 1.125m1.125 2.625h1.5m-1.5 0A1.125 1.125 0 0 1 18 7.125v-1.5m1.125 2.625c-.621 0-1.125.504-1.125 1.125v1.5m2.625-2.625c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M18 5.625v5.25M7.125 12h9.75m-9.75 0A1.125 1.125 0 0 1 6 10.875M7.125 12C6.504 12 6 12.504 6 13.125m0-2.25C6 11.496 5.496 12 4.875 12M18 10.875c0 .621-.504 1.125-1.125 1.125M18 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m-12 5.25v-5.25m0 5.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125m-12 0v-1.5c0-.621-.504-1.125-1.125-1.125M18 18.375v-5.25m0 5.25v-1.5c0-.621.504-1.125 1.125-1.125M18 13.125v1.5c0 .621.504 1.125 1.125 1.125M18 13.125c0-.621.504-1.125 1.125-1.125M6 13.125v1.5c0 .621-.504 1.125-1.125 1.125M6 13.125C6 12.504 5.496 12 4.875 12m-1.5 0h1.5m-1.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M19.125 12h1.5m0 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h1.5m14.25 0h1.5" />
                                 </svg> Video</label>
-                            <p id="has_video-description" class="text-gray-500 sr-only">The call has video screen capture available.</p>
+                            <p id="has_video-description" class="text-muted sr-only">The call has video screen capture available.</p>
                         </div>
                     </div>
                 </div>
@@ -158,8 +158,8 @@
 
         <div class="block mt-4">
             <div class="inline-flex flex items-center space-x-2">
-                <span class="text-sm text-gray-500">Sort by:</span>
-                <select wire:loading.attr="disabled" class="text-sm rounded border border-gray-300 shadow" wire:change="setSorting($event.target.value.split(':')[0], $event.target.value.split(':')[1])">
+                <span class="text-sm text-muted">Sort by:</span>
+                <select wire:loading.attr="disabled" class="text-sm rounded border border-border shadow" wire:change="setSorting($event.target.value.split(':')[0], $event.target.value.split(':')[1])">
                     <option value="Stamp:desc" @if($sort_by === 'statCallStart.Stamp' && $sort_direction === 'desc') selected @endif>Call Start (Newest First)</option>
                     <option value="Stamp:asc" @if($sort_by === 'statCallStart.Stamp' && $sort_direction === 'asc') selected @endif>Call Start (Oldest First)</option>
                     <option value="Duration:desc" @if($sort_by === 'CallDuration' && $sort_direction === 'desc') selected @endif>Duration (Longest First)</option>
@@ -171,23 +171,23 @@
 
     <div class="mx-2 my-4">
         @if($error_message)
-            <div class="rounded-md bg-red-50 p-4">
+            <div class="rounded-md bg-danger-soft p-4">
                 <div class="flex">
                     <div class="shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <svg class="h-5 w-5 text-danger" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-red-800">{{ $error_message }}</p>
+                        <p class="text-sm font-medium text-danger">{{ $error_message }}</p>
                     </div>
                 </div>
             </div>
         @elseif($queried)
-            <div class="rounded-md bg-gray-50 p-4 shadow">
+            <div class="rounded-md bg-surface-2 p-4 shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-700">
+                        <p class="text-sm text-surface-fg-soft">
                             <span class="font-semibold">{{ number_format($result_count) }}</span> record(s) match your filter criteria.
                         </p>
                     </div>
@@ -196,7 +196,7 @@
                             <button
                                 wire:click="exportCsv"
                                 wire:loading.attr="disabled"
-                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                                class="inline-flex items-center rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-fg shadow-sm hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
                             >
                                 <svg wire:loading.remove wire:target="exportCsv" class="-ml-0.5 mr-1.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
@@ -214,15 +214,15 @@
                 </div>
             </div>
         @else
-            <div class="rounded-md bg-blue-50 p-4">
+            <div class="rounded-md bg-info-soft p-4">
                 <div class="flex">
                     <div class="shrink-0">
-                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <svg class="h-5 w-5 text-info" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <p class="text-sm text-blue-700">
+                        <p class="text-sm text-info">
                             Set your filter criteria above and click <strong>Apply Filter</strong> to preview the number of matching records before exporting.
                         </p>
                     </div>

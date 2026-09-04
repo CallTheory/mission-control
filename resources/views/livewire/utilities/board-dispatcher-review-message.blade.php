@@ -12,11 +12,11 @@
         <div class=" mx-4">
             Please verify the message looks correct and accurate according to company standards and press the <strong>Confirm Message</strong> below.
         </div>
-        <hr class="border border-gray-300"/>
+        <hr class="border border-border"/>
 
         <livewire:utilities.call-lookup lazy="lazy" :isCallID="$isCallID" />
 
-        <hr class="border border-gray-300"/>
+        <hr class="border border-border"/>
 
         <div class="mx-4">
             <x-button class=" " wire:click="confirmMessage()">
@@ -24,7 +24,7 @@
             </x-button>
         </div>
 
-        <hr class="my-4 border border-gray-300"/>
+        <hr class="my-4 border border-border"/>
 
         <div class="mx-4 mt-12">
 
@@ -33,7 +33,7 @@
             <div class="col-span-6 sm:col-span-4 my-2">
 
                 <x-label for="category" value="{{ __('Category') }}" />
-                <select wire:model="state.category" id="category" class="mt-1 block w-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow ">
+                <select wire:model="state.category" id="category" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow ">
                     <option></option>
                     @foreach(Helpers::boardCheckCategories() as $key => $category )
                         <option value="{{ $key }}">{{ $category }}</option>
@@ -44,14 +44,14 @@
 
             <div class="col-span-6 sm:col-span-4  my-2">
                 <x-label for="comments" value="{{ __('Comments') }}" />
-                <textarea wire:model="state.comments" id="comment" class="mt-1 block w-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow "></textarea>
+                <textarea wire:model="state.comments" id="comment" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow "></textarea>
                 <x-input-error for="state.comments" class="mt-2" />
             </div>
 
             @if(isset($state['agents']) && isset($state['agents'][0]) && is_object($state['agents'][0]))
                 <div class="col-span-6 sm:col-span-4  my-2">
                     <x-label for="agtId" value="{{ __('Responsible Agent') }}" />
-                    <select wire:model="state.agtId" id="agtId" class="mt-1 block w-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow ">
+                    <select wire:model="state.agtId" id="agtId" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow ">
                             <option></option>
                             @foreach($state['agents'] as $agent )
                                 <option value="{{$agent->agtId }}">{{ $agent->Name }} ({{$agent->Initials }})</option>

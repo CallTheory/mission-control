@@ -1,5 +1,5 @@
 @php
-$warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 group-hover:text-white ease-in-out duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+$warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary group-hover:text-surface-inverse-fg ease-in-out duration-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
 @endphp
 
 <div>
@@ -19,7 +19,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                         x-transition:leave="transform transition ease-in-out duration-1000"
                         x-transition:leave-start="opacity-100"
                         x-transition:leave-end="opacity-0"
-                        class="inline-block transform transition absolute inset-0 bg-black transition-opacity fixed-bottom" aria-hidden="true"></div>
+                        class="inline-block transform transition absolute inset-0 bg-surface-inverse transition-opacity fixed-bottom" aria-hidden="true"></div>
                     </template>
 
                     <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex z-100">
@@ -38,12 +38,12 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
 
                             class="inline-block relative w-screen max-w-5xl h-full">
 
-                            <div class="group h-full flex flex-col py-6 bg-white  shadow
-                            overflow-y-scroll transform transition duration-700 ease-in-out border-l-4 shadow hover:border-gray-500 border-gray-300">
+                            <div class="group h-full flex flex-col py-6 bg-surface  shadow
+                            overflow-y-scroll transform transition duration-700 ease-in-out border-l-4 shadow hover:border-border-strong border-border">
                                 <div class="px-4 sm:px-6">
 
 
-                                    <h2 class="text-lg font-medium text-gray-900
+                                    <h2 class="text-lg font-medium text-surface-fg
                                     transform transition duration-700 ease-in-out"
                                         id="slide-over-title">
                                         <template  x-if="$wire.isOpen = true">
@@ -57,7 +57,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                             x-transition:leave-end="opacity-0"
 
                                             class="inline-flex">
-                                            <button  wire:click="$toggle('isOpen')" class="rounded-md text-gray-300 hover:text-gray-500 focus:outline-hidden focus:ring-2 focus:ring-white align-text-bottom">
+                                            <button  wire:click="$toggle('isOpen')" class="rounded-md text-subtle hover:text-muted focus:outline-hidden focus:ring-2 focus:ring-surface align-text-bottom">
                                                 <span class="sr-only">Close panel</span>
                                                 <!-- Heroicon name: outline/x -->
                                                 <svg class="h-4 w-4 " xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -72,7 +72,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                 <div class="mt-6 relative flex-1 px-4 sm:px-6">
                                     <!-- Replace with your content -->
                                     <div class="absolute inset-0 px-4 sm:px-6">
-                                        <!--border-2 border-dashed border-gray-300 -->
+                                        <!--border-2 border-dashed border-border -->
                                         <div class="h-full " aria-hidden="true">
                                             <form wire:submit.prevent="saveRules">
 
@@ -102,9 +102,9 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                   <span class="text-xs ">
                                                        Whether the inbound email rule is enabled for processing.
                                                     </span>
-                                                  <select class="mt-1 block w-full  border-gray-300
-                                                     focus:border-indigo-300
-                                                  focus:ring focus:ring-indigo-200 rounded-md
+                                                  <select class="mt-1 block w-full  border-border
+                                                     focus:border-primary
+                                                  focus:ring focus:ring-primary rounded-md
                                                   shadow "
                                                           name="enabled" wire:model="state.enabled">
                                                       <option value=""></option>
@@ -120,9 +120,9 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                     <span class="text-xs ">A list of rules to match against incoming email.</span>
 
                                                     <div class="flex my-2" x-data="">
-                                                        <select x-ref="field" class="mt-1 block w-full  border-gray-300
-                                                     focus:border-indigo-300
-                                                  focus:ring focus:ring-indigo-200 rounded-md
+                                                        <select x-ref="field" class="mt-1 block w-full  border-border
+                                                     focus:border-primary
+                                                  focus:ring focus:ring-primary rounded-md
                                                   shadow  h-8 text-xs mx-1">
                                                             <option value="to">To</option>
                                                             <option value="from">From</option>
@@ -130,26 +130,26 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                             <option value="text">Body</option>
                                                             <option value="attachment">Attachment</option>
                                                         </select>
-                                                        <select x-ref="modifier" class="mt-1 block w-full  border-gray-300
-                                                     focus:border-indigo-300
-                                                  focus:ring focus:ring-indigo-200 rounded-md
+                                                        <select x-ref="modifier" class="mt-1 block w-full  border-border
+                                                     focus:border-primary
+                                                  focus:ring focus:ring-primary rounded-md
                                                   shadow  h-8 text-xs mx-1">
                                                             <option value="exact_match">Exact Match</option>
                                                             <option value="contains">Contains</option>
                                                             <option value="starts_with">Starts With</option>
                                                             <option value="ends_with">Ends With</option>
                                                         </select>
-                                                        <input x-ref="item" value="" class="mt-1 block w-full  border-gray-300
-                                                     focus:border-indigo-300
-                                                  focus:ring focus:ring-indigo-200 rounded-md
+                                                        <input x-ref="item" value="" class="mt-1 block w-full  border-border
+                                                     focus:border-primary
+                                                  focus:ring focus:ring-primary rounded-md
                                                   shadow  h-8 text-xs"/>
-                                                        <a href="#"  @click="$wire.addRule($refs.field.value,$refs.modifier.value,$refs.item.value);" class="cursor-pointer text-indigo-300 hover:text-gray-500 transform transition duration-500 ease-in-out px-2 w-1/4 mx-1">
+                                                        <a href="#"  @click="$wire.addRule($refs.field.value,$refs.modifier.value,$refs.item.value);" class="cursor-pointer text-primary hover:text-muted transform transition duration-500 ease-in-out px-2 w-1/4 mx-1">
                                                             <svg class="align-text-bottom p-1 my-1 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                                         </a>
                                                     </div>
 
 
-                                                    <div class="block p-4 shadow-inner bg-gray-200 rounded-lg min-h-full mx-1">
+                                                    <div class="block p-4 shadow-inner bg-surface-3 rounded-lg min-h-full mx-1">
 
 
                                                         @php
@@ -161,8 +161,8 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                                     @foreach($items as $k => $item )
 
                                                                         <div  class="flex-row mt-1 block w-full ">
-                                                                            <code class="bg-indigo-500 text-white rounded px-2">{{ $field }}</code> <span class="italic font-semibold text-indigo-400">{{ $modifier }}</span> {{ $item }}
-                                                                            <a wire:click="removeRule('{{$field}}', '{{$modifier}}', '{{$k}}','{{$item}}');" href="#" class="text-indigo-500 hover:text-red-500 transform transition duration-700 ease-in-out">
+                                                                            <code class="bg-primary text-primary-fg rounded px-2">{{ $field }}</code> <span class="italic font-semibold text-primary">{{ $modifier }}</span> {{ $item }}
+                                                                            <a wire:click="removeRule('{{$field}}', '{{$modifier}}', '{{$k}}','{{$item}}');" href="#" class="text-primary hover:text-danger transform transition duration-700 ease-in-out">
                                                                                 <svg class="w-4 h-4 inline-flex align-text-bottom" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                                             </a>
                                                                         </div>
@@ -177,7 +177,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
 
 
                                                 </div>
-                                                <div class="flex items-center justify-end px-4 py-3 bg-gray-50    text-right
+                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-2    text-right
                                                 sm:px-6 shadow sm:rounded-md sm:rounded-md">
 
                                                     @if(isset($state['id']))

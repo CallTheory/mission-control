@@ -5,18 +5,18 @@
 @endphp
 
 @if(isset($statistics[0]) && is_object($statistics[0]))
-<div class="bg-white border border-gray-300 shadow overflow-hidden sm:rounded-lg mt-4 w-1/2">
+<div class="bg-surface border border-border shadow overflow-hidden sm:rounded-lg mt-4 w-1/2">
     <div class="px-4 py-5 sm:p-0">
-        <dl class="sm:divide-y sm:divide-gray-200 ">
+        <dl class="sm:divide-y sm:divide-border-soft ">
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Ring Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selRing + $statistics[0]->unselRing === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selRing + $statistics[0]->unselRing ) }}
                         </small>
                     @else
@@ -28,13 +28,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Auto Hold
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selAutoHold + $statistics[0]->unselAutoHold === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selAutoHold + $statistics[0]->unselAutoHold ) }}
                         </small>
                     @else
@@ -44,13 +44,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Talk Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selTalk + $statistics[0]->unselTalk === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selTalk + $statistics[0]->unselTalk ) }}
                         </small>
                     @else
@@ -61,13 +61,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Talk1 Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selTalk1 + $statistics[0]->unselTalk1 === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selTalk1 + $statistics[0]->unselTalk1 ) }}
                         </small>
                     @else
@@ -78,13 +78,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Talk2 Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selTalk2 + $statistics[0]->unselTalk2 === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selTalk2 + $statistics[0]->unselTalk2 ) }}
                         </small>
                     @else
@@ -95,13 +95,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     In Progress
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selInProgress + $statistics[0]->unselInProgress === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selInProgress + $statistics[0]->unselInProgress ) }}
                         </small>
                     @else
@@ -113,13 +113,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Conference Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selConference + $statistics[0]->unselConference === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selConference + $statistics[0]->unselConference ) }}
                         </small>
                     @else
@@ -132,13 +132,13 @@
 
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Hold Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selHold + $statistics[0]->unselHold === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selHold + $statistics[0]->unselHold ) }}
                         </small>
                     @else
@@ -150,13 +150,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Disconnect Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selDisc + $statistics[0]->unselDisc === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selDisc + $statistics[0]->unselDisc ) }}
                         </small>
                     @else
@@ -166,13 +166,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Auto Time
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selAuto + $statistics[0]->unselAuto === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selAuto + $statistics[0]->unselAuto ) }}
                         </small>
                     @else
@@ -183,13 +183,13 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Outbound Queue
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
 
                     @if($statistics[0]->selOutboundQueue + $statistics[0]->unselOutboundQueue === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selOutboundQueue + $statistics[0]->unselOutboundQueue ) }}
                         </small>
                     @else
@@ -199,12 +199,12 @@
             </div>
 
             <div class="group py-2 sm:py-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6  transform transition ease-in-out duration-700">
-                <dt class="text-sm font-medium text-gray-500 0  transform transition ease-in-out duration-700">
+                <dt class="text-sm font-medium text-muted 0 transform transition ease-in-out duration-700">
                     Voicemail
                 </dt>
-                <dd class="mt-1 text-sm text-gray-900   transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
+                <dd class="mt-1 text-sm text-surface-fg transform transition ease-in-out duration-700 sm:mt-0 sm:col-span-2">
                     @if($statistics[0]->selVoiceMail + $statistics[0]->unselVoiceMail === 0 )
-                        <small class="text-gray-300  group-hover:text-indigo-500 transform transition duration-700 ease-in-out">
+                        <small class="text-subtle group-hover:text-primary transform transition duration-700 ease-in-out">
                             {{ Helpers::formatDuration( $statistics[0]->selVoiceMail + $statistics[0]->unselVoiceMail ) }}
                         </small>
                     @else

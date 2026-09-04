@@ -12,7 +12,7 @@
 
         <div class="col-span-6 sm:col-span-4">
             <x-label for="category" value="{{ __('Category') }}" />
-            <select wire:model.live="state.category" id="category" class="mt-1 block w-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow ">
+            <select wire:model.live="state.category" id="category" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow ">
                 @foreach(Helpers::boardCheckCategories() as $key => $category )
                     <option value="{{ $key }}">{{ $category }}</option>
                 @endforeach
@@ -23,7 +23,7 @@
 
         <div class="col-span-6 sm:col-span-4">
             <x-label for="comments" value="{{ __('Comments') }}" />
-            <textarea wire:model.live="state.comments" id="comment" class="mt-1 block w-full  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow "></textarea>
+            <textarea wire:model.live="state.comments" id="comment" class="mt-1 block w-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow "></textarea>
             <x-input-error for="state.comments" class="mt-2" />
         </div>
 

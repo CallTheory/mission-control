@@ -9,7 +9,7 @@
         </x-slot>
 
         <h3 class="text-2xl mx-auto text-center font-semibold">
-            <code class="text-indigo-500 font-bold font-mono">404</code> Not Found
+            <code class="text-primary font-bold font-mono">404</code> Not Found
         </h3>
 
         <div class="w-full mx-auto pb-8">

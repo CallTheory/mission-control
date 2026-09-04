@@ -2,9 +2,9 @@
     @if($transcription)
 
         <div class="my-4 flex" wire:ignore>
-            <div class="group w-full bg-gray-100 border border-gray-300 rounded px-2 pt-6 pb-4 relative" id="transcription_text_field">
+            <div class="group w-full bg-surface-2 border border-border rounded px-2 pt-6 pb-4 relative" id="transcription_text_field">
                 <label for="transcription_text_field"
-                       class="absolute left-0 top-0 text-xs text-gray-500 group-hover:text-indigo-500 m-2 transform transition duration-700">
+                       class="absolute left-0 top-0 text-xs text-muted group-hover:text-primary m-2 transform transition duration-700">
                     <button id="toggleTranscriptionAccordionButton">
                         Transcription
                     </button>
@@ -30,7 +30,7 @@
                     Array.from(spans.getElementsByTagName("SPAN")).forEach((spn) => {
                         spn.classList.toggle("block");
                     });
-                    this.classList.toggle("text-indigo-500");
+                    this.classList.toggle("text-primary");
                     this.classList.toggle("font-bold");
                 }
             }

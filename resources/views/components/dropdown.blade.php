@@ -1,4 +1,4 @@
-@props(['align' => 'right', 'width' => '48', 'contentClasses' => 'py-1 bg-white', 'dropdownClasses' => ''])
+@props(['align' => 'right', 'width' => '48', 'contentClasses' => 'py-1 bg-surface', 'dropdownClasses' => ''])
 
 @php
 switch ($align) {
@@ -40,7 +40,7 @@ switch ($width) {
             class="absolute z-40 mt-2 {{ $width }} rounded-md shadow {{ $alignmentClasses }} {{ $dropdownClasses }}"
             style="display: none;"
             @click="open = false">
-        <div class="rounded-md border border-gray-300 {{ $contentClasses }}">
+        <div class="rounded-md border border-border {{ $contentClasses }}">
             {{ $content }}
         </div>
     </div>

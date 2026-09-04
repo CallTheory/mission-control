@@ -72,14 +72,14 @@ class UiComponentsTest extends TestCase
     {
         $badge = $this->render('<x-badge color="green">Live</x-badge>');
         $this->assertStringContainsString('Live', $badge);
-        $this->assertStringContainsString('bg-green-100', $badge);
+        $this->assertStringContainsString('bg-success-soft', $badge);
 
         $delivered = $this->render('<x-status-badge status="delivered" />');
-        $this->assertStringContainsString('bg-green-100', $delivered);
+        $this->assertStringContainsString('bg-success-soft', $delivered);
         $this->assertStringContainsString('Delivered', $delivered);
 
         $failed = $this->render('<x-status-badge status="failed" />');
-        $this->assertStringContainsString('bg-red-100', $failed);
+        $this->assertStringContainsString('bg-danger-soft', $failed);
     }
 
     public function test_flash_renders_session_messages(): void

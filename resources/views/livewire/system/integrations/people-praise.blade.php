@@ -1,6 +1,6 @@
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-gray-800 hover:bg-gray-900">
-        <a wire:click="$toggle('isOpen')" href="#" class="flex text-4xl text-white font-extrabold">
+    <div class="col-span-1 flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover">
+        <a wire:click="$toggle('isOpen')" href="#" class="flex text-4xl text-surface-inverse-fg font-extrabold">
             <img class="h-12 rounded-sm grayscale invert mr-2" src="/images/people-praise.png" alt="People Praise">
         </a>
     </div>

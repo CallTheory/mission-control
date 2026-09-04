@@ -2,14 +2,14 @@
     <x-slot name="header">
 
         <h2 class="inline font-normal text-xl leading-tight ">
-            <a href="/accounts/">Intelligent Series Account</a> <a class="border border-gray-300 px-2 py-0.5 rounded bg-gray-100 text-indigo-700 hover:underline" href="/accounts/{{ $client_number }}">{{ $client_number }}</a>
+            <a href="/accounts/">Intelligent Series Account</a> <a class="border border-border px-2 py-0.5 rounded bg-surface-2 text-primary hover:underline" href="/accounts/{{ $client_number }}">{{ $client_number }}</a>
         </h2>
 
     </x-slot>
 
     <div class="p-4">
         <div id="toggleScreenWidthContent"
-             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded border bg-white shadow border-gray-300">
+             class="max-w-7xl mx-auto transform transition duration-1000 ease-in-out rounded border bg-surface shadow border-border">
             <div class="m-4">
                 @include('layouts.width-toggle')
             </div>

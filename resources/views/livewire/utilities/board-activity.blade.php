@@ -9,7 +9,7 @@
         @include('utilities.board-nav')
     </div>
 
-    <div class="p-2 bg-gray-50 rounded shadow flex">
+    <div class="p-2 bg-surface-2 rounded shadow flex">
 
         <div class="mr-4 pr-4">
             <x-label for="msgId">Filter by MsgId</x-label>
@@ -19,7 +19,7 @@
 
         <div>
             <x-label for="user_id">Or Filter by User</x-label>
-            <select id="user_id" name="user_id" class="mt-1  border-gray-300     focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow "
+            <select id="user_id" name="user_id" class="mt-1 border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow "
                     wire:model.live="user_id">
                 <option value="">All Users</option>
                 @foreach( User::all() as $user)
@@ -36,18 +36,18 @@
         <div class="my-2">
             {{ $boardCheckActivity->links() }}
         </div>
-        <table class="min-w-full divide-y divide-gray-200  text-left">
+        <table class="min-w-full divide-y divide-border-soft text-left">
             <thead class="">
             <tr class="sticky top-0">
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 0 uppercase tracking-wider whitespace-nowrap">Date</th>
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 0 uppercase tracking-wider whitespace-nowrap">User</th>
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 0 uppercase tracking-wider whitespace-nowrap">msgId</th>
-                <th scope="col" class="px-6 py-3 text-xs font-medium text-gray-500 0 uppercase tracking-wider whitespace-nowrap">Activity</th>
+                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted 0 uppercase tracking-wider whitespace-nowrap">Date</th>
+                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted 0 uppercase tracking-wider whitespace-nowrap">User</th>
+                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted 0 uppercase tracking-wider whitespace-nowrap">msgId</th>
+                <th scope="col" class="px-6 py-3 text-xs font-medium text-muted 0 uppercase tracking-wider whitespace-nowrap">Activity</th>
             </tr>
             </thead>
-            <tbody class="bg-white  divide-y divide-gray-200 ">
+            <tbody class="bg-surface divide-y divide-border-soft ">
             @foreach($boardCheckActivity as $row)
-                <tr class="group  transform transition duration-700 text-gray-800 ease-in-out py-2">
+                <tr class="group transform transition duration-700 text-surface-fg ease-in-out py-2">
                     <td class="text-ellipsis pl-4">
                         <small>{{ $row->created_at->timezone(Auth::user()->timezone ?? 'UTC')->format('m/d/Y g:i:s A T') }} &middot; {{ $row->created_at->timezone(Auth::user()->timezone ?? 'UTC')->diffForHumans() }}</small>
                     </td>
@@ -59,7 +59,7 @@
                     </td>
                     <td class="text-ellipsis">
                         @if($row->msgId)
-                            <small class="bg-gray-100  rounded px-1 py-0.5 my-1">{{ $row->msgId }}</small>
+                            <small class="bg-surface-2 rounded px-1 py-0.5 my-1">{{ $row->msgId }}</small>
                         @endif
                     </td>
                     <td class="text-ellipsis">

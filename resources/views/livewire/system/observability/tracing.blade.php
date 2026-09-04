@@ -2,7 +2,7 @@
     <div class="md:grid md:grid-cols-3 md:gap-6">
         <div class="md:col-span-1 flex justify-between px-4 sm:px-0">
             <div class="max-w-xs">
-                <h3 class="text-lg font-medium text-gray-900">Tracing</h3>
+                <h3 class="text-lg font-medium text-surface-fg">Tracing</h3>
                 <p class="mt-1 text-sm text-muted">
                     Export request, job and query timings to Grafana Tempo over OTLP.
                     Off by default.
@@ -11,7 +11,7 @@
         </div>
 
         <div class="mt-5 md:mt-0 md:col-span-2">
-            <div class="px-4 py-5 sm:p-6 bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6 bg-surface shadow sm:rounded-lg">
 
                 @if($envOverridden)
                     <x-alert-warning
@@ -35,8 +35,8 @@
                     <div class="col-span-6">
                         <label class="flex items-center">
                             <input type="checkbox" wire:model="enabled"
-                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-                            <span class="ml-2 text-sm text-gray-700">Enable tracing</span>
+                                   class="rounded border-border text-primary shadow-sm focus:ring-primary" />
+                            <span class="ml-2 text-sm text-surface-fg-soft">Enable tracing</span>
                         </label>
                     </div>
 
@@ -53,7 +53,7 @@
 
                     <x-form-field for="protocol" label="Protocol" errorFor="protocol">
                         <select wire:model="protocol" id="protocol"
-                                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                class="mt-1 block w-full border-border focus:border-primary focus:ring-primary rounded-md shadow-sm">
                             <option value="http/protobuf">http/protobuf (default)</option>
                             <option value="http/json">http/json (easier to debug)</option>
                         </select>
@@ -96,11 +96,11 @@
                               To keep every error instead, set this to 1.0 and configure tail sampling
                               in Alloy." />
 
-                    <div class="col-span-6 border-t border-gray-200 pt-4">
+                    <div class="col-span-6 border-t border-border-soft pt-4">
                         <label class="flex items-center">
                             <input type="checkbox" wire:model.live="dbSpansEnabled"
-                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-                            <span class="ml-2 text-sm text-gray-700">Trace database queries</span>
+                                   class="rounded border-border text-primary shadow-sm focus:ring-primary" />
+                            <span class="ml-2 text-sm text-surface-fg-soft">Trace database queries</span>
                         </label>
                         <p class="mt-1 text-sm text-muted">
                             Highest-volume signal by far — one page with an N+1 can emit hundreds of
@@ -125,7 +125,7 @@
                     <x-action-message class="mr-3" on="saved">Saved.</x-action-message>
 
                     <button type="button" wire:click="checkEndpoint" wire:loading.attr="disabled"
-                            class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 disabled:opacity-50">
+                            class="inline-flex items-center px-4 py-2 bg-surface border border-border rounded-md font-semibold text-xs text-surface-fg-soft uppercase tracking-widest shadow-sm hover:bg-surface-2 disabled:opacity-50">
                         Check collector
                     </button>
 

@@ -1,36 +1,36 @@
 <div>
     <div class="p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">MCP Server - SSE Test</h3>
+        <h3 class="text-lg font-medium text-surface-fg mb-4">MCP Server - SSE Test</h3>
         
         <div class="mb-4">
-            <p class="text-sm text-gray-600 mb-2">API Token required for authentication. Generate one from your profile settings.</p>
+            <p class="text-sm text-surface-fg-soft mb-2">API Token required for authentication. Generate one from your profile settings.</p>
             <input type="text" id="apiToken" placeholder="Enter your API token" 
-                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-info">
         </div>
 
         <div class="mb-4">
             <button id="connectBtn" 
-                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    class="px-4 py-2 bg-info text-info-fg rounded-md hover:bg-info-hover focus:outline-none focus:ring-2 focus:ring-info">
                 Connect to SSE Stream
             </button>
             <button id="disconnectBtn" 
-                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 ml-2"
+                    class="px-4 py-2 bg-danger text-danger-fg rounded-md hover:bg-danger-hover focus:outline-none focus:ring-2 focus:ring-danger ml-2"
                     style="display: none;">
                 Disconnect
             </button>
         </div>
 
         <div class="mb-4">
-            <h4 class="text-md font-medium text-gray-900 mb-2">Connection Status</h4>
-            <div id="status" class="p-3 bg-gray-100 rounded-md text-sm">
-                <span class="text-gray-500">Not connected</span>
+            <h4 class="text-md font-medium text-surface-fg mb-2">Connection Status</h4>
+            <div id="status" class="p-3 bg-surface-2 rounded-md text-sm">
+                <span class="text-muted">Not connected</span>
             </div>
         </div>
 
         <div>
-            <h4 class="text-md font-medium text-gray-900 mb-2">Event Log</h4>
-            <div id="eventLog" class="p-3 bg-gray-100 rounded-md h-64 overflow-y-auto font-mono text-sm">
-                <div class="text-gray-500">No events received yet...</div>
+            <h4 class="text-md font-medium text-surface-fg mb-2">Event Log</h4>
+            <div id="eventLog" class="p-3 bg-surface-2 rounded-md h-64 overflow-y-auto font-mono text-sm">
+                <div class="text-muted">No events received yet...</div>
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
         function addLogEntry(message, type = 'info') {
             const timestamp = new Date().toLocaleTimeString();
             const entry = document.createElement('div');
-            entry.className = type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-700');
+            entry.className = type === 'error' ? 'text-danger' : (type === 'success' ? 'text-success' : 'text-surface-fg-soft');
             entry.textContent = `[${timestamp}] ${message}`;
             
             if (eventLog.firstChild && eventLog.firstChild.textContent.includes('No events received yet')) {

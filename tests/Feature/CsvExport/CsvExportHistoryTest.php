@@ -111,13 +111,13 @@ final class CsvExportHistoryTest extends TestCase
             ->test(CsvExportHistory::class);
 
         $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
-        $this->assertEquals(1, substr_count($html, 'bg-red-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+        $this->assertEquals(1, substr_count($html, 'bg-danger-soft'));
 
         $component->set('filterStatus', 'completed');
         $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
-        $this->assertEquals(0, substr_count($html, 'bg-red-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+        $this->assertEquals(0, substr_count($html, 'bg-danger-soft'));
     }
 
     public function test_history_component_filters_by_user(): void
@@ -139,11 +139,11 @@ final class CsvExportHistoryTest extends TestCase
             ->test(CsvExportHistory::class);
 
         $html = $component->html();
-        $this->assertEquals(2, substr_count($html, 'bg-green-100'));
+        $this->assertEquals(2, substr_count($html, 'bg-success-soft'));
 
         $component->set('filterUser', $this->user->id);
         $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-green-100'));
+        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
     }
 
     public function test_history_component_only_shows_team_logs(): void
