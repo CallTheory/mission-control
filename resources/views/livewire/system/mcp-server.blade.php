@@ -42,7 +42,7 @@
             <!-- Rate Limiting -->
             <div class="col-span-6 sm:col-span-3">
                 <x-label for="mcp_rate_limit" class="font-semibold" value="{{ __('Rate Limit') }}" />
-                <x-input id="mcp_rate_limit" type="number" class="mt-1 block w-full" wire:model.defer="mcp_rate_limit" min="1" max="1000" />
+                <x-input id="mcp_rate_limit" type="number" class="mt-1 block w-full" wire:model="mcp_rate_limit" min="1" max="1000" />
                 <small class="text-xs text-gray-500">Requests per minute per API key (1-1000)</small>
                 <x-input-error for="mcp_rate_limit" class="mt-2" />
             </div>
@@ -50,7 +50,7 @@
             <!-- Timeout -->
             <div class="col-span-6 sm:col-span-3">
                 <x-label for="mcp_timeout" class="font-semibold" value="{{ __('Tool Execution Timeout') }}" />
-                <x-input id="mcp_timeout" type="number" class="mt-1 block w-full" wire:model.defer="mcp_timeout" min="1" max="300" />
+                <x-input id="mcp_timeout" type="number" class="mt-1 block w-full" wire:model="mcp_timeout" min="1" max="300" />
                 <small class="text-xs text-gray-500">Maximum seconds for tool execution (1-300)</small>
                 <x-input-error for="mcp_timeout" class="mt-2" />
             </div>
@@ -58,7 +58,7 @@
             <!-- Max Response Size -->
             <div class="col-span-6 sm:col-span-3">
                 <x-label for="mcp_max_response_size" class="font-semibold" value="{{ __('Max Response Size') }}" />
-                <x-input id="mcp_max_response_size" type="number" class="mt-1 block w-full" wire:model.defer="mcp_max_response_size" min="1024" max="10485760" />
+                <x-input id="mcp_max_response_size" type="number" class="mt-1 block w-full" wire:model="mcp_max_response_size" min="1024" max="10485760" />
                 <small class="text-xs text-gray-500">Maximum response size in bytes (1KB - 10MB)</small>
                 <x-input-error for="mcp_max_response_size" class="mt-2" />
             </div>
@@ -66,7 +66,7 @@
             <!-- Log Level -->
             <div class="col-span-6 sm:col-span-3">
                 <x-label for="mcp_log_level" class="font-semibold" value="{{ __('Log Level') }}" />
-                <select id="mcp_log_level" wire:model.defer="mcp_log_level" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                <select id="mcp_log_level" wire:model="mcp_log_level" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                     <option value="error">Error</option>
                     <option value="warning">Warning</option>
                     <option value="info">Info</option>
@@ -133,7 +133,7 @@
             <!-- CORS Origins -->
             <div class="col-span-6">
                 <x-label for="mcp_cors_origins" class="font-semibold" value="{{ __('CORS Origins (Optional)') }}" />
-                <textarea id="mcp_cors_origins" class="mt-1 block w-full border border-gray-300 rounded-md shadow" rows="3" wire:model.defer="mcp_cors_origins" placeholder="https://example.com"></textarea>
+                <textarea id="mcp_cors_origins" class="mt-1 block w-full border border-gray-300 rounded-md shadow" rows="3" wire:model="mcp_cors_origins" placeholder="https://example.com"></textarea>
                 <small class="text-xs text-gray-500">
                     One origin per line. Leave blank to use default CORS policy.
                     <br>Example: <code>https://claude.ai</code> or <code>http://localhost:3000</code>

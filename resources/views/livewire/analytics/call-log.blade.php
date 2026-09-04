@@ -14,19 +14,19 @@
                 <x-label for="start_date">
                     Start Date <small class="text-gray-400">({{ $timezone }})</small>
                 </x-label>
-                <x-input id="start_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model.defer="start_date"  />
+                <x-input id="start_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model="start_date"  />
                 <x-input-error for="start_date" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="end_date">
                     End Date <small class="text-gray-400">({{ $timezone }})</small>
                 </x-label>
-                <x-input id="end_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model.defer="end_date" />
+                <x-input id="end_date" wire:loading.attr="disabled" type="datetime-local" class="my-1" wire:model="end_date" />
                 <x-input-error for="end_date" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="client_number">Client Number</x-label>
-                <x-input id="client_number" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="client_number" />
+                <x-input id="client_number" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="client_number" />
                 <x-input-error for="client_number" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
@@ -96,12 +96,12 @@
         <div class="inline-flex flex my-2">
             <div class="mr-4 pr-4">
                 <x-label for="ani">ANI</x-label>
-                <x-input id="ani" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="ani" />
+                <x-input id="ani" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="ani" />
                 <x-input-error for="ani" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="call_type">Call Type</x-label>
-                <select id="call_type" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model.defer="call_type">
+                <select id="call_type" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model="call_type">
                     <option value=""></option>
                     @foreach($ck as $ctid => $ctname)
                         <option value="{{ $ctid }}">{{ $ctname }}</option>
@@ -112,12 +112,12 @@
 
             <div class="mr-2 pr-2">
                 <x-label for="min_duration">Min. Duration <small class="text-gray-400">second(s)</small></x-label>
-                <x-input id="min_duration" wire:loading.attr="disabled" type="text" class="mt-1" wire:model.defer="min_duration" />
+                <x-input id="min_duration" wire:loading.attr="disabled" type="text" class="mt-1" wire:model="min_duration" />
                 <x-input-error for="min_duration" class="mt-2" />
             </div>
             <div class="mr-4 pr-4">
                 <x-label for="max_duration">Max. Duration <small class="text-gray-400">second(s)</small></x-label>
-                <x-input id="max_duration" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="max_duration" />
+                <x-input id="max_duration" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="max_duration" />
                 <x-input-error for="max_duration" class="mt-2" />
             </div>
         </div>
@@ -126,7 +126,7 @@
             @if($agents)
                 <div class="mr-4 pr-4">
                     <x-label for="agent">Agent</x-label>
-                    <select id="agent" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model.defer="agent">
+                    <select id="agent" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model="agent">
                         <option value=""></option>
                         @foreach($agents as $agentDetails)
                             <option value="{{ $agentDetails->agtId }}">{{ $agentDetails->Name }}</option>
@@ -139,7 +139,7 @@
             @if($keywords)
                 <div class="mr-2 pr-2">
                     <x-label for="keyword">Keyword Label</x-label>
-                    <select id="keyword" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model.defer="keyword">
+                    <select id="keyword" wire:loading.attr="disabled"  class="mt-1 rounded border border-gray-300 shadow" wire:model="keyword">
                         <option value=""></option>
                         @foreach($keywords as $kw)
                             <option value="{{ $kw->Keywords }}">{{ $kw->Keywords }}</option>
@@ -151,7 +151,7 @@
 
             <div class="mr-4 pr-4">
                 <x-label for="keyword_search">Keyword Value</x-label>
-                <x-input id="keyword_search" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="keyword_search" />
+                <x-input id="keyword_search" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="keyword_search" />
                 <x-input-error for="keyword_search" class="mt-2" />
             </div>
         </div>

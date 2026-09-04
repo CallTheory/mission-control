@@ -11,28 +11,28 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
         <div class="inline-flex flex flex-wrap">
             <div class="mr-4 pr-4 my-2">
                 <x-label for="client_number">Client Number</x-label>
-                <x-input id="client_number" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="client_number" />
+                <x-input id="client_number" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="client_number" />
                 <x-input-error for="client_number" class="mt-2" />
             </div>
             <div class="mr-4 pr-4 my-2">
                 <x-label for="billing_code">Billing Code</x-label>
-                <x-input id="billing_code" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="billing_code" />
+                <x-input id="billing_code" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="billing_code" />
                 <x-input-error for="billing_code" class="mt-2" />
             </div>
             <div class="mr-4 pr-4 my-2">
                 <x-label for="client_name">Client Name</x-label>
-                <x-input id="client_name" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="client_name" />
+                <x-input id="client_name" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="client_name" />
                 <x-input-error for="client_name" class="mt-2" />
             </div>
             <div class="mr-4 pr-4 my-2">
                 <x-label for="client_source">Source</x-label>
-                <x-input id="client_source" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model.defer="client_source" />
+                <x-input id="client_source" wire:loading.attr="disabled" type="text" class="mt-1 " wire:model="client_source" />
                 <x-input-error for="client_source" class="mt-2" />
             </div>
             <div class="flex my-2">
                 <div class="mr-2 pr-2">
                     <x-label for="account_setting">Account Setting</x-label>
-                    <select id="account_setting" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model.defer="account_setting">
+                    <select id="account_setting" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model="account_setting">
                         <option value=""></option>
                         <option value="SaveDiscardedMessages">Save Discarded Messages</option>
                         <option value="CheckinPending">Checkin Pending</option>
@@ -84,7 +84,7 @@ $sortIconDesc = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 
 
                 <div class="mr-4 pr-4">
                     <x-label for="account_setting_value">Setting Value</x-label>
-                    <select id="account_setting_value" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model.defer="account_setting_value">
+                    <select id="account_setting_value" wire:loading.attr="disabled" class="mt-1 border border-gray-300 shadow rounded" wire:model="account_setting_value">
                         <option value=""></option>
                         <option value="0">Off</option>
                         <option value="1">On</option>

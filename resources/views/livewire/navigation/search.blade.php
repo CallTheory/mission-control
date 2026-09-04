@@ -1,7 +1,7 @@
 <div>
     @if($enabled)
         <div class="relative mt-2 flex items-center">
-            <x-input type="text" wire:model.defer="searchTerm" wire:keydown.enter="search" name="searchTerm" id="searchTerm"
+            <x-input type="text" wire:model="searchTerm" wire:keydown.enter="search" name="searchTerm" id="searchTerm"
                      class="-my-2  transform transition duration-500 ease-in-out text-xs"
                      placeholder="Lookup ISCallId..." />
             @if($searchTerm)

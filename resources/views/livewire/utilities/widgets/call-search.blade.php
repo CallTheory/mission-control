@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Session;
     <form wire:submit.prevent="userLookupCall" class="bg-white border border-gray-300 shadow rounded">
         <div class="px-4 py-5 sm:p-6 ">
             <div class="block w-100">
-                <x-input value="{{ $isCallID ?? Session::get('searchTerm') ?? '' }}" required id="isCallID" type="text" class="mt-1 block w-full " wire:model.defer="isCallID" />
+                <x-input value="{{ $isCallID ?? Session::get('searchTerm') ?? '' }}" required id="isCallID" type="text" class="mt-1 block w-full " wire:model="isCallID" />
                 <x-input-error for="isCallID" class="mt-2" />
             </div>
         </div>

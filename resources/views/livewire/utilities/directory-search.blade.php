@@ -8,12 +8,12 @@ use Illuminate\Support\Str;
                 <div class="px-4 py-5 sm:p-6">
                     <div class="block w-100">
                         <x-input value="{{ $searchQuery ?? '' }}" required name="searchQuery"
-                                 id="searchQuery" type="text" class="mt-1 block w-full " wire:model.defer="searchQuery" />
+                                 id="searchQuery" type="text" class="mt-1 block w-full " wire:model="searchQuery" />
                         <span class="text-xs text-gray-500">Match the format (full or partial) that your directory uses!<br>(i.e., 614555 or 6145551234 or 614-555-1234)</span>
                         <x-input-error for="searchQuery" class="mt-2" />
                     </div>
                     <div class="block w-100 mt-4">
-                        <select required id="contactSearchType"  class="mt-1 block w-full rounded border-gray-300 shadow" wire:model.defer="contactSearchType">
+                        <select required id="contactSearchType"  class="mt-1 block w-full rounded border-gray-300 shadow" wire:model="contactSearchType">
                             <option value="phone">Phone</option>
                             <option value="email">Email</option>
                             <option value="fax">Fax</option>

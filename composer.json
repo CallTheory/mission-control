@@ -16,14 +16,14 @@
         "jfcherng/php-diff": "^6.16.2",
         "laravel/framework": "^12.15.0",
         "laravel/horizon": "^5.32.0",
-        "laravel/jetstream": "^5.3.6",
+        "laravel/jetstream": "^5.5",
         "laravel/pint": "^1.22.1",
         "laravel/sanctum": "^4.1.1",
         "laravel/socialite": "^5.20.0",
         "laravel/telescope": "^5.7.0",
         "laravel/tinker": "^2.10.1",
         "league/csv": "^9.23.0",
-        "livewire/livewire": "^3.6.3",
+        "livewire/livewire": "^4.4",
         "notifius/php-wctp": "dev-main",
         "onelogin/php-saml": "^4.2.0",
         "open-telemetry/api": "^1.4",
@@ -39,7 +39,7 @@
         "symfony/mailer": "^7.2.5",
         "symfony/process": "^v7.2.5",
         "twilio/sdk": "^8.7",
-        "wire-elements/modal": "^3.0.1"
+        "wire-elements/modal": "^3.0.4"
     },
     "require-dev": {
         "brianium/paratest": "^7.10",

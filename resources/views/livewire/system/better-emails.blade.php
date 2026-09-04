@@ -21,56 +21,56 @@
                 <x-input id="title"
                          type="text"
                          class="mt-1 block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="title" />
+                         wire:model="title" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="description" class="font-semibold text-sm text-gray-500">Description</label>
                 <x-input id="description"
                          type="text"
                          class="mt-1 block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="description" />
+                         wire:model="description" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="logo" class="font-semibold text-sm text-gray-500">Logo Url</label>
                 <x-input id="logo"
                          type="text"
                          class="mt-1  block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="logo" />
+                         wire:model="logo" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="logo_alt" class="font-semibold text-sm text-gray-500">Logo Alt Text</label>
                 <x-input id="logo_alt"
                          type="text"
                          class="mt-1  block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="logo_alt"  />
+                         wire:model="logo_alt"  />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="logo_link" class="font-semibold text-sm text-gray-500">Logo Link</label>
                 <x-input id="logo_link"
                          type="text"
                          class="mt-1  block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="logo_link"  />
+                         wire:model="logo_link"  />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="button_text" class="font-semibold text-sm text-gray-500">Button Text</label>
                 <x-input id="button_text"
                          type="text"
                          class="mt-1  block border border-gray-300 rounded-md shadow"
-                         wire:model.defer="button_text" />
+                         wire:model="button_text" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="button_link" class="font-semibold text-sm text-gray-500">Button Link</label>
                 <x-input id="button_link"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="button_link" />
+                         wire:model="button_link" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="theme" class="font-semibold text-sm text-gray-500">Theme</label>
                 <select class="focus:border-indigo-300 focus:ring-3 focus:ring-indigo-200 rounded-md shadow  mt-1 block border border-gray-300 rounded-md shadow-m"
                         name="theme"
                         id="theme"
-                        wire:model.defer="theme">
+                        wire:model="theme">
                     @if(File::exists(resource_path('views/emails/better-emails/custom.blade.php')))
                         <option value="custom">Custom</option>
                     @endif
@@ -82,7 +82,7 @@
                 <label for="message_history" class="font-semibold text-sm text-gray-500">Message History</label>
                 <select class="focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow  mt-1 block border border-gray-300 rounded-md shadow-m"
                         id="message_history_toggle"
-                        wire:model.defer="message_history">
+                        wire:model="message_history">
                     <option value="1">Message History: true</option>
                     <option value="0">Message History: false</option>
                 </select>
@@ -91,7 +91,7 @@
                 <label for="report_metadata" class="font-semibold text-sm text-gray-500">Report Metadata</label>
                 <select class="focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow  mt-1 block border border-gray-300 rounded-md shadow-m"
                         id="report_metadata_toggle"
-                        wire:model.defer="report_metadata">
+                        wire:model="report_metadata">
                     <option value="1">Report Metadata: true</option>
                     <option value="0">Report Metadata: false</option>
                 </select>
@@ -100,7 +100,7 @@
                 <label for="example_file" class="font-semibold text-sm text-gray-500">Example File</label>
                 <select class="focus:border-indigo-300 focus:ring focus:ring-indigo-200 rounded-md shadow  mt-1 block border border-gray-300 rounded-md shadow-m"
                         id="example_file"
-                        wire:model.defer="example_file">
+                        wire:model="example_file">
                     <option value="messages 5520 06112024-070001.txt">Multiple Messages</option>
                     <option value="messages 5520 06042024-070000.txt">Single Message</option>
                     <option value="messages 5520 06052024-070001.txt">No Messages</option>
@@ -112,7 +112,7 @@
                 <x-input id="canspam_company"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_company" />
+                         wire:model="canspam_company" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -120,14 +120,14 @@
                 <x-input id="canspam_address"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_address" />
+                         wire:model="canspam_address" />
             </div>
             <div class="my-2 mx-2 ">
                 <label for="canspam_address2" class="font-semibold text-sm text-gray-500">CAN-SPAM Address - Line 2</label>
                 <x-input id="canspam_address2"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_address2" />
+                         wire:model="canspam_address2" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -135,7 +135,7 @@
                 <x-input id="canspam_city"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_city" />
+                         wire:model="canspam_city" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -143,7 +143,7 @@
                 <x-input id="canspam_state"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_state" />
+                         wire:model="canspam_state" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -151,7 +151,7 @@
                 <x-input id="canspam_postal"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_postal" />
+                         wire:model="canspam_postal" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -159,7 +159,7 @@
                 <x-input id="canspam_country"
                          type="text"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_country" />
+                         wire:model="canspam_country" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -167,7 +167,7 @@
                 <x-input id="canspam_email"
                          type="email"
                          class="mt-1  block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_email" />
+                         wire:model="canspam_email" />
             </div>
 
             <div class="my-2 mx-2 ">
@@ -175,7 +175,7 @@
                 <x-input id="canspam_phone"
                          type="text"
                          class="mt-1 block border-gray-300 rounded-md shadow"
-                         wire:model.defer="canspam_phone" />
+                         wire:model="canspam_phone" />
             </div>
 
             <div class="my-2 mx-2 h-full align-bottom mt-auto mb-2 flex">

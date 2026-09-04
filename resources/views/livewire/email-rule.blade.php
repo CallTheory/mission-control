@@ -79,21 +79,21 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                 <div class="my-4">
                                                     <x-label for="name" value="{{ __('Rule Nickname') }}" />
                                                     <span class="text-xs ">An easy to remember nickname for the rule</span>
-                                                    <x-input id="name" type="text" class="mt-1 block w-full " wire:model.defer="state.name" />
+                                                    <x-input id="name" type="text" class="mt-1 block w-full " wire:model="state.name" />
                                                     <x-input-error for="state.name" class="mt-2" />
                                                 </div>
 
                                                 <div class="my-4">
                                                     <x-label for="category" value="{{ __('Call Category') }}" />
                                                     <span class="text-xs ">Emails that match this rule will send this category to the script.</span>
-                                                    <x-input id="category" type="text" class="mt-1 block w-full " wire:model.defer="state.category" />
+                                                    <x-input id="category" type="text" class="mt-1 block w-full " wire:model="state.category" />
                                                     <x-input-error for="state.category" class="mt-2" />
                                                 </div>
 
                                                 <div class="my-4">
                                                     <x-label for="account" value="{{ __('Account') }}" />
                                                     <span class="text-xs ">The account to use for MergeComm inbound email.</span>
-                                                    <x-input id="account" type="text" class="mt-1 block w-full " wire:model.defer="state.account" />
+                                                    <x-input id="account" type="text" class="mt-1 block w-full " wire:model="state.account" />
                                                     <x-input-error for="state.account" class="mt-2" />
                                                 </div>
 
@@ -106,7 +106,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
                                                      focus:border-indigo-300
                                                   focus:ring focus:ring-indigo-200 rounded-md
                                                   shadow "
-                                                          name="enabled" wire:model.defer="state.enabled">
+                                                          name="enabled" wire:model="state.enabled">
                                                       <option value=""></option>
                                                       <option value="1">Enabled</option>
                                                       <option value="0">Disabled</option>
@@ -162,7 +162,6 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-indigo-400 gr
 
                                                                         <div  class="flex-row mt-1 block w-full ">
                                                                             <code class="bg-indigo-500 text-white rounded px-2">{{ $field }}</code> <span class="italic font-semibold text-indigo-400">{{ $modifier }}</span> {{ $item }}
-                                                                            <input type="hidden" name="rules[{{$field}}][{{ $modifier }}][]" value="{{ $item }}" wire:mode.defer="state.rules.{{$field}}.{{$modifier}}.{{ $k }}.{{ $item }}">
                                                                             <a wire:click="removeRule('{{$field}}', '{{$modifier}}', '{{$k}}','{{$item}}');" href="#" class="text-indigo-500 hover:text-red-500 transform transition duration-700 ease-in-out">
                                                                                 <svg class="w-4 h-4 inline-flex align-text-bottom" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                                                             </a>

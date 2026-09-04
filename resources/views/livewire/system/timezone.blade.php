@@ -11,7 +11,7 @@
 
         <div class="col-span-6 sm:col-span-4">
             <x-label for="timezone" value="{{ __('Select a timezone:') }}" />
-            <x-input id="timezone" type="text" list="timezones" class="mt-1 block w-full " wire:model.defer="state.timezone" />
+            <x-input id="timezone" type="text" list="timezones" class="mt-1 block w-full " wire:model="state.timezone" />
             <datalist id="timezones">
                 @include('timezones')
             </datalist>

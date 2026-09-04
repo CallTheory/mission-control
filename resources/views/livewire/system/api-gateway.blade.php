@@ -38,7 +38,7 @@
         <hr class="col-span-6 my-4 border border-gray-300" />
         <div class="col-span-6 sm:col-span-4">
             <x-label for="api_whitelist" class="font-semibold" value="{{ __('API Whitelist') }}" />
-            <textarea id="api_whitelist" class="mt-1 block w-full border border-gray-300 rounded-md shadow " wire:model.defer="api_whitelist"></textarea>
+            <textarea id="api_whitelist" class="mt-1 block w-full border border-gray-300 rounded-md shadow " wire:model="api_whitelist"></textarea>
             <small class="text-xs text-gray-400">
                 One IP address or slash-formatted subnet per-line (i.e., <code>1.2.3.4</code> or <code>1.2.3.0/24</code>)
                 <br>
