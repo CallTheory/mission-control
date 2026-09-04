@@ -73,13 +73,15 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * The application's route middleware.
+     * The application's middleware aliases.
      *
-     * Middleware that may be assigned to groups or used individually.
+     * Aliases that may be assigned to groups or used individually. Renamed
+     * from the pre-Laravel-9 $routeMiddleware, which the framework still reads
+     * but marks @deprecated.
      *
      * @var array<string, class-string|string>
      */
-    protected $routeMiddleware = [
+    protected $middlewareAliases = [
         'auth' => Authenticate::class,
         'auth.basic' => AuthenticateWithBasicAuth::class,
         'cache.headers' => SetCacheHeaders::class,
