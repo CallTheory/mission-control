@@ -1,4 +1,4 @@
-<x-form-section submit="saveMarketingWebsite">
+<x-form-section submit="save">
     <x-slot name="title">
         {{ __('Company Marketing Site') }}
     </x-slot>
@@ -8,8 +8,9 @@
     </x-slot>
 
     <x-slot name="form">
-        <x-form-field for="marketing_site" label="{{ __('Endpoint URL') }}"
-            error-for="state.marketing_site" wire:model.live="state.marketing_site" />
+        <div class="col-span-6">
+            {{ $this->form }}
+        </div>
     </x-slot>
 
     <x-slot name="actions">

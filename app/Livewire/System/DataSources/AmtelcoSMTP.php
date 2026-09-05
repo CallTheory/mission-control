@@ -1,61 +1,62 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\EditsDataSourceSettings;
 use App\Models\DataSource;
-use Exception;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class AmtelcoSMTP extends Component
+class AmtelcoSMTP extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
+    public string $connectionStatus = '';
+
+    public string $connectionMessage = '';
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public string $connectionStatus = '';
-
-    public string $connectionMessage = '';
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        $this->state['amtelco_inbound_smtp_host'] = $this->datasource->amtelco_inbound_smtp_host ?? '';
-        $this->state['amtelco_inbound_smtp_port'] = $this->datasource->amtelco_inbound_smtp_port ?? '';
+        return ['amtelco_inbound_smtp_host', 'amtelco_inbound_smtp_port'];
     }
 
-    public function updateAmtelcoSMTPDetails(): void
+    protected function settingsSchema(): array
     {
-        $this->validate([
-            'state.amtelco_inbound_smtp_host' => 'required|string',
-            'state.amtelco_inbound_smtp_port' => 'required|integer|numeric',
-        ], [], [
-            'state.amtelco_inbound_smtp_host' => 'inbound SMTP host',
-            'state.amtelco_inbound_smtp_port' => 'inbound SMTP port',
-        ]);
+        return [
+            TextInput::make('amtelco_inbound_smtp_host')
+                ->label('Inbound SMTP Host')
+                ->required()
+                ->validationAttribute('inbound SMTP host'),
 
-        $this->datasource->amtelco_inbound_smtp_host = $this->state['amtelco_inbound_smtp_host'];
-        $this->datasource->amtelco_inbound_smtp_port = $this->state['amtelco_inbound_smtp_port'];
-
-        $this->datasource->save();
-
-        $this->dispatch('saved');
+            TextInput::make('amtelco_inbound_smtp_port')
+                ->label('Inbound SMTP Port')
+                ->numeric()
+                ->required()
+                ->validationAttribute('inbound SMTP port'),
+        ];
     }
 
     public function testConnection(): void
     {
-        $host = $this->state['amtelco_inbound_smtp_host'] ?: $this->datasource->amtelco_inbound_smtp_host;
-        $port = $this->state['amtelco_inbound_smtp_port'] ?: $this->datasource->amtelco_inbound_smtp_port;
+        $host = $this->data['amtelco_inbound_smtp_host'] ?: DataSource::firstOrNew()->amtelco_inbound_smtp_host;
+        $port = $this->data['amtelco_inbound_smtp_port'] ?: DataSource::firstOrNew()->amtelco_inbound_smtp_port;
 
         if (empty($host) || empty($port)) {
             $this->connectionStatus = 'failed';

@@ -8,6 +8,7 @@ use App\Enums\Capability;
 use App\Livewire\System\DataSources\Intelligent;
 use App\Livewire\System\DataSources\IsUser;
 use App\Livewire\System\DataSources\IsWebApi;
+use App\Models\DataSource;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -54,12 +55,14 @@ class DataSourceValidationMessagesTest extends TestCase
 
         $component = Livewire::actingAs($this->admin(Capability::SystemDataSources))
             ->test(IsUser::class)
-            ->set('state.is_username', '')
-            ->set('state.is_password', $secret)
-            ->set('state.is_password_confirmation', 'something-else')
-            ->call('saveIntelligentUser');
+            ->fillForm([
+                'is_agent_username' => '',
+                'is_agent_password' => $secret,
+                'is_agent_password_confirmation' => 'something-else',
+            ])
+            ->call('save');
 
-        $component->assertHasErrors('state.is_password');
+        $component->assertHasFormErrors(['is_agent_password']);
 
         $errors = $component->errors()->all();
 
@@ -75,20 +78,37 @@ class DataSourceValidationMessagesTest extends TestCase
 
         $component = Livewire::actingAs($this->admin(Capability::SystemDataSources))
             ->test(Intelligent::class)
-            ->set('state.is_db_host', 'sql.example.test')
-            ->set('state.is_db_port', '1433')
-            ->set('state.is_db_data', 'intelligent')
-            ->set('state.is_db_user', 'sa')
-            ->set('state.is_db_pass', $secret)
-            ->set('state.is_db_pass_confirmation', 'mismatch')
-            ->call('saveIntelligentConnection');
+            ->fillForm([
+                'is_db_host' => 'sql.example.test',
+                'is_db_port' => '1433',
+                'is_db_data' => 'intelligent',
+                'is_db_user' => 'sa',
+                'is_db_pass' => $secret,
+                'is_db_pass_confirmation' => 'mismatch',
+            ])
+            ->call('save');
 
-        $component->assertHasErrors('state.is_db_pass');
+        $component->assertHasFormErrors(['is_db_pass']);
 
         foreach ($component->errors()->all() as $message) {
             $this->assertStringNotContainsString($secret, $message,
                 'A validation message echoed the submitted database password back to the user.');
         }
+    }
+
+    public function test_a_stored_password_is_never_sent_to_the_browser(): void
+    {
+        // preservedFields() blanks these on load, so the credential is not in the
+        // rendered DOM or the Livewire snapshot even for an authorised admin.
+        DataSource::create([
+            'is_db_host' => 'sql.example.test',
+            'is_db_pass' => 'stored-db-secret',
+        ]);
+
+        Livewire::actingAs($this->admin(Capability::SystemDataSources))
+            ->test(Intelligent::class)
+            ->assertFormSet(['is_db_pass' => ''])
+            ->assertDontSee('stored-db-secret');
     }
 
     public function test_a_failed_url_validation_explains_itself(): void
@@ -97,12 +117,12 @@ class DataSourceValidationMessagesTest extends TestCase
 
         $component = Livewire::actingAs($this->admin(Capability::SystemDataSources))
             ->test(IsWebApi::class)
-            ->set('state.isweb_api_endpoint', $typed)
-            ->call('saveISWebAPIConnection');
+            ->fillForm(['is_web_api_endpoint' => $typed])
+            ->call('save');
 
-        $component->assertHasErrors('state.isweb_api_endpoint');
+        $component->assertHasFormErrors(['is_web_api_endpoint']);
 
-        $messages = $component->errors()->get('state.isweb_api_endpoint');
+        $messages = $component->errors()->get('data.is_web_api_endpoint');
 
         // The old behaviour made the message *be* the typed value.
         $this->assertNotSame([$typed], $messages);

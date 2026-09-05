@@ -1,44 +1,48 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
+use App\Livewire\Concerns\EditsDataSourceSettings;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class IsWebApi extends Component
+class IsWebApi extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-        $this->state['isweb_api_endpoint'] = $this->datasource->is_web_api_endpoint ?? '';
+        return ['is_web_api_endpoint'];
     }
 
-    public function saveISWebAPIConnection(): void
+    protected function settingsSchema(): array
     {
-        $this->validate([
-            'state.isweb_api_endpoint' => 'required|url',
-        ], [], [
-            'state.isweb_api_endpoint' => 'Intelligent Series web API endpoint',
-        ]);
-
-        $this->datasource->is_web_api_endpoint = $this->state['isweb_api_endpoint'];
-        $this->datasource->save();
-
-        $this->dispatch('saved');
+        return [
+            TextInput::make('is_web_api_endpoint')
+                ->label('Endpoint URL')
+                ->url()
+                ->required()
+                ->placeholder('https://yourdomain.com/isweb/mobileIS.svc')
+                ->helperText('The https ISWeb endpoint for your mobileIS.svc.')
+                ->validationAttribute('Intelligent Series web API endpoint'),
+        ];
     }
 
     public function render(): View

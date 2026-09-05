@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Concerns;
 
-use App\Models\DataSource;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 
@@ -24,12 +23,7 @@ use Filament\Notifications\Notification;
  */
 trait ConfiguresDataSource
 {
-    /**
-     * The DataSource columns this component owns, as a plain list.
-     *
-     * @return array<int, string>
-     */
-    abstract protected function settingsFields(): array;
+    use DataSourceSettings;
 
     /**
      * The form components shown inside the configuration dialog.
@@ -68,48 +62,5 @@ trait ConfiguresDataSource
                     ->success()
                     ->send();
             });
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function currentSettings(): array
-    {
-        $datasource = DataSource::firstOrNew();
-
-        $state = [];
-
-        foreach ($this->settingsFields() as $field) {
-            $state[$field] = $datasource->{$field};
-        }
-
-        return $state;
-    }
-
-    /**
-     * @param  array<string, mixed>  $data
-     */
-    protected function persistSettings(array $data): DataSource
-    {
-        $datasource = DataSource::firstOrNew();
-
-        foreach ($this->settingsFields() as $field) {
-            if (! array_key_exists($field, $data)) {
-                continue;
-            }
-
-            $value = $data[$field];
-
-            // An empty field means "not configured", which the columns express as
-            // NULL rather than an empty string.
-            $datasource->{$field} = ($value === '' ? null : $value);
-        }
-
-        $datasource->save();
-
-        // Kept for the Blade `x-action-message on="saved"` wiring that predates this.
-        $this->dispatch('saved');
-
-        return $datasource;
     }
 }

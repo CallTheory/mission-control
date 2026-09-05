@@ -1,86 +1,127 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\Integrations;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\ConfiguresDataSource;
 use App\Models\DataSource;
 use Exception;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class Mfax extends Component
+class Mfax extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use ConfiguresDataSource;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemIntegrations;
     }
 
-    public bool $isOpen = false;
+    /**
+     * The basic auth pair is generated rather than entered, so it is not part of the
+     * editable set -- it is only displayed.
+     */
+    protected function settingsFields(): array
+    {
+        return ['mfax_api_key', 'mfax_sender_name', 'mfax_subject', 'mfax_notes', 'mfax_cover_page_id'];
+    }
 
-    public array $state;
+    protected function settingsHeading(): string
+    {
+        return 'mFax Configuration';
+    }
 
-    public DataSource $datasource;
+    protected function settingsDescription(): string
+    {
+        return 'API credentials and the defaults applied to outbound faxes.';
+    }
 
     /**
      * @throws Exception
      */
     public function mount(): void
     {
-        $this->datasource = DataSource::firstOrNew();
+        $datasource = DataSource::firstOrNew();
 
-        if ($this->datasource->mfax_basic_auth_username === null || $this->datasource->mfax_basic_auth_password === null) {
-            // Automatically create a username / password (the model cast encrypts on write).
-            try {
-                $this->datasource->mfax_basic_auth_username = bin2hex(random_bytes(8));
-                $this->datasource->mfax_basic_auth_password = bin2hex(random_bytes(8));
-                $this->datasource->save();
-            } catch (Exception $e) {
-                throw new Exception('Unable to generate auth user/pass. '.$e->getMessage());
-            }
+        if ($datasource->mfax_basic_auth_username !== null && $datasource->mfax_basic_auth_password !== null) {
+            return;
         }
 
-        // Values are decrypted transparently by the model cast.
-        $this->state['mfax_basic_auth_username'] = $this->datasource->mfax_basic_auth_username ?? '';
-        $this->state['mfax_basic_auth_password'] = $this->datasource->mfax_basic_auth_password ?? '';
-
-        $this->state['mfax_notes'] = $this->datasource->mfax_notes ?? '';
-        $this->state['mfax_subject'] = $this->datasource->mfax_subject ?? '';
-        $this->state['mfax_sender_name'] = $this->datasource->mfax_sender_name ?? '';
-
-        $this->state['mfax_api_key'] = $this->datasource->mfax_api_key ?? '';
-
-        $this->state['mfax_cover_page_id'] = $this->datasource->mfax_cover_page_id ?? '';
+        // The inbound webhook needs a credential pair whether or not anyone has opened
+        // this dialog, so generate it on first view. The model cast encrypts on write.
+        try {
+            $datasource->mfax_basic_auth_username = bin2hex(random_bytes(8));
+            $datasource->mfax_basic_auth_password = bin2hex(random_bytes(8));
+            $datasource->save();
+        } catch (Exception $e) {
+            throw new Exception('Unable to generate auth user/pass. '.$e->getMessage());
+        }
     }
 
     /**
-     * @throws Exception
+     * The generated inbound credentials, shown so they can be copied into mFax.
+     *
+     * @return array{username: ?string, password: ?string}
      */
-    public function saveMFaxDetails(): void
+    public function basicAuthCredentials(): array
     {
-        try {
-            // First-time setup: enable the provider automatically so a fresh configuration
-            // isn't hidden by default. Re-editing existing keys leaves the toggle untouched.
-            $wasConfigured = $this->datasource->mfax_api_key !== null;
+        $datasource = DataSource::firstOrNew();
 
-            $this->datasource->mfax_notes = $this->state['mfax_notes'];
-            $this->datasource->mfax_subject = $this->state['mfax_subject'];
-            $this->datasource->mfax_api_key = $this->state['mfax_api_key'];
-            $this->datasource->mfax_cover_page_id = $this->state['mfax_cover_page_id'];
-            $this->datasource->mfax_sender_name = $this->state['mfax_sender_name'];
+        return [
+            'username' => $datasource->mfax_basic_auth_username,
+            'password' => $datasource->mfax_basic_auth_password,
+        ];
+    }
 
-            if (! $wasConfigured && ! empty($this->state['mfax_api_key'])) {
-                $this->datasource->mfax_enabled = true;
-            }
+    protected function settingsSchema(): array
+    {
+        return [
+            TextInput::make('mfax_api_key')
+                ->label('API Key')
+                ->password()
+                ->revealable()
+                ->helperText('From the mFax developer console.'),
 
-            $this->datasource->save();
-            $this->dispatch('saved');
-            $this->isOpen = false;
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+            TextInput::make('mfax_sender_name')->label('Sender Name'),
+            TextInput::make('mfax_subject')->label('Default Subject'),
+            TextInput::make('mfax_cover_page_id')->label('Cover Page ID'),
+
+            Textarea::make('mfax_notes')
+                ->label('Default Notes')
+                ->rows(3),
+        ];
+    }
+
+    /**
+     * Extends the shared save with the first-configuration behaviour: enabling the
+     * provider automatically the first time an API key is supplied, so a fresh setup
+     * is not silently switched off. Re-editing an existing key leaves the toggle alone.
+     */
+    protected function persistSettings(array $data): DataSource
+    {
+        $wasConfigured = DataSource::firstOrNew()->mfax_api_key !== null;
+
+        $datasource = $this->persistDataSourceSettings($data);
+
+        if (! $wasConfigured && filled($data['mfax_api_key'] ?? null)) {
+            $datasource->mfax_enabled = true;
+            $datasource->save();
         }
+
+        return $datasource;
     }
 
     public function render(): View

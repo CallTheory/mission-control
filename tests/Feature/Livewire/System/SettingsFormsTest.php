@@ -40,8 +40,10 @@ class SettingsFormsTest extends TestCase
 
         Livewire::test(ClientDb::class)
             ->assertSuccessful()
-            ->assertSet('state.client_db_host', 'db.example')
-            ->assertSet('state.client_db_pass', ''); // password never prefilled
+            ->assertFormSet([
+                'client_db_host' => 'db.example',
+                'client_db_pass' => '', // never prefilled
+            ]);
     }
 
     public function test_user_theme_toggle_persists_dark_mode(): void

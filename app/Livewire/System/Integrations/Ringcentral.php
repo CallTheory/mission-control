@@ -1,87 +1,116 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\Integrations;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\ConfiguresDataSource;
 use App\Models\DataSource;
-use Exception;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class Ringcentral extends Component
+class Ringcentral extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use ConfiguresDataSource;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemIntegrations;
     }
 
-    public bool $isOpen = false;
-
-    public array $state;
-
-    // Whether a secret is already stored (so the view can show "leave blank to keep
-    // current") without ever shipping the decrypted value to the browser.
-    public bool $hasClientSecret = false;
-
-    public bool $hasJwtToken = false;
-
-    public DataSource $datasource;
-
-    /**
-     * @throws Exception
-     */
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        // Never place decrypted secrets into public Livewire state: public props are
-        // serialized into the component snapshot sent to (and echoed back from) the
-        // browser. The secret fields stay blank when editing; a blank value on save
-        // preserves the stored secret (see saveRingCentralFaxDetails).
-        $this->state['ringcentral_jwt_token'] = '';
-        $this->state['ringcentral_client_secret'] = '';
-        $this->hasClientSecret = $this->datasource->ringcentral_client_secret !== null;
-        $this->hasJwtToken = $this->datasource->ringcentral_jwt_token !== null;
-
-        $this->state['ringcentral_client_id'] = $this->datasource->ringcentral_client_id ?? '';
-        $this->state['ringcentral_api_endpoint'] = $this->datasource->ringcentral_api_endpoint ?? '';
+        return ['ringcentral_client_id', 'ringcentral_api_endpoint', 'ringcentral_client_secret', 'ringcentral_jwt_token'];
     }
 
     /**
-     * @throws Exception
+     * The secret and the JWT are never displayed, and a blank submission leaves the
+     * stored value alone -- which is what the previous form's `if (! empty(...))`
+     * guards were doing by hand.
      */
-    public function saveRingCentralFaxDetails(): void
+    protected function preservedFields(): array
     {
-        try {
-            // First-time setup: enable the provider automatically so a fresh configuration
-            // isn't hidden by default. Re-editing existing keys leaves the toggle untouched.
-            $wasConfigured = $this->datasource->ringcentral_client_id !== null;
+        return ['ringcentral_client_secret', 'ringcentral_jwt_token'];
+    }
 
-            $this->datasource->ringcentral_client_id = $this->state['ringcentral_client_id'];
-            // Only overwrite a secret when the admin actually entered a new value;
-            // a blank field keeps the existing stored (encrypted) secret.
-            // The model cast encrypts on write; pass plaintext.
-            if (! empty($this->state['ringcentral_client_secret'])) {
-                $this->datasource->ringcentral_client_secret = $this->state['ringcentral_client_secret'];
-            }
-            if (! empty($this->state['ringcentral_jwt_token'])) {
-                $this->datasource->ringcentral_jwt_token = $this->state['ringcentral_jwt_token'];
-            }
-            $this->datasource->ringcentral_api_endpoint = $this->state['ringcentral_api_endpoint'];
+    protected function settingsHeading(): string
+    {
+        return 'RingCentral Configuration';
+    }
 
-            if (! $wasConfigured && ! empty($this->state['ringcentral_client_id'])) {
-                $this->datasource->ringcentral_enabled = true;
-            }
+    protected function settingsDescription(): string
+    {
+        return 'Leave the secret and JWT blank to keep the values already stored.';
+    }
 
-            $this->datasource->save();
-            $this->dispatch('saved');
-            $this->isOpen = false;
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
+    /**
+     * Whether a secret and JWT are already on file, so the dialog can say so rather
+     * than showing an empty field that looks unconfigured.
+     *
+     * @return array{secret: bool, jwt: bool}
+     */
+    public function storedCredentials(): array
+    {
+        $datasource = DataSource::firstOrNew();
+
+        return [
+            'secret' => $datasource->ringcentral_client_secret !== null,
+            'jwt' => $datasource->ringcentral_jwt_token !== null,
+        ];
+    }
+
+    protected function settingsSchema(): array
+    {
+        $stored = $this->storedCredentials();
+
+        return [
+            TextInput::make('ringcentral_client_id')->label('Client ID'),
+
+            TextInput::make('ringcentral_api_endpoint')
+                ->label('API Endpoint')
+                ->url()
+                ->placeholder('https://platform.ringcentral.com'),
+
+            TextInput::make('ringcentral_client_secret')
+                ->label('Client Secret')
+                ->password()
+                ->revealable()
+                ->helperText($stored['secret'] ? 'A secret is stored. Leave blank to keep it.' : 'No secret stored yet.'),
+
+            TextInput::make('ringcentral_jwt_token')
+                ->label('JWT Token')
+                ->password()
+                ->revealable()
+                ->helperText($stored['jwt'] ? 'A token is stored. Leave blank to keep it.' : 'No token stored yet.'),
+        ];
+    }
+
+    /**
+     * Extends the shared save with the first-configuration behaviour: enabling the
+     * provider automatically the first time a client ID is supplied.
+     */
+    protected function persistSettings(array $data): DataSource
+    {
+        $wasConfigured = DataSource::firstOrNew()->ringcentral_client_id !== null;
+
+        $datasource = $this->persistDataSourceSettings($data);
+
+        if (! $wasConfigured && filled($data['ringcentral_client_id'] ?? null)) {
+            $datasource->ringcentral_enabled = true;
+            $datasource->save();
         }
+
+        return $datasource;
     }
 
     public function render(): View

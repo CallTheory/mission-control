@@ -1,4 +1,4 @@
-<x-form-section submit="saveMiTeamWeb">
+<x-form-section submit="save">
     <x-slot name="title">
         {{ __('Intelligent Series miTeamWeb Site') }}
     </x-slot>
@@ -8,8 +8,9 @@
     </x-slot>
 
     <x-slot name="form">
-        <x-form-field for="miteamweb_site" label="{{ __('Endpoint URL') }}"
-            error-for="state.miteamweb_site" wire:model.live="state.miteamweb_site" />
+        <div class="col-span-6">
+            {{ $this->form }}
+        </div>
     </x-slot>
 
     <x-slot name="actions">

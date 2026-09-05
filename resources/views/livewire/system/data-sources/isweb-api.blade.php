@@ -1,6 +1,6 @@
-<x-form-section submit="saveISWebAPIConnection">
+<x-form-section submit="save">
     <x-slot name="title">
-        {{ __('Intelligent Series Web API Endpoint') }}
+        Intelligent Series Web API Endpoint
     </x-slot>
 
     <x-slot name="description">
@@ -8,8 +8,9 @@
     </x-slot>
 
     <x-slot name="form">
-        <x-form-field for="isweb_api_endpoint" label="{{ __('Endpoint URL') }}"
-            error-for="state.isweb_api_endpoint" wire:model.live="state.isweb_api_endpoint" />
+        <div class="col-span-6">
+            {{ $this->form }}
+        </div>
     </x-slot>
 
     <x-slot name="actions">

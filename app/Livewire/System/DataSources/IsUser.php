@@ -1,51 +1,70 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
+use App\Livewire\Concerns\EditsDataSourceSettings;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class IsUser extends Component
+class IsUser extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        $this->state['is_username'] = $this->datasource->is_agent_username ?? '';
-        $this->state['is_password'] = '';
-        $this->state['is_password_confirmation'] = '';
+        return ['is_agent_username', 'is_agent_password'];
     }
 
-    public function saveIntelligentUser(): void
+    /**
+     * The password is never sent to the browser and is only written when retyped.
+     */
+    protected function preservedFields(): array
     {
-        $this->validate([
-            'state.is_username' => 'required',
-            'state.is_password' => 'required|confirmed',
-        ], [], [
-            'state.is_username' => 'username',
-            'state.is_password' => 'password and confirmation',
-        ]);
+        return ['is_agent_password'];
+    }
 
-        $this->datasource->is_agent_username = $this->state['is_username'];
-        // The model cast encrypts on write; pass plaintext.
-        $this->datasource->is_agent_password = $this->state['is_password'];
-        $this->datasource->save();
+    protected function settingsSchema(): array
+    {
+        return [
+            TextInput::make('is_agent_username')
+                ->label('Intelligent Series Agent Username')
+                ->required()
+                ->validationAttribute('username'),
 
-        $this->dispatch('saved');
+            TextInput::make('is_agent_password')
+                ->label('Intelligent Series Agent Password')
+                ->password()
+                ->revealable()
+                ->required()
+                ->confirmed()
+                ->validationAttribute('password and confirmation')
+                ->helperText('Retype the password to save. It is never displayed.'),
+
+            TextInput::make('is_agent_password_confirmation')
+                ->label('Password Confirmation')
+                ->password()
+                ->revealable()
+                ->required()
+                // Confirmation is a UI concern only; it is not a column.
+                ->dehydrated(false),
+        ];
     }
 
     public function render(): View

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Livewire\System;
 
 use App\Enums\Capability;
+use App\Livewire\System\Integrations\Mfax;
 use App\Livewire\System\Integrations\PeoplePraise;
+use App\Livewire\System\Integrations\Ringcentral;
 use App\Livewire\System\Integrations\Stripe;
 use App\Livewire\System\Integrations\Twilio;
 use App\Models\DataSource;
@@ -159,6 +161,96 @@ class IntegrationSettingsTest extends TestCase
 
         $this->assertSame('exporter', $datasource->people_praise_basic_auth_user);
         $this->assertSame('hunter2', $datasource->people_praise_basic_auth_pass);
+    }
+
+    // ------------------------------------------------------------------
+    // Mfax and RingCentral carry behaviour a mechanical port would have lost.
+    // ------------------------------------------------------------------
+
+    public function test_mfax_generates_inbound_credentials_on_first_view(): void
+    {
+        $component = Livewire::actingAs($this->admin())->test(Mfax::class);
+
+        $credentials = $component->instance()->basicAuthCredentials();
+
+        $this->assertNotNull($credentials['username']);
+        $this->assertNotNull($credentials['password']);
+    }
+
+    public function test_mfax_keeps_the_credentials_it_already_generated(): void
+    {
+        $first = Livewire::actingAs($this->admin())->test(Mfax::class)
+            ->instance()->basicAuthCredentials();
+
+        $second = Livewire::actingAs($this->admin())->test(Mfax::class)
+            ->instance()->basicAuthCredentials();
+
+        $this->assertSame($first['username'], $second['username']);
+        $this->assertSame($first['password'], $second['password']);
+    }
+
+    public function test_mfax_enables_itself_only_on_first_configuration(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)->test(Mfax::class)
+            ->callAction('configure', ['mfax_api_key' => 'key-one']);
+
+        $this->assertTrue((bool) DataSource::first()->mfax_enabled);
+
+        // An operator turning it off must stay off when the key is later edited.
+        DataSource::first()->forceFill(['mfax_enabled' => false])->save();
+
+        Livewire::actingAs($admin)->test(Mfax::class)
+            ->callAction('configure', ['mfax_api_key' => 'key-two']);
+
+        $this->assertFalse((bool) DataSource::first()->mfax_enabled);
+        $this->assertSame('key-two', DataSource::first()->mfax_api_key);
+    }
+
+    public function test_ringcentral_keeps_a_stored_secret_when_the_field_is_left_blank(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)->test(Ringcentral::class)
+            ->callAction('configure', [
+                'ringcentral_client_id' => 'client-1',
+                'ringcentral_api_endpoint' => 'https://platform.ringcentral.com',
+                'ringcentral_client_secret' => 'the-secret',
+                'ringcentral_jwt_token' => 'the-jwt',
+            ]);
+
+        // Re-save with the secret fields blank, as the dialog invites.
+        Livewire::actingAs($admin)->test(Ringcentral::class)
+            ->callAction('configure', [
+                'ringcentral_client_id' => 'client-2',
+                'ringcentral_api_endpoint' => 'https://platform.ringcentral.com',
+                'ringcentral_client_secret' => '',
+                'ringcentral_jwt_token' => '',
+            ]);
+
+        $datasource = DataSource::first();
+
+        $this->assertSame('client-2', $datasource->ringcentral_client_id);
+        $this->assertSame('the-secret', $datasource->ringcentral_client_secret);
+        $this->assertSame('the-jwt', $datasource->ringcentral_jwt_token);
+    }
+
+    public function test_ringcentral_never_sends_a_stored_secret_to_the_browser(): void
+    {
+        Livewire::actingAs($this->admin())->test(Ringcentral::class)
+            ->callAction('configure', [
+                'ringcentral_client_id' => 'client-1',
+                'ringcentral_client_secret' => 'the-secret',
+                'ringcentral_jwt_token' => 'the-jwt',
+            ]);
+
+        Livewire::actingAs($this->admin())
+            ->test(Ringcentral::class)
+            ->mountAction('configure')
+            ->assertActionDataSet(['ringcentral_client_secret' => '', 'ringcentral_jwt_token' => ''])
+            ->assertDontSee('the-secret')
+            ->assertDontSee('the-jwt');
     }
 
     public function test_a_user_without_the_capability_cannot_save_any_of_them(): void

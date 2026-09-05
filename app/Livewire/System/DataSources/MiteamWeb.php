@@ -1,44 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
+use App\Livewire\Concerns\EditsDataSourceSettings;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class MiteamWeb extends Component
+class MiteamWeb extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-        $this->state['miteamweb_site'] = $this->datasource->miteamweb_site ?? '';
+        return ['miteamweb_site'];
     }
 
-    public function saveMiTeamWeb(): void
+    protected function settingsSchema(): array
     {
-        $this->validate([
-            'state.miteamweb_site' => 'required|url',
-        ], [], [
-            'state.miteamweb_site' => 'miTeamWeb site URL',
-        ]);
-
-        $this->datasource->miteamweb_site = $this->state['miteamweb_site'];
-        $this->datasource->save();
-
-        $this->dispatch('saved');
+        return [
+            TextInput::make('miteamweb_site')
+                ->label('miTeamWeb Site URL')
+                ->url()
+                ->required()
+                ->placeholder('https://yourdomain.com/miteamweb')
+                ->validationAttribute('miTeamWeb site URL'),
+        ];
     }
 
     public function render(): View

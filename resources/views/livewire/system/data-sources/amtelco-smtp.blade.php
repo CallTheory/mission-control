@@ -1,4 +1,4 @@
-<x-form-section submit="updateAmtelcoSMTPDetails">
+<x-form-section submit="save">
     <x-slot name="title">
         {{ __('Intelligent Series Inbound SMTP') }}
     </x-slot>
@@ -9,28 +9,25 @@
     </x-slot>
 
     <x-slot name="form">
-        <x-form-field for="amtelco_inbound_smtp_host" label="{{ __('IS SMTP Email Host') }}"
-            error-for="state.amtelco_inbound_smtp_host" wire:model.live="state.amtelco_inbound_smtp_host" />
-
-        <x-form-field for="amtelco_inbound_smtp_port" label="{{ __('IS SMTP Email Port') }}"
-            error-for="state.amtelco_inbound_smtp_port" wire:model.live="state.amtelco_inbound_smtp_port" />
+        <div class="col-span-6">
+            {{ $this->form }}
+        </div>
     </x-slot>
 
     <x-slot name="actions">
-        @if ($connectionStatus === 'success')
+
+        <x-secondary-button type="button" class="mr-3" wire:click="testConnection" wire:loading.attr="disabled">
+            {{ __('Test Connection') }}
+        </x-secondary-button>
+
+        @if($connectionStatus === 'success')
             <span class="mr-3 text-sm text-success">{{ $connectionMessage }}</span>
-        @elseif ($connectionStatus === 'failed')
+        @elseif($connectionStatus === 'failed')
             <span class="mr-3 text-sm text-danger">{{ $connectionMessage }}</span>
         @endif
-
         <x-action-message class="mr-3" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
-
-        <x-secondary-button wire:click="testConnection" wire:loading.attr="disabled" class="mr-3">
-            <span wire:loading.remove wire:target="testConnection">{{ __('Test Connection') }}</span>
-            <span wire:loading wire:target="testConnection">{{ __('Testing...') }}</span>
-        </x-secondary-button>
 
         <x-button>
             {{ __('Save') }}

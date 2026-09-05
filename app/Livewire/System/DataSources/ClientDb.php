@@ -1,84 +1,107 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\EditsDataSourceSettings;
 use App\Models\DataSource;
 use Exception;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class ClientDb extends Component
+class ClientDb extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
+    public string $connectionStatus = '';
+
+    public string $connectionMessage = '';
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public string $connectionStatus = '';
-
-    public string $connectionMessage = '';
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        $this->state['client_db_host'] = $this->datasource->client_db_host ?? '';
-        $this->state['client_db_port'] = $this->datasource->client_db_port ?? '';
-        $this->state['client_db_data'] = $this->datasource->client_db_data ?? '';
-        $this->state['client_db_user'] = $this->datasource->client_db_user ?? '';
-        // don't show the password by default, require it for changes
-        $this->state['client_db_pass'] = '';
-        $this->state['client_db_pass_confirmation'] = '';
+        return ['client_db_host', 'client_db_port', 'client_db_data', 'client_db_user', 'client_db_pass'];
     }
 
-    public function saveClientConnection(): void
+    /**
+     * The password is never sent to the browser and is only written when retyped.
+     */
+    protected function preservedFields(): array
     {
-        $this->validate([
-            'state.client_db_host' => 'required|string',
-            'state.client_db_port' => 'required|numeric',
-            'state.client_db_data' => 'required|string',
-            'state.client_db_user' => 'required|string',
-            'state.client_db_pass' => 'required|confirmed',
-        ], [], [
-            'state.client_db_host' => 'host server',
-            'state.client_db_port' => 'port',
-            'state.client_db_data' => 'database',
-            'state.client_db_user' => 'username',
-            'state.client_db_pass' => 'password and confirmation',
-        ]);
+        return ['client_db_pass'];
+    }
 
-        $this->datasource->client_db_host = $this->state['client_db_host'];
-        $this->datasource->client_db_port = $this->state['client_db_port'];
-        $this->datasource->client_db_data = $this->state['client_db_data'];
-        $this->datasource->client_db_user = $this->state['client_db_user'];
+    protected function settingsSchema(): array
+    {
+        return [
+            TextInput::make('client_db_host')
+                ->label('Host Server')
+                ->required()
+                ->validationAttribute('host server'),
 
-        try {
-            // The model cast encrypts on write; pass plaintext.
-            $this->datasource->client_db_pass = $this->state['client_db_pass'];
-            $this->datasource->save();
-            $this->dispatch('saved');
-        } catch (Exception $e) {
-        }
+            TextInput::make('client_db_port')
+                ->label('Port')
+                ->numeric()
+                ->required()
+                ->validationAttribute('port'),
+
+            TextInput::make('client_db_data')
+                ->label('Database')
+                ->required()
+                ->validationAttribute('database'),
+
+            TextInput::make('client_db_user')
+                ->label('Username')
+                ->required()
+                ->validationAttribute('username'),
+
+            TextInput::make('client_db_pass')
+                ->label('Password')
+                ->password()
+                ->revealable()
+                ->required()
+                ->confirmed()
+                ->validationAttribute('password and confirmation')
+                ->helperText('Retype the password to save. It is never displayed.'),
+
+            TextInput::make('client_db_pass_confirmation')
+                ->label('Password Confirmation')
+                ->password()
+                ->revealable()
+                ->required()
+                // Confirmation is a UI concern only; it is not a column.
+                ->dehydrated(false),
+        ];
     }
 
     public function testConnection(): void
     {
-        $host = $this->state['client_db_host'] ?: $this->datasource->client_db_host;
-        $port = $this->state['client_db_port'] ?: $this->datasource->client_db_port;
-        $database = $this->state['client_db_data'] ?: $this->datasource->client_db_data;
-        $username = $this->state['client_db_user'] ?: $this->datasource->client_db_user;
-        $password = $this->state['client_db_pass']
-            ?: ($this->datasource->client_db_pass ?: '');
+        $stored = DataSource::firstOrNew();
+
+        $host = $this->data['client_db_host'] ?: $stored->client_db_host;
+        $port = $this->data['client_db_port'] ?: $stored->client_db_port;
+        $database = $this->data['client_db_data'] ?: $stored->client_db_data;
+        $username = $this->data['client_db_user'] ?: $stored->client_db_user;
+        // The form never holds the stored password, so fall back to it when the
+        // admin is testing without retyping.
+        $password = $this->data['client_db_pass'] ?: ($stored->client_db_pass ?: '');
 
         if (empty($host) || empty($port) || empty($database) || empty($username) || empty($password)) {
             $this->connectionStatus = 'failed';

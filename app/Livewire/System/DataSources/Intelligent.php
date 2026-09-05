@@ -1,84 +1,107 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\EditsDataSourceSettings;
 use App\Models\DataSource;
 use Exception;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class Intelligent extends Component
+class Intelligent extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
+    public string $connectionStatus = '';
+
+    public string $connectionMessage = '';
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public string $connectionStatus = '';
-
-    public string $connectionMessage = '';
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        $this->state['is_db_host'] = $this->datasource->is_db_host ?? '';
-        $this->state['is_db_port'] = $this->datasource->is_db_port ?? '';
-        $this->state['is_db_data'] = $this->datasource->is_db_data ?? '';
-        $this->state['is_db_user'] = $this->datasource->is_db_user ?? '';
-        // don't show the password by default, require it for changes
-        $this->state['is_db_pass'] = '';
-        $this->state['is_db_pass_confirmation'] = '';
+        return ['is_db_host', 'is_db_port', 'is_db_data', 'is_db_user', 'is_db_pass'];
     }
 
-    public function saveIntelligentConnection(): void
+    /**
+     * The password is never sent to the browser and is only written when retyped.
+     */
+    protected function preservedFields(): array
     {
-        $this->validate([
-            'state.is_db_host' => 'required|string',
-            'state.is_db_port' => 'required|numeric',
-            'state.is_db_data' => 'required|string',
-            'state.is_db_user' => 'required|string',
-            'state.is_db_pass' => 'required|confirmed',
-        ], [], [
-            'state.is_db_host' => 'host server',
-            'state.is_db_port' => 'port',
-            'state.is_db_data' => 'database',
-            'state.is_db_user' => 'username',
-            'state.is_db_pass' => 'password and confirmation',
-        ]);
+        return ['is_db_pass'];
+    }
 
-        $this->datasource->is_db_host = $this->state['is_db_host'];
-        $this->datasource->is_db_port = $this->state['is_db_port'];
-        $this->datasource->is_db_data = $this->state['is_db_data'];
-        $this->datasource->is_db_user = $this->state['is_db_user'];
+    protected function settingsSchema(): array
+    {
+        return [
+            TextInput::make('is_db_host')
+                ->label('Host Server')
+                ->required()
+                ->validationAttribute('host server'),
 
-        try {
-            // The model cast encrypts on write; pass plaintext.
-            $this->datasource->is_db_pass = $this->state['is_db_pass'];
-            $this->datasource->save();
-            $this->dispatch('saved');
-        } catch (Exception $e) {
-        }
+            TextInput::make('is_db_port')
+                ->label('Port')
+                ->numeric()
+                ->required()
+                ->validationAttribute('port'),
+
+            TextInput::make('is_db_data')
+                ->label('Database')
+                ->required()
+                ->validationAttribute('database'),
+
+            TextInput::make('is_db_user')
+                ->label('Username')
+                ->required()
+                ->validationAttribute('username'),
+
+            TextInput::make('is_db_pass')
+                ->label('Password')
+                ->password()
+                ->revealable()
+                ->required()
+                ->confirmed()
+                ->validationAttribute('password and confirmation')
+                ->helperText('Retype the password to save. It is never displayed.'),
+
+            TextInput::make('is_db_pass_confirmation')
+                ->label('Password Confirmation')
+                ->password()
+                ->revealable()
+                ->required()
+                // Confirmation is a UI concern only; it is not a column.
+                ->dehydrated(false),
+        ];
     }
 
     public function testConnection(): void
     {
-        $host = $this->state['is_db_host'] ?: $this->datasource->is_db_host;
-        $port = $this->state['is_db_port'] ?: $this->datasource->is_db_port;
-        $database = $this->state['is_db_data'] ?: $this->datasource->is_db_data;
-        $username = $this->state['is_db_user'] ?: $this->datasource->is_db_user;
-        $password = $this->state['is_db_pass']
-            ?: ($this->datasource->is_db_pass ?: '');
+        $stored = DataSource::firstOrNew();
+
+        $host = $this->data['is_db_host'] ?: $stored->is_db_host;
+        $port = $this->data['is_db_port'] ?: $stored->is_db_port;
+        $database = $this->data['is_db_data'] ?: $stored->is_db_data;
+        $username = $this->data['is_db_user'] ?: $stored->is_db_user;
+        // The form never holds the stored password, so fall back to it when the
+        // admin is testing without retyping.
+        $password = $this->data['is_db_pass'] ?: ($stored->is_db_pass ?: '');
 
         if (empty($host) || empty($port) || empty($database) || empty($username) || empty($password)) {
             $this->connectionStatus = 'failed';
@@ -113,7 +136,6 @@ class Intelligent extends Component
 
     public function render(): View
     {
-
         return view('livewire.system.data-sources.intelligent');
     }
 }

@@ -1,49 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\DataSources;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
+use App\Livewire\Concerns\EditsDataSourceSettings;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class MarketingSite extends Component
+class MarketingSite extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemDataSources;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-        $this->state['marketing_site'] = $this->datasource->marketing_site ?? '';
+        return ['marketing_site'];
     }
 
-    public function saveMarketingWebsite(): void
+    protected function settingsSchema(): array
     {
-        $this->validate([
-            'state.marketing_site' => 'required|url',
-        ], [], [
-            'state.marketing_site' => 'marketing site URL',
-        ]);
-
-        $this->datasource->marketing_site = $this->state['marketing_site'];
-        $this->datasource->save();
-
-        $this->dispatch('saved');
+        return [
+            TextInput::make('marketing_site')
+                ->label('Marketing Site URL')
+                ->url()
+                ->required()
+                ->placeholder('https://yourdomain.com')
+                ->validationAttribute('marketing site URL'),
+        ];
     }
 
     public function render(): View
     {
-
         return view('livewire.system.data-sources.marketing-site');
     }
 }
