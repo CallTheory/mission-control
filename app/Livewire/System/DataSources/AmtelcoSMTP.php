@@ -39,9 +39,9 @@ class AmtelcoSMTP extends Component
         $this->validate([
             'state.amtelco_inbound_smtp_host' => 'required|string',
             'state.amtelco_inbound_smtp_port' => 'required|integer|numeric',
-        ], [
-            'state.amtelco_inbound_smtp_host' => $this->state['amtelco_inbound_smtp_host'],
-            'state.amtelco_inbound_smtp_port' => $this->state['amtelco_inbound_smtp_port'],
+        ], [], [
+            'state.amtelco_inbound_smtp_host' => 'inbound SMTP host',
+            'state.amtelco_inbound_smtp_port' => 'inbound SMTP port',
         ]);
 
         $this->datasource->amtelco_inbound_smtp_host = $this->state['amtelco_inbound_smtp_host'];

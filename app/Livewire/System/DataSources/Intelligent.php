@@ -49,21 +49,13 @@ class Intelligent extends Component
             'state.is_db_data' => 'required|string',
             'state.is_db_user' => 'required|string',
             'state.is_db_pass' => 'required|confirmed',
-        ],
-            [
-                'is_db_host' => $this->state['is_db_host'],
-                'is_db_port' => $this->state['is_db_port'],
-                'is_db_data' => $this->state['is_db_data'],
-                'is_db_user' => $this->state['is_db_user'],
-                'is_db_pass' => $this->state['is_db_pass'],
-                'state.is_db_pass_confirmation' => $this->state['is_db_pass_confirmation'],
-            ], [
-                'state.is_db_host' => 'host server',
-                'state.is_db_port' => 'port',
-                'state.is_db_data' => 'database',
-                'state.is_db_user' => 'username',
-                'state.is_db_pass' => 'password and confirmation',
-            ]);
+        ], [], [
+            'state.is_db_host' => 'host server',
+            'state.is_db_port' => 'port',
+            'state.is_db_data' => 'database',
+            'state.is_db_user' => 'username',
+            'state.is_db_pass' => 'password and confirmation',
+        ]);
 
         $this->datasource->is_db_host = $this->state['is_db_host'];
         $this->datasource->is_db_port = $this->state['is_db_port'];

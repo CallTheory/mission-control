@@ -35,9 +35,9 @@ class IsUser extends Component
         $this->validate([
             'state.is_username' => 'required',
             'state.is_password' => 'required|confirmed',
-        ], [
-            'state.is_username' => $this->state['is_username'],
-            'state.is_password' => $this->state['is_password'],
+        ], [], [
+            'state.is_username' => 'username',
+            'state.is_password' => 'password and confirmation',
         ]);
 
         $this->datasource->is_agent_username = $this->state['is_username'];

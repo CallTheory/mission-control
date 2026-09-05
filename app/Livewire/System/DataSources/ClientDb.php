@@ -49,21 +49,13 @@ class ClientDb extends Component
             'state.client_db_data' => 'required|string',
             'state.client_db_user' => 'required|string',
             'state.client_db_pass' => 'required|confirmed',
-        ],
-            [
-                'client_db_host' => $this->state['client_db_host'],
-                'client_db_port' => $this->state['client_db_port'],
-                'client_db_data' => $this->state['client_db_data'],
-                'client_db_user' => $this->state['client_db_user'],
-                'client_db_pass' => $this->state['client_db_pass'],
-                'state.client_db_pass_confirmation' => $this->state['client_db_pass_confirmation'],
-            ], [
-                'state.client_db_host' => 'host server',
-                'state.client_db_port' => 'port',
-                'state.client_db_data' => 'database',
-                'state.client_db_user' => 'username',
-                'state.client_db_pass' => 'password and confirmation',
-            ]);
+        ], [], [
+            'state.client_db_host' => 'host server',
+            'state.client_db_port' => 'port',
+            'state.client_db_data' => 'database',
+            'state.client_db_user' => 'username',
+            'state.client_db_pass' => 'password and confirmation',
+        ]);
 
         $this->datasource->client_db_host = $this->state['client_db_host'];
         $this->datasource->client_db_port = $this->state['client_db_port'];

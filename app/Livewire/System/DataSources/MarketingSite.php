@@ -31,8 +31,8 @@ class MarketingSite extends Component
     {
         $this->validate([
             'state.marketing_site' => 'required|url',
-        ], [
-            'state.marketing_site' => $this->state['marketing_site'],
+        ], [], [
+            'state.marketing_site' => 'marketing site URL',
         ]);
 
         $this->datasource->marketing_site = $this->state['marketing_site'];

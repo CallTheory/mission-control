@@ -31,8 +31,8 @@ class IsWebApi extends Component
     {
         $this->validate([
             'state.isweb_api_endpoint' => 'required|url',
-        ], [
-            'state.isweb_api_endpoint' => $this->state['isweb_api_endpoint'],
+        ], [], [
+            'state.isweb_api_endpoint' => 'Intelligent Series web API endpoint',
         ]);
 
         $this->datasource->is_web_api_endpoint = $this->state['isweb_api_endpoint'];

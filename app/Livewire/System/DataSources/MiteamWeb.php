@@ -31,8 +31,8 @@ class MiteamWeb extends Component
     {
         $this->validate([
             'state.miteamweb_site' => 'required|url',
-        ], [
-            'state.miteamweb_site' => $this->state['miteamweb_site'],
+        ], [], [
+            'state.miteamweb_site' => 'miTeamWeb site URL',
         ]);
 
         $this->datasource->miteamweb_site = $this->state['miteamweb_site'];
