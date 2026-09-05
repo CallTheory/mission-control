@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesBoardComponent;
 use App\Models\BoardCheckItem;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
@@ -11,13 +13,27 @@ use LivewireUI\Modal\ModalComponent;
 
 class BoardFlagIssue extends ModalComponent
 {
+    use AuthorizesBoardComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::UtilityBoardCheck;
+    }
+
     public int $msgId;
+
+    /**
+     * The call the flagged message belongs to. The view passes it to the shared
+     * modal-include partial, so without it this component could not render at all.
+     */
+    public ?int $isCallID = null;
 
     public array $state;
 
-    public function mount(int $msgId): void
+    public function mount(int $msgId, ?int $isCallID = null): void
     {
         $this->msgId = $msgId;
+        $this->isCallID = $isCallID;
         $item = BoardCheckItem::where('msgId', $this->msgId)->first();
         $this->state['comments'] = $item->comments ?? null;
         $this->state['category'] = $item->category ?? null;

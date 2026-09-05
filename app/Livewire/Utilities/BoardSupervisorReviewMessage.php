@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesBoardComponent;
 use App\Models\BoardCheckItem;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\Calls\Call;
@@ -13,6 +15,13 @@ use LivewireUI\Modal\ModalComponent;
 
 class BoardSupervisorReviewMessage extends ModalComponent
 {
+    use AuthorizesBoardComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::BoardReview;
+    }
+
     public int $msgId;
 
     public ?int $isCallID = null;

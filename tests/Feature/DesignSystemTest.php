@@ -158,6 +158,43 @@ class DesignSystemTest extends TestCase
         ));
     }
 
+    #[Test]
+    public function no_element_paints_text_and_background_with_the_same_token(): void
+    {
+        // bg-success + text-success is green on green. It reads as a valid pair because
+        // both are real tokens, which is exactly why it survives review: the palette
+        // rollout mapped `bg-green-400 text-green-800` onto it and the result was
+        // invisible text. A tinted chip wants bg-{token}-soft with text-{token}-soft-fg.
+        $tokens = ['primary', 'danger', 'success', 'warning', 'info', 'accent-2', 'accent'];
+
+        $offenders = [];
+
+        foreach ($this->bladeFiles() as $file) {
+            $contents = file_get_contents($file->getPathname());
+
+            preg_match_all('/(["\'])((?:[^"\'\\\\\n]|\\\\.)*)\1/', $contents, $quoted);
+
+            foreach ($quoted[2] as $attribute) {
+                foreach ($tokens as $token) {
+                    $boundary = '(?<![\w:-])(?:[a-z-]+:)*';
+
+                    if (preg_match('/'.$boundary.'bg-'.preg_quote($token, '/').'(?![\w-])/', $attribute)
+                        && preg_match('/'.$boundary.'text-'.preg_quote($token, '/').'(?![\w-])/', $attribute)) {
+                        $relative = str_replace(resource_path('views').DIRECTORY_SEPARATOR, '', $file->getPathname());
+                        $offenders[$relative][] = $token.': '.trim($attribute);
+                        break;
+                    }
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, $this->explain(
+            'An element paints its text and its background from the same colour token, '
+            .'which renders the text invisible. Use the -soft / -soft-fg pair for tinted chips.',
+            $offenders
+        ));
+    }
+
     /**
      * @param  array<mixed>  $offenders
      */

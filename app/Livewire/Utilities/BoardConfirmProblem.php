@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesBoardComponent;
 use App\Models\BoardCheckItem;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use Carbon\Carbon;
@@ -11,6 +13,13 @@ use LivewireUI\Modal\ModalComponent;
 
 class BoardConfirmProblem extends ModalComponent
 {
+    use AuthorizesBoardComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::BoardReview;
+    }
+
     public int $msgId;
 
     public array $state;

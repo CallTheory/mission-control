@@ -7,16 +7,27 @@ use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\BoardCheck\Fill as Recent;
 use App\Models\System\Settings;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class BoardCheck extends Component
+class BoardCheck extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     protected $listeners = ['boardCheckItemUpdated' => 'getRecent'];
 
@@ -66,10 +77,41 @@ class BoardCheck extends Component
         $this->currentUrl = url()->current();
     }
 
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(fn (): Builder => BoardCheckItem::query()
+                ->whereNull('approved_at')
+                ->whereNull('problem_found_at'))
+            ->columns([
+                TextColumn::make('msgId')->label('Message ID')->searchable()->sortable(),
+                TextColumn::make('callId')->label('Call ID')->searchable()->sortable(),
+
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->color('warning')
+                    // Every row in this query is by definition unreviewed.
+                    ->state('Needs Reviewed'),
+            ])
+            ->recordActions([
+                Action::make('review')
+                    ->label('Review Message')
+                    ->icon('heroicon-m-magnifying-glass-circle')
+                    ->link()
+                    ->action(fn (BoardCheckItem $record) => $this->dispatch('openModal', component: 'utilities.board-dispatcher-review-message', arguments: [
+                        'msgId' => $record->msgId,
+                        'isCallID' => $record->callId,
+                    ])),
+            ])
+            ->defaultSort('msgId')
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('Nothing to do!')
+            ->emptyStateDescription('There are no un-checked messages.');
+    }
+
     public function render(): View
     {
-        return view('livewire.utilities.board-check', [
-            'boardChecks' => BoardCheckItem::whereNull('approved_at')->whereNull('problem_found_at')->orderBy('msgId', 'asc')->paginate(25),
-        ]);
+        return view('livewire.utilities.board-check');
     }
 }

@@ -34,22 +34,22 @@ use Illuminate\Support\Str;
                     <div class="flex flex-wrap mt-4">
 
                         @if($message->Urgent)
-                            <div class="flex rounded text-danger bg-danger px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-danger-soft-fg bg-danger-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>&nbsp;Urgent
                             </div>
                         @endif
                         @if($message->Delivered)
-                            <div class="flex rounded text-success bg-success px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-success-soft-fg bg-success-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>&nbsp;Delivered
                             </div>
                         @endif
                         @if($message->Voice)
-                            <div class="flex rounded text-primary bg-primary px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-primary-soft-fg bg-primary-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>&nbsp;Voice
                             </div>
                         @endif
                         @if($message->Played)
-                            <div class="flex rounded text-info bg-info px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-info-soft-fg bg-info-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>&nbsp;Played
                             </div>
                         @endif
@@ -59,7 +59,7 @@ use Illuminate\Support\Str;
                             </div>
                         @endif
                         @if($message->Exported)
-                            <div class="flex rounded text-accent bg-accent px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-accent-soft-fg bg-accent-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>&nbsp;Exported
                             </div>
                         @endif
@@ -74,7 +74,7 @@ use Illuminate\Support\Str;
                             </div>
                         @endif
                         @if($message->Held)
-                            <div class="flex rounded text-warning bg-warning px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
+                            <div class="flex rounded text-warning-soft-fg bg-warning-soft px-2 py-1 text-xs my-1 mr-2 whitespace-nowrap">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>&nbsp;Held
                             </div>
                         @endif

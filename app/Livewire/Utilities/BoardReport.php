@@ -5,37 +5,44 @@ namespace App\Livewire\Utilities;
 use App\Jobs\ExportBoardCheckForPeoplePraise;
 use App\Jobs\PeoplePraiseApi\ExportBoardCheckForPeoplePraiseApi;
 use App\Models\BoardCheckItem;
-use App\Models\DataSource;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
+use App\Models\Stats\Helpers;
 use App\Models\System\Settings;
-use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class BoardReport extends Component
+class BoardReport extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     public $currentUrl;
 
     public $listeners = ['boardCheckSupervisorItemUpdated' => 'render'];
 
-    private DataSource $datasource;
-
-    private Settings $settings;
-
     public function exportPeopleSoft(): void
     {
-        $this->settings = Settings::first();
-        if ($this->settings->board_check_people_praise_export_method === 'file') {
+        $method = Settings::first()?->board_check_people_praise_export_method;
+
+        if ($method === 'file') {
             ExportBoardCheckForPeoplePraise::dispatch();
             BoardCheckActivity::create([
                 'activity_type' => 'Exported to file',
                 'user_id' => Auth::user()->id,
             ]);
-        } elseif ($this->settings->board_check_people_praise_export_method === 'api') {
+        } elseif ($method === 'api') {
             ExportBoardCheckForPeoplePraiseApi::dispatch();
             BoardCheckActivity::create([
                 'activity_type' => 'Exported to People Praise API',
@@ -43,7 +50,7 @@ class BoardReport extends Component
             ]);
         } else {
             BoardCheckActivity::create([
-                'activity_type' => "Export Failed: Expected \"file\" or \"api\" but got {$this->settings->board_check_people_praise_export_method}",
+                'activity_type' => 'Export Failed: Expected "file" or "api" but got '.($method ?? 'no configured method'),
                 'user_id' => Auth::user()->id,
             ]);
         }
@@ -52,39 +59,80 @@ class BoardReport extends Component
         $this->dispatch('boardCheckSupervisorItemUpdated');
     }
 
-    public function markOK(BoardCheckItem $item): void
-    {
-        $item->marked_ok_at = Carbon::now();
-        $item->marked_ok_by = Auth::user()->email;
-        BoardCheckActivity::create([
-            'activity_type' => 'Marked OK',
-            'user_id' => Auth::user()->id,
-            'msgId' => $item->msgId,
-        ]);
-        $item->save();
-        $this->dispatch('saved');
-        $this->dispatch('boardCheckSupervisorItemUpdated');
-    }
-
-    public function problemConfirmed(BoardCheckItem $item): void
-    {
-        $item->problem_verified_at = Carbon::now();
-        $item->problem_verified_by = Auth::user()->email;
-        BoardCheckActivity::create([
-            'activity_type' => 'Confirmed Problem',
-            'user_id' => Auth::user()->id,
-            'msgId' => $item->msgId,
-        ]);
-        $item->save();
-        $this->dispatch('saved');
-        $this->dispatch('boardCheckSupervisorItemUpdated');
-    }
-
     public function mount(): void
     {
-        $this->settings = Settings::first();
-        $this->datasource = DataSource::first();
         $this->currentUrl = url()->current();
+    }
+
+    public function table(Table $table): Table
+    {
+        $categories = Helpers::boardCheckCategories();
+
+        return $table
+            // Items a supervisor has resolved, either way.
+            ->query(fn (): Builder => BoardCheckItem::query()
+                ->where(fn (Builder $q) => $q->whereNotNull('problem_verified_at')->orWhereNotNull('marked_ok_at')))
+            ->columns([
+                TextColumn::make('msgId')->label('Message ID')->searchable()->sortable(),
+
+                TextColumn::make('callId')
+                    ->label('Call ID')
+                    ->searchable()
+                    ->sortable()
+                    ->url(fn (BoardCheckItem $record): string => '/utilities/call-lookup/'.$record->callId, shouldOpenInNewTab: true),
+
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->badge()
+                    ->state(fn (BoardCheckItem $record): string => match (true) {
+                        $record->marked_ok_at !== null => 'Approved',
+                        $record->problem_verified_at !== null => 'Problem Verified',
+                        $record->approved_at !== null => 'Awaiting Review',
+                        $record->problem_found_at !== null => 'Problem Reported',
+                        default => 'Needs Reviewed',
+                    })
+                    ->color(fn (BoardCheckItem $record): string => match (true) {
+                        $record->marked_ok_at !== null => 'success',
+                        $record->problem_verified_at !== null => 'danger',
+                        default => 'warning',
+                    })
+                    ->tooltip(fn (BoardCheckItem $record): ?string => match (true) {
+                        $record->marked_ok_at !== null => 'Approved by '.$record->marked_ok_by.' at '.$record->marked_ok_at,
+                        $record->problem_verified_at !== null => 'Verified by '.$record->problem_verified_by.' at '.$record->problem_verified_at,
+                        default => null,
+                    }),
+
+                TextColumn::make('category')
+                    ->label('Category')
+                    ->formatStateUsing(fn ($state): string => $categories[$state] ?? '')
+                    ->sortable(),
+
+                TextColumn::make('comments')
+                    ->label('Comments')
+                    ->wrap()
+                    ->limit(80)
+                    ->tooltip(fn (BoardCheckItem $record): string => $record->comments ?? 'No Comments')
+                    ->searchable(),
+
+                TextColumn::make('updated_at')
+                    ->label('Last Update')
+                    ->dateTime()
+                    ->color('gray')
+                    ->sortable(),
+            ])
+            ->recordActions([
+                Action::make('review')
+                    ->label('Review Message')
+                    ->icon('heroicon-m-magnifying-glass-circle')
+                    ->link()
+                    ->action(fn (BoardCheckItem $record) => $this->dispatch('openModal', component: 'utilities.board-supervisor-review-message', arguments: [
+                        'msgId' => $record->msgId,
+                        'isCallID' => $record->callId,
+                    ])),
+            ])
+            ->defaultSort('updated_at', 'desc')
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('No reviewed items yet.');
     }
 
     public function render(): View
@@ -94,8 +142,6 @@ class BoardReport extends Component
             'user_id' => Auth::user()->id,
         ]);
 
-        return view('livewire.utilities.board-report', [
-            'boardChecks' => BoardCheckItem::whereNotNull('problem_verified_at')->orWhereNotNull('marked_ok_at')->paginate(25),
-        ]);
+        return view('livewire.utilities.board-report');
     }
 }
