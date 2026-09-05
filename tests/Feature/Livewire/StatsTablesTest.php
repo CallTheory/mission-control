@@ -9,6 +9,7 @@ use App\Livewire\Analytics\Agents;
 use App\Livewire\Analytics\CallLog;
 use App\Livewire\Analytics\Clients as AnalyticsClients;
 use App\Livewire\Utilities\BoardActivity;
+use App\Livewire\Utilities\DirectorySearch;
 use App\Models\Stats\BoardCheck\Activity;
 use App\Models\System\Settings;
 use App\Models\Team;
@@ -76,6 +77,25 @@ class StatsTablesTest extends TestCase
             ->test(CallLog::class)
             ->assertOk()
             ->assertSee('No calls match these filters.');
+    }
+
+    public function test_directory_search_lists_nothing_until_a_search_is_entered(): void
+    {
+        // The underlying queries take the search term as their only argument, so an
+        // empty table is the correct resting state rather than an unfiltered dump.
+        Livewire::actingAs($this->actor())
+            ->test(DirectorySearch::class)
+            ->assertOk()
+            ->assertSee('Search the directory');
+    }
+
+    public function test_directory_search_ignores_a_search_below_the_minimum_length(): void
+    {
+        Livewire::actingAs($this->actor())
+            ->test(DirectorySearch::class)
+            ->searchTable('61')
+            ->assertOk()
+            ->assertSee('Search the directory');
     }
 
     // ------------------------------------------------------------------
