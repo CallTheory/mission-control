@@ -34,8 +34,12 @@ class Overview extends Stat
         $this->billing_code = $config['billing_code'] ?? '';
         $this->allowed_billing = $config['allowed_billing'] ?? '';
         $this->allowed_accounts = $config['allowed_accounts'] ?? '';
-        $this->order_by = $config['order_by'] ?? 'ClientNumber';
-        $this->order_direction = $config['order_direction'] ?? 'asc';
+        // ORDER BY cannot be parameterised, so it is interpolated into the T-SQL
+        // below. Both halves are therefore resolved against a fixed allow-list here,
+        // at the sink, rather than trusted from the caller: this class is reachable
+        // from a Livewire component whose sort state the browser can set directly.
+        $this->order_by = self::resolveOrderBy($config['order_by'] ?? null);
+        $this->order_direction = self::resolveOrderDirection($config['order_direction'] ?? null);
         $this->account_setting = $config['account_setting'] ?? '';
         $this->account_setting_value = $config['account_setting_value'] ?? '';
         $this->client_source = $config['client_source'] ?? '';
@@ -49,6 +53,21 @@ class Overview extends Stat
             }
         }
         parent::__construct();
+    }
+
+    /**
+     * Columns this listing is allowed to sort by.
+     */
+    public const ORDERABLE = ['ClientNumber', 'ClientName', 'BillingCode'];
+
+    private static function resolveOrderBy(?string $column): string
+    {
+        return in_array($column, self::ORDERABLE, true) ? $column : 'ClientNumber';
+    }
+
+    private static function resolveOrderDirection(?string $direction): string
+    {
+        return strtolower((string) $direction) === 'desc' ? 'desc' : 'asc';
     }
 
     public function validateParams(): bool

@@ -45,6 +45,21 @@ class CallLog extends Stat
 
     public string $sortDirection;
 
+    /**
+     * Columns this log is allowed to sort by.
+     */
+    public const SORTABLE = ['statCallStart.Stamp', 'CallDuration'];
+
+    private static function resolveSortBy(?string $column): string
+    {
+        return in_array($column, self::SORTABLE, true) ? $column : 'statCallStart.Stamp';
+    }
+
+    private static function resolveSortDirection(?string $direction): string
+    {
+        return strtolower((string) $direction) === 'asc' ? 'asc' : 'desc';
+    }
+
     public function validateParams(): bool
     {
         $this->parameters['start_date'] = $this->start_date;
@@ -69,8 +84,11 @@ class CallLog extends Stat
         $this->tz = $tz;
         $this->keyword = $keyword;
         $this->keyword_search = $keyword_search;
-        $this->sortBy = $sort_by ?? 'statCallStart.Stamp';
-        $this->sortDirection = $sort_direction ?? 'desc';
+        // Same as Clients\Overview: ORDER BY is interpolated, so it is resolved
+        // against a fixed allow-list here. The calling component locks sort_by but
+        // not sort_direction, and neither guarantee should be load-bearing.
+        $this->sortBy = self::resolveSortBy($sort_by);
+        $this->sortDirection = self::resolveSortDirection($sort_direction);
         $this->hasAny = $hasAny;
 
         $this->allowed_accounts = $allowed_accounts;
