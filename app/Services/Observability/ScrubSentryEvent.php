@@ -74,10 +74,12 @@ final class ScrubSentryEvent
 
         /*
          * Livewire update payloads must be dropped WHOLESALE, not key-filtered.
-         * ManagesDataSourceSettings assigns decrypted credentials straight into
-         * $this->state, and those live inside a JSON-encoded
-         * components[].snapshot string where key-based scrubbing never finds
-         * them. Keep only the component name, which is the useful signal.
+         * The System settings screens carry decrypted credentials in component
+         * state -- today inside a mounted Filament action's form data -- and that
+         * lives inside a JSON-encoded components[].snapshot string where key-based
+         * scrubbing never finds it. Dropping the payload is what makes this
+         * independent of how any one form happens to hold its state. Keep only the
+         * component name, which is the useful signal.
          */
         $uri = (string) ($request['url'] ?? '');
         if (config('observability.scrubbing.strip_livewire_payloads', true)

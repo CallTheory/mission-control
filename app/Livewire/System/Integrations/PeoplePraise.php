@@ -1,53 +1,60 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System\Integrations;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
-use Exception;
+use App\Livewire\Concerns\ConfiguresDataSource;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class PeoplePraise extends Component
+class PeoplePraise extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use ConfiguresDataSource;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemIntegrations;
     }
 
-    public bool $isOpen = false;
-
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function mount(): void
+    protected function settingsFields(): array
     {
-        $this->datasource = DataSource::firstOrNew();
-
-        // Values are decrypted transparently by the model cast.
-        $this->state['people_praise_basic_auth_user'] = $this->datasource->people_praise_basic_auth_user ?? '';
-        $this->state['people_praise_basic_auth_pass'] = $this->datasource->people_praise_basic_auth_pass ?? '';
+        return ['people_praise_basic_auth_user', 'people_praise_basic_auth_pass'];
     }
 
-    /**
-     * @throws Exception
-     */
-    public function savePeoplePraiseDetails(): void
+    protected function settingsHeading(): string
     {
-        try {
-            // The model cast encrypts on write; pass plaintext.
-            $this->datasource->people_praise_basic_auth_user = $this->state['people_praise_basic_auth_user'];
-            $this->datasource->people_praise_basic_auth_pass = $this->state['people_praise_basic_auth_pass'];
-            $this->datasource->save();
-            $this->dispatch('saved');
-            $this->isOpen = false;
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage());
-        }
+        return 'People Praise Configuration';
+    }
+
+    protected function settingsDescription(): string
+    {
+        return 'Basic auth credentials the board check export presents to People Praise.';
+    }
+
+    protected function settingsSchema(): array
+    {
+        return [
+            TextInput::make('people_praise_basic_auth_user')
+                ->label('Username')
+                ->maxLength(255),
+
+            TextInput::make('people_praise_basic_auth_pass')
+                ->label('Password')
+                ->password()
+                ->revealable()
+                ->maxLength(255),
+        ];
     }
 
     public function render(): View

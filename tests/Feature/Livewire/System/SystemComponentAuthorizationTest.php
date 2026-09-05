@@ -63,8 +63,7 @@ class SystemComponentAuthorizationTest extends TestCase
 
         Livewire::actingAs($admin)
             ->test(Twilio::class)
-            ->set('state.twilio_account_sid', 'AC-new')
-            ->call('save')
+            ->callAction('configure', ['twilio_account_sid' => 'AC-new'])
             ->assertHasNoErrors();
 
         $this->assertSame('AC-new', DataSource::first()->twilio_account_sid);
@@ -79,8 +78,7 @@ class SystemComponentAuthorizationTest extends TestCase
         try {
             Livewire::actingAs($user)
                 ->test(Twilio::class)
-                ->set('state.twilio_account_sid', 'AC-hacked')
-                ->call('save');
+                ->callAction('configure', ['twilio_account_sid' => 'AC-hacked']);
         } catch (\Throwable) {
             // Livewire renders the authorization failure rather than rethrowing
             // it cleanly out of mount(); the security property is the write.
@@ -104,7 +102,7 @@ class SystemComponentAuthorizationTest extends TestCase
         auth()->setUser($admin->fresh());
 
         try {
-            $component->set('state.twilio_account_sid', 'AC-hacked')->call('save');
+            $component->callAction('configure', ['twilio_account_sid' => 'AC-hacked']);
         } catch (\Throwable) {
             // as above
         }

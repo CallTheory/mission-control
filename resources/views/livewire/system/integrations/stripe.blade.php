@@ -1,40 +1,9 @@
 <div>
-    <div class="col-span-1 flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover">
-        <a wire:click="$toggle('isOpen')" href="#">
-            <img class="h-12 grayscale" src="/images/stripe.svg" alt="Stripe">
-        </a>
-    </div>
+    <button type="button" wire:click="mountAction('configure')"
+        class="col-span-1 w-full flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover cursor-pointer"
+        title="Configure Stripe">
+        <img class="h-12 rounded-sm grayscale" src="/images/stripe.svg" alt="Stripe">
+    </button>
 
-    @if($isOpen)
-        <x-dialog-modal wire:model.live="isOpen">
-            <x-slot name="title">
-                <img class="h-12 rounded-sm bg-surface-inverse" src="/images/stripe.svg" alt="Stripe">
-                <br>
-                Stripe Billing API
-            </x-slot>
-            <x-slot name="content">
-                <ul class="list-disc list-inside my-4">
-                    <li class="pl-4">Find your <strong>Testing Secret Key</strong> from Stripe's dashboard and enter it below</li>
-                    <li class="pl-4">Find your <strong>Production Secret Key</strong> from Stripe's dashboard and enter it below</li>
-                    <li class="pl-4">Navigate to <a class="font-semibold hover:underline" href="/utilities/card-processing">Card Processing utility</a> to process TBS export files.</li>
-                </ul>
-
-                <x-form-field for="stripe_secret_test_key" label="{{ __('Test Secret Key') }}"
-                    error-for="state.stripe_secret_test_key" wire:model.live="state.stripe_secret_test_key" />
-
-                <x-form-field for="stripe_secret_prod_key" label="{{ __('Production Secret Key') }}"
-                    error-for="state.stripe_secret_prod_key" wire:model.live="state.stripe_secret_prod_key" />
-            </x-slot>
-
-            <x-slot name="footer">
-                <x-secondary-button wire:click="$toggle('isOpen')" wire:loading.attr="disabled">
-                    Cancel
-                </x-secondary-button>
-
-                <x-button class="ml-2" wire:click="saveStripeKeys" wire:loading.attr="disabled">
-                    Save
-                </x-button>
-            </x-slot>
-        </x-dialog-modal>
-    @endif
+    <x-filament-actions::modals />
 </div>

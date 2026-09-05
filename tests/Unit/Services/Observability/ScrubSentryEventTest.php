@@ -54,12 +54,17 @@ class ScrubSentryEventTest extends TestCase
 
     public function test_livewire_payloads_are_dropped_wholesale(): void
     {
-        // ManagesDataSourceSettings puts DECRYPTED credentials into public
-        // Livewire props, which are serialized into the snapshot. Key-based
-        // scrubbing cannot see inside that JSON string, so the whole payload
-        // must go.
+        // The System settings screens put DECRYPTED credentials into public Livewire
+        // props, which are serialized into the snapshot. Key-based scrubbing cannot
+        // see inside that JSON string, so the whole payload must go. The shape below
+        // is a mounted Filament action's form data, which is where those settings
+        // now hold their state -- the point being that dropping the payload does not
+        // depend on that shape.
         $snapshot = json_encode([
-            'data' => ['state' => ['twilio_auth_token' => 'tok-PLAINTEXT-SECRET']],
+            'data' => [
+                'mountedActions' => [['name' => 'configure']],
+                'mountedActionsData' => [['twilio_auth_token' => 'tok-PLAINTEXT-SECRET']],
+            ],
             'memo' => ['name' => 'system.integrations.twilio'],
         ]);
 
