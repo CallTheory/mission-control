@@ -1,153 +1,198 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\Accounts;
 
 use App\Models\Stats\Clients\Overview;
 use App\Models\Stats\Clients\Sources;
+use App\Support\Tables\StatRecords;
 use Exception;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Session;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 use Illuminate\View\View;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class Clients extends Component
+class Clients extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
-    public string $client_number = '';
+    /**
+     * Per-account switches the listing can filter on, as offered by the Amtelco
+     * client record.
+     *
+     * @var array<string, string>
+     */
+    public const ACCOUNT_SETTINGS = [
+        'SaveDiscardedMessages' => 'Save Discarded Messages',
+        'CheckinPending' => 'Checkin Pending',
+        'LogVoice' => 'Log Voice',
+        'PerfectAnswer' => 'Perfect Answer',
+        'AutoConnect' => 'Auto-Connect (Deprecated?)',
+        'Emergency' => 'Emergency',
+        'DoneKeyCancelsScript' => 'Done Key Cancels Script',
+        'HangupRemovesWorkArea' => 'Hangup Removes Work Area',
+        'TransferConfRemovesWorkArea' => 'Transfer Conference Removes Work Area',
+        'PciCompliance' => 'PCI Compliance',
+        'OverrideOpLimit' => 'Override Op Limit',
+        'AnnounceATTA' => 'Announce ATTA',
+        'RepeatATTA' => 'Repeat ATTA',
+        'AnnounceCallsInQue' => 'Announce Calls In Queue',
+        'DontStartScriptOnFetch' => 'Dont Start Script On Fetch',
+        'ScreenCapture' => 'Screen Capture',
+        'SelectNextUndelMsgWhenDel' => 'Select Next Undelivered Msg When Deleted',
+        'PlayQualityPrompt' => 'Play Quality Prompt',
+        'LoggerBeep' => 'Logger Beep',
+        'SpecialOldToNew' => 'Special Old To New',
+        'SaveEditedSpecial' => 'Save Edited Special',
+        'ShowSpecials' => 'Show Specials',
+        'ShowInfos' => 'Show Infos',
+        'DirectCheckin' => 'Direct Checkin',
+        'VoiceMailPlayBeep' => 'Voice Mail Play Beep',
+        'VoiceMailOldToNew' => 'Voice Mail Old To New',
+        'VoiceMailRevert' => 'Voice Mail Revert',
+        'VmChgPasscode' => 'Vm Change Passcode',
+        'VmChgGreeting' => 'Vm Change Greeting',
+        'VoiceMailPrivate' => 'Voice Mail Private',
+        'VoiceMailANI' => 'Voice Mail ANI',
+        'SecureVMTransfer' => 'Secure VM Transfer',
+        'NewVMRunsMergecomm' => 'New VM Runs Mergecomm',
+        'ExcludeFromSurvey' => 'Exclude From Survey',
+        'LogWhenMessageViewed' => 'Log When Message Viewed',
+        'UseOrgClientForDIDLimit' => 'Use Original Client For DID Limit',
+        'ExemptFromSystemHoliday' => 'Exempt From System Holiday',
+        'RecordPatch' => 'Record Patch',
+        'NoLoggerDialout' => 'No Logger Dialout',
+        'UseCallersCallerIdOnDialouts' => 'Use Callers CallerId On Dialouts',
+        'Voci' => 'Voci',
+        'Inactive' => 'Inactive',
+        'PresentAbandon' => 'Present Abandon',
+        'ExemptFromSystemEmergency' => 'Exempt From System Emergency',
+    ];
 
-    public string $client_name = '';
-
-    public string $billing_code = '';
-
-    public string $account_setting = '';
-
-    public string $account_setting_value = '';
-
-    public string $client_source = '';
-
-    public string $order_by = 'ClientNumber';
-
-    public string $order_direction = 'asc';
-
-    #[Url]
-    public int $page;
-
-    #[On('filtered')]
-    public function render(): View
+    public function table(Table $table): Table
     {
-        $clientsArray = [];
-        $sourcesArray = [];
+        return $table
+            ->records(function (int $page, int $recordsPerPage, ?string $sortColumn, ?string $sortDirection, ?string $search, array $filters) {
+                $rows = $this->clientRows($filters, $search, $sortColumn, $sortDirection);
+
+                // The T-SQL already applied the ORDER BY, so only page here.
+                return StatRecords::paginate(
+                    rows: $rows,
+                    page: $page,
+                    perPage: $recordsPerPage,
+                );
+            })
+            ->columns([
+                TextColumn::make('ClientNumber')->label('Client Number')->sortable(),
+                TextColumn::make('BillingCode')->label('Billing Code')->sortable(),
+
+                TextColumn::make('ClientName')
+                    ->label('Client Name')
+                    ->sortable()
+                    ->url(fn (array $record): string => '/accounts/client/'.$record['ClientNumber']),
+
+                TextColumn::make('Sources')
+                    ->label('Sources')
+                    ->badge()
+                    ->state(fn (array $record): array => $this->sourcesByClient()[$record['cltId']] ?? []),
+            ])
+            ->filters([
+                Filter::make('account')
+                    ->schema([
+                        TextInput::make('client_number')->label('Client Number'),
+                        TextInput::make('billing_code')->label('Billing Code'),
+                        TextInput::make('client_name')->label('Client Name'),
+                        TextInput::make('client_source')->label('Source'),
+                        Select::make('account_setting')
+                            ->label('Account Setting')
+                            ->options(self::ACCOUNT_SETTINGS)
+                            ->searchable(),
+                        Select::make('account_setting_value')
+                            ->label('Setting Value')
+                            ->options(['0' => 'Off', '1' => 'On']),
+                    ])
+                    ->columns(3)
+                    // Filtering happens inside the T-SQL, not over the returned rows,
+                    // so there is nothing to apply to a query builder here.
+                    ->query(fn ($query) => $query),
+            ], layout: FiltersLayout::AboveContent)
+            ->searchable()
+            // Replaces the hand-rolled Session::put wiring the filter form used to do.
+            ->persistFiltersInSession()
+            ->persistSortInSession()
+            ->defaultSort('ClientNumber')
+            ->paginated([50, 100, 200])
+            ->emptyStateHeading('No records found.');
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array<int, object>
+     */
+    private function clientRows(array $filters, ?string $search, ?string $sortColumn, ?string $sortDirection): array
+    {
+        $account = $filters['account'] ?? [];
+        $team = request()->user()->currentTeam;
 
         try {
-            $clients = new Overview([
-                'order_by' => $this->order_by,
-                'order_direction' => $this->order_direction,
-                'client_number' => $this->client_number,
-                'client_name' => $this->client_name,
-                'billing_code' => $this->billing_code,
-                'allowed_accounts' => request()->user()->currentTeam->allowed_accounts,
-                'allowed_billing' => request()->user()->currentTeam->allowed_billing,
-                'account_setting' => $this->account_setting,
-                'account_setting_value' => $this->account_setting_value,
-                'client_source' => $this->client_source,
-            ]);
-            $sources = new Sources(['all' => true]);
-            $clientsArray = $clients->results;
-            $sourcesArray = $sources->results;
-        } catch (Exception $e) {
-        }
-
-        $per_page = 50;
-        $starting_point = ($this->getPage() * $per_page) - $per_page;
-
-        $clientPaginator = new LengthAwarePaginator(array_slice($clientsArray, $starting_point, $per_page), count($clientsArray), $per_page);
-
-        return view('livewire.accounts.clients', [
-            'clients' => $clientPaginator,
-            'sources' => $sourcesArray,
-        ]);
-    }
-
-    public function mount(): void
-    {
-        $this->client_number = Session::get('client_list:filter:client_number', '');
-        $this->client_name = Session::get('client_list:filter:client_name', '');
-        $this->billing_code = Session::get('client_list:filter:billing_code', '');
-        $this->account_setting = Session::get('client_list:filter:account_setting', '');
-        $this->account_setting_value = Session::get('client_list:filter:account_setting_value', '');
-        $this->client_source = Session::get('client_list:filter:client_source', '');
-        $this->order_by = Session::get('client_list:filter:order_by', 'ClientNumber');
-        $this->order_direction = Session::get('client_list:filter:order_direction', 'asc');
-    }
-
-    public function orderBy(string $field): void
-    {
-
-        if ($this->order_by !== $field) {
-            // don't change the direction if we're already sorting by this field
-            if (! in_array($field, ['ClientNumber', 'ClientName', 'BillingCode'])) {
-                $this->order_by = 'ClientNumber';
-            } else {
-                $this->order_by = $field;
-            }
-        } else {
-            if ($this->order_direction === 'asc') {
-                $this->order_direction = 'desc';
-            } else {
-                $this->order_direction = 'asc';
-            }
+            return (new Overview([
+                // Overview allow-lists both of these before interpolating them into
+                // its ORDER BY, so an unexpected column falls back rather than injecting.
+                'order_by' => $sortColumn ?? 'ClientNumber',
+                'order_direction' => $sortDirection ?? 'asc',
+                // A table-wide search is the same thing as a client-name contains filter
+                // as far as the underlying query is concerned.
+                'client_name' => (string) ($account['client_name'] ?? '') ?: (string) $search,
+                'client_number' => (string) ($account['client_number'] ?? ''),
+                'billing_code' => (string) ($account['billing_code'] ?? ''),
+                'client_source' => (string) ($account['client_source'] ?? ''),
+                'account_setting' => (string) ($account['account_setting'] ?? ''),
+                'account_setting_value' => (string) ($account['account_setting_value'] ?? ''),
+                'allowed_accounts' => $team->allowed_accounts,
+                'allowed_billing' => $team->allowed_billing,
+            ]))->results;
+        } catch (Exception) {
+            return [];
         }
     }
 
-    public function applyFilter(): void
+    /**
+     * @return array<int|string, array<int, string>>
+     */
+    private function sourcesByClient(): array
     {
-        $this->client_name = trim($this->client_name);
-        $this->client_number = trim($this->client_number);
-        $this->billing_code = trim($this->billing_code);
-        $this->account_setting = trim($this->account_setting);
-        $this->account_setting = trim($this->account_setting);
-        $this->account_setting_value = trim($this->account_setting_value);
-        $this->client_source = trim($this->client_source);
-        $this->order_by = trim($this->order_by);
-        $this->order_direction = trim($this->order_direction);
-        Session::put('client_list:filter:client_number', $this->client_number);
-        Session::put('client_list:filter:client_name', $this->client_name);
-        Session::put('client_list:filter:billing_code', $this->billing_code);
-        Session::put('client_list:filter:account_setting', $this->account_setting);
-        Session::put('client_list:filter:account_setting_value', $this->account_setting_value);
-        Session::put('client_list:filter:client_source', $this->client_source);
-        Session::put('client_list:filter:order_by', $this->order_by);
-        Session::put('client_list:filter:order_direction', $this->order_direction);
-        $this->resetPage();
-        $this->dispatch('saved');
-        $this->dispatch('filtered');
-    }
+        static $cache = null;
 
-    public function resetFilter(): void
-    {
-        Session::put('client_list:filter:client_number', '');
-        Session::put('client_list:filter:client_name', '');
-        Session::put('client_list:filter:billing_code', '');
-        Session::put('client_list:filter:account_setting', '');
-        Session::put('client_list:filter:account_setting_value', '');
-        Session::put('client_list:filter:client_source', '');
-        Session::put('client_list:filter:order_by', 'ClientNumber');
-        Session::put('client_list:filter:order_direction', 'asc');
-        $this->client_number = '';
-        $this->client_name = '';
-        $this->billing_code = '';
-        $this->account_setting = '';
-        $this->account_setting_value = '';
-        $this->client_source = '';
-        $this->order_by = 'ClientNumber';
-        $this->order_direction = 'asc';
-        $this->resetPage();
-        $this->dispatch('saved');
-        $this->dispatch('filtered');
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        try {
+            $rows = (new Sources(['all' => true]))->results;
+        } catch (Exception) {
+            return $cache = [];
+        }
+
+        $grouped = [];
+
+        foreach ($rows as $source) {
+            $grouped[$source->cltId][] = $source->Source;
+        }
+
+        return $cache = $grouped;
     }
 
     public function placeholder(): string
@@ -157,5 +202,10 @@ class Clients extends Component
            Loading the account list...one moment, please.
         </div>
         HTML;
+    }
+
+    public function render(): View
+    {
+        return view('livewire.accounts.clients');
     }
 }

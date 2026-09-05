@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Livewire;
 
+use App\Livewire\Accounts\Clients as AccountsClients;
 use App\Livewire\Analytics\Agents;
+use App\Livewire\Analytics\CallLog;
 use App\Livewire\Analytics\Clients as AnalyticsClients;
 use App\Livewire\Utilities\BoardActivity;
 use App\Models\Stats\BoardCheck\Activity;
+use App\Models\System\Settings;
+use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -29,6 +33,17 @@ class StatsTablesTest extends TestCase
         return User::factory()->create();
     }
 
+    /** A user on a real (non-personal) team, which the account-scoped screens require. */
+    private function teamActor(): User
+    {
+        $user = User::factory()->create();
+        $team = Team::factory()->create(['user_id' => $user->id, 'personal_team' => false]);
+        $user->teams()->attach($team, ['role' => 'admin']);
+        $user->switchTeam($team);
+
+        return $user->fresh();
+    }
+
     public function test_agents_renders_an_empty_table_when_the_stats_database_is_unreachable(): void
     {
         Livewire::actingAs($this->actor())
@@ -43,6 +58,24 @@ class StatsTablesTest extends TestCase
             ->test(AnalyticsClients::class)
             ->assertOk()
             ->assertSee('No records found.');
+    }
+
+    public function test_accounts_clients_renders_an_empty_table_when_the_stats_database_is_unreachable(): void
+    {
+        Livewire::actingAs($this->teamActor())
+            ->test(AccountsClients::class)
+            ->assertOk()
+            ->assertSee('No records found.');
+    }
+
+    public function test_call_log_renders_an_empty_table_when_the_stats_database_is_unreachable(): void
+    {
+        Settings::firstOrCreate([], ['switch_data_timezone' => 'UTC']);
+
+        Livewire::actingAs($this->teamActor())
+            ->test(CallLog::class)
+            ->assertOk()
+            ->assertSee('No calls match these filters.');
     }
 
     // ------------------------------------------------------------------
