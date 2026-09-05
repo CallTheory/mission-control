@@ -97,27 +97,22 @@ final class CsvExportHistoryTest extends TestCase
 
     public function test_history_component_filters_by_status(): void
     {
-        CsvExportLog::factory()->completed()->create([
+        $completed = CsvExportLog::factory()->completed()->create([
             'user_id' => $this->user->id,
             'team_id' => $this->team->id,
         ]);
 
-        CsvExportLog::factory()->failed()->create([
+        $failed = CsvExportLog::factory()->failed()->create([
             'user_id' => $this->user->id,
             'team_id' => $this->team->id,
         ]);
 
-        $component = Livewire::actingAs($this->user)
-            ->test(CsvExportHistory::class);
-
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
-        $this->assertEquals(1, substr_count($html, 'bg-danger-soft'));
-
-        $component->set('filterStatus', 'completed');
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
-        $this->assertEquals(0, substr_count($html, 'bg-danger-soft'));
+        Livewire::actingAs($this->user)
+            ->test(CsvExportHistory::class)
+            ->assertCanSeeTableRecords([$completed, $failed])
+            ->filterTable('status', 'completed')
+            ->assertCanSeeTableRecords([$completed])
+            ->assertCanNotSeeTableRecords([$failed]);
     }
 
     public function test_history_component_filters_by_user(): void
@@ -125,25 +120,22 @@ final class CsvExportHistoryTest extends TestCase
         $otherUser = User::factory()->create(['name' => 'Other Export User']);
         $otherUser->teams()->attach($this->team, ['role' => 'editor']);
 
-        CsvExportLog::factory()->completed()->create([
+        $own = CsvExportLog::factory()->completed()->create([
             'user_id' => $this->user->id,
             'team_id' => $this->team->id,
         ]);
 
-        CsvExportLog::factory()->completed()->create([
+        $others = CsvExportLog::factory()->completed()->create([
             'user_id' => $otherUser->id,
             'team_id' => $this->team->id,
         ]);
 
-        $component = Livewire::actingAs($this->user)
-            ->test(CsvExportHistory::class);
-
-        $html = $component->html();
-        $this->assertEquals(2, substr_count($html, 'bg-success-soft'));
-
-        $component->set('filterUser', $this->user->id);
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+        Livewire::actingAs($this->user)
+            ->test(CsvExportHistory::class)
+            ->assertCanSeeTableRecords([$own, $others])
+            ->filterTable('user_id', $this->user->id)
+            ->assertCanSeeTableRecords([$own])
+            ->assertCanNotSeeTableRecords([$others]);
     }
 
     public function test_history_component_only_shows_team_logs(): void

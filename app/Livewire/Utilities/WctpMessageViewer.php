@@ -4,32 +4,47 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
+use App\Jobs\ProcessWctpMessage;
 use App\Livewire\Concerns\AuthorizesWctpManagement;
-use App\Models\WctpMessage;
 use App\Models\EnterpriseHost;
+use App\Models\WctpMessage;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class WctpMessageViewer extends Component
+class WctpMessageViewer extends Component implements HasActions, HasSchemas, HasTable
 {
     use AuthorizesWctpManagement;
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     public $host = null;
-    public $search = '';
-    public $filterStatus = '';
-    public $filterDirection = '';
-    public $filterCarrier = '';
-    public $dateFrom = '';
-    public $dateTo = '';
+
     public $selectedMessage = null;
 
     protected $queryString = [
-        'search' => ['except' => ''],
-        'filterStatus' => ['except' => ''],
-        'filterDirection' => ['except' => ''],
-        'filterCarrier' => ['except' => ''],
         'host' => ['except' => null],
+    ];
+
+    /** @var array<string, string> */
+    private const DIRECTION_COLORS = ['outbound' => 'info', 'inbound' => 'accent'];
+
+    /** @var array<string, string> */
+    private const STATUS_COLORS = [
+        'delivered' => 'success', 'sent' => 'info', 'pending' => 'warning',
+        'submitted' => 'warning', 'failed' => 'danger', 'undelivered' => 'danger',
     ];
 
     public function mount()
@@ -41,71 +56,122 @@ class WctpMessageViewer extends Component
         }
     }
 
+    /**
+     * The host the log is pinned to via ?host=, used for the page caption. Scoped to
+     * the acting team so a tampered id captions nothing rather than leaking a name.
+     */
+    public function getCurrentHostProperty(): ?EnterpriseHost
+    {
+        if (! $this->host) {
+            return null;
+        }
+
+        return EnterpriseHost::whereKey($this->host)
+            ->where('team_id', $this->currentTeamId())
+            ->first();
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            // Only messages belonging to the acting team's enterprise hosts are ever visible.
+            ->query(fn (): Builder => WctpMessage::query()
+                ->with('enterpriseHost')
+                ->whereHas('enterpriseHost', fn ($q) => $q->where('team_id', $this->currentTeamId()))
+                ->when($this->host, fn ($q) => $q->where('enterprise_host_id', $this->host)))
+            ->columns([
+                TextColumn::make('created_at')
+                    ->label('Time')
+                    ->dateTime('Y-m-d H:i:s')
+                    ->description(fn (WctpMessage $record): string => $record->created_at->diffForHumans())
+                    ->sortable(),
+
+                TextColumn::make('enterpriseHost.name')
+                    ->label('Host')
+                    ->default('Unknown')
+                    ->description(fn (WctpMessage $record): ?string => $record->enterpriseHost?->senderID)
+                    ->sortable(),
+
+                TextColumn::make('direction')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->color(fn (string $state): string => self::DIRECTION_COLORS[$state] ?? 'gray'),
+
+                TextColumn::make('to')
+                    ->label('From/To')
+                    ->state(fn (WctpMessage $record): string => 'To: '.$record->to."\nFrom: ".$record->from)
+                    ->searchable(['to', 'from'])
+                    ->listWithLineBreaks(),
+
+                TextColumn::make('message')
+                    ->limit(50)
+                    ->wrap()
+                    ->description(fn (WctpMessage $record): string => 'ID: '.$record->wctp_message_id)
+                    ->searchable(['message', 'wctp_message_id', 'twilio_sid']),
+
+                TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->color(fn (string $state): string => self::STATUS_COLORS[$state] ?? 'gray')
+                    ->description(fn (WctpMessage $record): ?string => $record->retry_count > 0
+                        ? 'Retries: '.$record->retry_count
+                        : null)
+                    ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('enterprise_host_id')
+                    ->label('Host')
+                    ->placeholder('All Hosts')
+                    ->options(fn (): array => EnterpriseHost::where('team_id', $this->currentTeamId())
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all()),
+
+                SelectFilter::make('status')
+                    ->placeholder('All Statuses')
+                    ->options(fn (): array => collect(array_keys(self::STATUS_COLORS))
+                        ->mapWithKeys(fn (string $s): array => [$s => ucfirst($s)])
+                        ->all()),
+
+                SelectFilter::make('direction')
+                    ->placeholder('All Directions')
+                    ->options(['outbound' => 'Outbound', 'inbound' => 'Inbound']),
+
+                Filter::make('created_at')
+                    ->label('Date Range')
+                    ->schema([
+                        DatePicker::make('dateFrom')->label('From'),
+                        DatePicker::make('dateTo')->label('To'),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['dateFrom'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '>=', $date))
+                        ->when($data['dateTo'] ?? null, fn ($q, $date) => $q->whereDate('created_at', '<=', $date))),
+            ])
+            ->recordActions([
+                Action::make('view')
+                    ->label('View')
+                    ->link()
+                    ->action(fn (WctpMessage $record) => $this->viewMessage($record)),
+
+                Action::make('retry')
+                    ->label('Retry')
+                    ->link()
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Retry sending this message?')
+                    ->visible(fn (WctpMessage $record): bool => in_array($record->status, ['failed', 'undelivered'], true))
+                    ->action(fn (WctpMessage $record) => $this->retryMessage($record)),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->paginated([20, 50, 100])
+            ->emptyStateHeading('No messages found.');
+    }
+
     public function render()
     {
         $this->authorizeWctpManagement();
 
-        // Only messages belonging to the acting team's enterprise hosts are ever visible.
-        $query = WctpMessage::query()
-            ->with(['enterpriseHost'])
-            ->whereHas('enterpriseHost', function ($q) {
-                $q->where('team_id', $this->currentTeamId());
-            });
-
-        // Filter by host if specified (still constrained to the team's hosts above)
-        if ($this->host) {
-            $query->where('enterprise_host_id', $this->host);
-        }
-
-        // Apply search
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('to', 'like', '%' . $this->search . '%')
-                    ->orWhere('from', 'like', '%' . $this->search . '%')
-                    ->orWhere('wctp_message_id', 'like', '%' . $this->search . '%')
-                    ->orWhere('twilio_sid', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        // Apply status filter
-        if ($this->filterStatus) {
-            $query->where('status', $this->filterStatus);
-        }
-
-        // Apply direction filter
-        if ($this->filterDirection) {
-            $query->where('direction', $this->filterDirection);
-        }
-
-        // Carrier filter not applicable in current implementation
-        // All messages are sent via Twilio
-        if ($this->filterCarrier && $this->filterCarrier === 'twilio') {
-            // No need to filter as all messages are Twilio
-        }
-
-        // Apply date filters
-        if ($this->dateFrom) {
-            $query->where('created_at', '>=', $this->dateFrom . ' 00:00:00');
-        }
-        if ($this->dateTo) {
-            $query->where('created_at', '<=', $this->dateTo . ' 23:59:59');
-        }
-
-        $messages = $query->orderBy('created_at', 'desc')->paginate(20);
-
-        // Get available hosts for filter (scoped to the acting team)
-        $hosts = EnterpriseHost::where('team_id', $this->currentTeamId())
-            ->orderBy('name')
-            ->get();
-
-        // All messages use Twilio as carrier in current implementation
-        $carriers = collect(['twilio']);
-
-        return view('livewire.utilities.wctp-message-viewer', [
-            'messages' => $messages,
-            'hosts' => $hosts,
-            'carriers' => $carriers,
-        ]);
+        return view('livewire.utilities.wctp-message-viewer');
     }
 
     public function viewMessage(WctpMessage $message)
@@ -126,41 +192,10 @@ class WctpMessageViewer extends Component
 
         if ($message->status === 'failed') {
             $message->update(['status' => 'pending', 'failed_at' => null]);
-            \App\Jobs\ProcessWctpMessage::dispatch($message);
-            
+            ProcessWctpMessage::dispatch($message);
+
             session()->flash('message', 'Message queued for retry.');
         }
-    }
-
-    public function exportMessages()
-    {
-        // TODO: Implement CSV export
-        session()->flash('message', 'Export feature coming soon.');
-    }
-
-    public function updatingSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFilterStatus()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFilterDirection()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingFilterCarrier()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingHost()
-    {
-        $this->resetPage();
     }
 
     /**

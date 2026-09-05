@@ -112,14 +112,8 @@ class EnterpriseHostManagementTest extends TestCase
         $theirs = EnterpriseHost::factory()->create(['name' => 'Their Host', 'team_id' => $otherTeam->id]);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->assertViewHas('hosts', function ($hosts) use ($mine, $theirs) {
-                $ids = $hosts->pluck('id')->all();
-
-                return in_array($mine->id, $ids, true)
-                    && ! in_array($theirs->id, $ids, true);
-            })
-            ->assertSee('My Host')
-            ->assertDontSee('Their Host');
+            ->assertCanSeeTableRecords([$mine])
+            ->assertCanNotSeeTableRecords([$theirs]);
     }
 
     public function test_cannot_edit_another_teams_host(): void
@@ -189,29 +183,28 @@ class EnterpriseHostManagementTest extends TestCase
 
     public function test_search_functionality(): void
     {
-        $this->host(['name' => 'Alpha Enterprise']);
-        $this->host(['name' => 'Beta Corporation']);
-        $this->host(['senderID' => 'alpha_sender']);
+        $alpha = $this->host(['name' => 'Alpha Enterprise']);
+        $beta = $this->host(['name' => 'Beta Corporation']);
+        $bySender = $this->host(['senderID' => 'alpha_sender']);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('search', 'alpha')
-            ->assertSee('Alpha Enterprise')
-            ->assertSee('alpha_sender')
-            ->assertDontSee('Beta Corporation');
+            ->searchTable('alpha')
+            ->assertCanSeeTableRecords([$alpha, $bySender])
+            ->assertCanNotSeeTableRecords([$beta]);
     }
 
     public function test_enabled_filter(): void
     {
-        $this->host(['name' => 'Enabled Host', 'enabled' => true]);
-        $this->host(['name' => 'Disabled Host', 'enabled' => false]);
+        $enabled = $this->host(['name' => 'Enabled Host', 'enabled' => true]);
+        $disabled = $this->host(['name' => 'Disabled Host', 'enabled' => false]);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('filterEnabled', '1')
-            ->assertSee('Enabled Host')
-            ->assertDontSee('Disabled Host')
-            ->set('filterEnabled', '0')
-            ->assertSee('Disabled Host')
-            ->assertDontSee('Enabled Host');
+            ->filterTable('enabled', true)
+            ->assertCanSeeTableRecords([$enabled])
+            ->assertCanNotSeeTableRecords([$disabled])
+            ->filterTable('enabled', false)
+            ->assertCanSeeTableRecords([$disabled])
+            ->assertCanNotSeeTableRecords([$enabled]);
     }
 
     public function test_successful_host_creation_encrypts_security_code(): void

@@ -104,29 +104,22 @@ final class VoicemailDigestHistoryTest extends TestCase
     {
         $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
 
-        VoicemailDigestLog::factory()->sent()->create([
+        $sent = VoicemailDigestLog::factory()->sent()->create([
             'voicemail_digest_id' => $digest->id,
             'team_id' => $this->team->id,
         ]);
 
-        VoicemailDigestLog::factory()->failed()->create([
+        $failed = VoicemailDigestLog::factory()->failed()->create([
             'voicemail_digest_id' => $digest->id,
             'team_id' => $this->team->id,
         ]);
 
-        // Without filter, both status badges are visible
-        $component = Livewire::actingAs($this->user)
-            ->test(VoicemailDigestHistory::class);
-
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
-        $this->assertEquals(1, substr_count($html, 'bg-danger-soft'));
-
-        // With filter, only sent logs are visible
-        $component->set('filterStatus', 'sent');
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
-        $this->assertEquals(0, substr_count($html, 'bg-danger-soft'));
+        Livewire::actingAs($this->user)
+            ->test(VoicemailDigestHistory::class)
+            ->assertCanSeeTableRecords([$sent, $failed])
+            ->filterTable('status', 'sent')
+            ->assertCanSeeTableRecords([$sent])
+            ->assertCanNotSeeTableRecords([$failed]);
     }
 
     public function test_history_component_filters_by_schedule(): void
@@ -140,24 +133,21 @@ final class VoicemailDigestHistoryTest extends TestCase
             'name' => 'Schedule Beta',
         ]);
 
-        VoicemailDigestLog::factory()->sent()->create([
+        $alpha = VoicemailDigestLog::factory()->sent()->create([
             'voicemail_digest_id' => $digest1->id,
             'team_id' => $this->team->id,
         ]);
 
-        VoicemailDigestLog::factory()->sent()->create([
+        $beta = VoicemailDigestLog::factory()->sent()->create([
             'voicemail_digest_id' => $digest2->id,
             'team_id' => $this->team->id,
         ]);
 
-        $component = Livewire::actingAs($this->user)
+        Livewire::actingAs($this->user)
             ->test(VoicemailDigestHistory::class)
-            ->set('filterSchedule', $digest1->id)
-            ->assertSee('Schedule Alpha');
-
-        // The table body should only contain one data row for Schedule Alpha
-        $html = $component->html();
-        $this->assertEquals(1, substr_count($html, 'bg-success-soft'));
+            ->filterTable('voicemail_digest_id', $digest1->id)
+            ->assertCanSeeTableRecords([$alpha])
+            ->assertCanNotSeeTableRecords([$beta]);
     }
 
     public function test_history_component_only_shows_team_logs(): void

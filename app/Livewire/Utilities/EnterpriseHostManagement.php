@@ -6,34 +6,48 @@ namespace App\Livewire\Utilities;
 
 use App\Livewire\Concerns\AuthorizesWctpManagement;
 use App\Models\EnterpriseHost;
-use App\Models\Team;
-use Livewire\Component;
-use Livewire\WithPagination;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
-class EnterpriseHostManagement extends Component
+class EnterpriseHostManagement extends Component implements HasActions, HasSchemas, HasTable
 {
     use AuthorizesWctpManagement;
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     public $showModal = false;
+
     public $editingHost = null;
-    
+
     // Form fields
     public $name = '';
+
     public $senderID = '';
+
     public $securityCode = '';
+
     public $enabled = true;
+
     public $callback_url = '';
+
     public $team_id = null;
+
     public $phoneNumbers = [];
+
     public $newPhoneNumber = '';
-    
-    // Search and filters
-    public $search = '';
-    public $filterEnabled = '';
-    public $filterTeam = '';
-    
+
     protected $rules = [
         'name' => 'required|string|max:255',
         'senderID' => 'required|string|max:255',
@@ -49,40 +63,91 @@ class EnterpriseHostManagement extends Component
         $this->authorizeWctpManagement();
     }
 
+    public function table(Table $table): Table
+    {
+        return $table
+            // Hosts are always scoped to the acting team; the client cannot widen this.
+            ->query(fn (): Builder => EnterpriseHost::query()
+                ->where('team_id', $this->currentTeamId())
+                ->withCount('messages'))
+            ->columns([
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->description(function (EnterpriseHost $record): ?string {
+                        $count = count($record->phone_numbers ?? []);
+
+                        return $count > 0 ? $count.' number'.($count === 1 ? '' : 's') : null;
+                    }),
+
+                TextColumn::make('senderID')
+                    ->label('Sender ID')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->fontFamily('mono'),
+
+                TextColumn::make('messages_count')
+                    ->label('Messages')
+                    ->numeric()
+                    ->sortable(),
+
+                TextColumn::make('last_message_at')
+                    ->label('Last Activity')
+                    ->since()
+                    ->placeholder('Never')
+                    ->color('gray')
+                    ->sortable(),
+
+                TextColumn::make('enabled')
+                    ->label('Status')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Enabled' : 'Disabled')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'danger'),
+            ])
+            ->filters([
+                TernaryFilter::make('enabled')
+                    ->label('Status')
+                    ->placeholder('All')
+                    ->trueLabel('Enabled')
+                    ->falseLabel('Disabled'),
+            ])
+            ->recordActions([
+                Action::make('edit')
+                    ->label('Edit')
+                    ->link()
+                    ->action(fn (EnterpriseHost $record) => $this->editHost($record)),
+
+                Action::make('toggleEnabled')
+                    ->label(fn (EnterpriseHost $record): string => $record->enabled ? 'Disable' : 'Enable')
+                    ->link()
+                    ->action(fn (EnterpriseHost $record) => $this->toggleEnabled($record)),
+
+                Action::make('messages')
+                    ->label('Messages')
+                    ->link()
+                    ->url(fn (EnterpriseHost $record): string => route('utilities.wctp-messages', ['host' => $record->id])),
+
+                Action::make('delete')
+                    ->label('Delete')
+                    ->link()
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete this enterprise host?')
+                    // A host with messages cannot be deleted, only disabled.
+                    ->visible(fn (EnterpriseHost $record): bool => $record->messages_count === 0)
+                    ->action(fn (EnterpriseHost $record) => $this->deleteHost($record)),
+            ])
+            ->defaultSort('name')
+            ->paginated([10, 25, 50])
+            ->emptyStateHeading('No enterprise hosts found.');
+    }
+
     public function render()
     {
         $this->authorizeWctpManagement();
 
-        // Hosts are always scoped to the acting team; the client cannot widen this.
-        $query = EnterpriseHost::query()
-            ->where('team_id', $this->currentTeamId())
-            ->with(['team', 'messages' => function ($q) {
-                $q->latest()->limit(5);
-            }])
-            ->withCount('messages');
-
-        // Apply search
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('senderID', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        // Apply enabled filter
-        if ($this->filterEnabled !== '') {
-            $query->where('enabled', (bool) $this->filterEnabled);
-        }
-
-        $hosts = $query->orderBy('name')->paginate(10);
-
-        // Only the acting team is ever exposed to the management UI.
-        $teams = Team::whereKey($this->currentTeamId())->get();
-
-        return view('livewire.utilities.enterprise-host-management', [
-            'hosts' => $hosts,
-            'teams' => $teams,
-        ]);
+        return view('livewire.utilities.enterprise-host-management');
     }
 
     public function createHost()
@@ -141,11 +206,11 @@ class EnterpriseHostManagement extends Component
             $this->validate([
                 'senderID' => 'unique:enterprise_hosts,senderID',
             ]);
-            
+
             $data['securityCode'] = $this->securityCode;
-            
+
             EnterpriseHost::create($data);
-            
+
             session()->flash('message', 'Enterprise Host created successfully.');
         }
 
@@ -159,11 +224,12 @@ class EnterpriseHostManagement extends Component
 
         if ($host->messages()->exists()) {
             session()->flash('error', 'Cannot delete host with existing messages. Disable it instead.');
+
             return;
         }
 
         $host->delete();
-        
+
         session()->flash('message', 'Enterprise Host deleted successfully.');
     }
 
@@ -171,8 +237,8 @@ class EnterpriseHostManagement extends Component
     {
         $this->authorizeHost($host);
 
-        $host->update(['enabled' => !$host->enabled]);
-        
+        $host->update(['enabled' => ! $host->enabled]);
+
         $status = $host->enabled ? 'enabled' : 'disabled';
         session()->flash('message', "Enterprise Host {$status} successfully.");
     }
@@ -185,27 +251,27 @@ class EnterpriseHostManagement extends Component
     public function addPhoneNumber()
     {
         $this->validate(['newPhoneNumber' => 'required|regex:/^[\+]?[1-9]\d{1,14}$/']);
-        
+
         // Normalize the phone number
         $normalized = preg_replace('/\D+/', '', $this->newPhoneNumber);
-        if (!str_starts_with($normalized, '1') && strlen($normalized) == 10) {
-            $normalized = '1' . $normalized;
+        if (! str_starts_with($normalized, '1') && strlen($normalized) == 10) {
+            $normalized = '1'.$normalized;
         }
-        $formatted = '+' . $normalized;
-        
-        if (!in_array($formatted, $this->phoneNumbers)) {
+        $formatted = '+'.$normalized;
+
+        if (! in_array($formatted, $this->phoneNumbers)) {
             $this->phoneNumbers[] = $formatted;
         }
-        
+
         $this->newPhoneNumber = '';
     }
-    
+
     public function removePhoneNumber($index)
     {
         unset($this->phoneNumbers[$index]);
         $this->phoneNumbers = array_values($this->phoneNumbers);
     }
-    
+
     public function resetForm()
     {
         $this->reset([
@@ -242,20 +308,5 @@ class EnterpriseHostManagement extends Component
         if ((int) $host->team_id !== $this->currentTeamId()) {
             abort(403);
         }
-    }
-
-    public function updatedSearch()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterEnabled()
-    {
-        $this->resetPage();
-    }
-
-    public function updatedFilterTeam()
-    {
-        $this->resetPage();
     }
 }

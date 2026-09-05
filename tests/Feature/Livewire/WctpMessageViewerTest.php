@@ -127,14 +127,8 @@ class WctpMessageViewerTest extends TestCase
         ]);
 
         Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('messages', function ($messages) use ($mine, $theirs) {
-                $ids = $messages->pluck('id')->all();
-
-                return in_array($mine->id, $ids, true)
-                    && ! in_array($theirs->id, $ids, true);
-            })
-            ->assertSee('mine123')
-            ->assertDontSee('theirs456');
+            ->assertCanSeeTableRecords([$mine])
+            ->assertCanNotSeeTableRecords([$theirs]);
     }
 
     public function test_cannot_view_another_teams_message(): void
@@ -164,12 +158,16 @@ class WctpMessageViewerTest extends TestCase
 
     public function test_hosts_filter_is_scoped_to_current_team(): void
     {
-        $this->otherTeamHost();
+        $theirHost = $this->otherTeamHost();
 
-        Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('hosts', function ($hosts) {
-                return $hosts->every(fn ($host) => (int) $host->team_id === $this->team->id);
-            });
+        $options = Livewire::test(WctpMessageViewer::class)
+            ->instance()
+            ->getTable()
+            ->getFilter('enterprise_host_id')
+            ->getOptions();
+
+        $this->assertArrayHasKey($this->host->id, $options);
+        $this->assertArrayNotHasKey($theirHost->id, $options);
     }
 
     // ---------------------------------------------------------------------
@@ -182,22 +180,20 @@ class WctpMessageViewerTest extends TestCase
         $newer = $this->msg(['created_at' => now()]);
 
         Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('messages', function ($messages) use ($newer, $older) {
-                return $messages->first()->id === $newer->id && $messages->last()->id === $older->id;
-            });
+            ->assertCanSeeTableRecords([$newer, $older], inOrder: true);
     }
 
     public function test_host_filter_from_query_string(): void
     {
         $host2 = EnterpriseHost::factory()->create(['team_id' => $this->team->id]);
 
-        $this->msg(['message' => 'Host 1 message', 'wctp_message_id' => 'host1msg']);
-        $this->msg(['enterprise_host_id' => $host2->id, 'message' => 'Host 2 message', 'wctp_message_id' => 'host2msg']);
+        $onHost1 = $this->msg(['message' => 'Host 1 message', 'wctp_message_id' => 'host1msg']);
+        $onHost2 = $this->msg(['enterprise_host_id' => $host2->id, 'message' => 'Host 2 message', 'wctp_message_id' => 'host2msg']);
 
         Livewire::test(WctpMessageViewer::class)
             ->set('host', $this->host->id)
-            ->assertSee('host1msg')
-            ->assertDontSee('host2msg');
+            ->assertCanSeeTableRecords([$onHost1])
+            ->assertCanNotSeeTableRecords([$onHost2]);
     }
 
     public function test_search_functionality(): void
@@ -207,65 +203,59 @@ class WctpMessageViewerTest extends TestCase
             'from' => '+15552345678',
             'wctp_message_id' => 'msg123unique',
         ]);
-        $this->msg([
+        $message2 = $this->msg([
             'to' => '5559876543',
             'from' => '+15553456789',
             'wctp_message_id' => 'msg456different',
         ]);
 
-        $messages = Livewire::test(WctpMessageViewer::class)
-            ->set('search', '5551234567')
-            ->viewData('messages');
-        $this->assertEquals(1, $messages->count());
-        $this->assertEquals($message1->id, $messages->first()->id);
-
-        $messages = Livewire::test(WctpMessageViewer::class)
-            ->set('search', 'msg123unique')
-            ->viewData('messages');
-        $this->assertEquals(1, $messages->count());
-        $this->assertEquals($message1->id, $messages->first()->id);
+        Livewire::test(WctpMessageViewer::class)
+            ->searchTable('5551234567')
+            ->assertCanSeeTableRecords([$message1])
+            ->assertCanNotSeeTableRecords([$message2])
+            ->searchTable('msg123unique')
+            ->assertCanSeeTableRecords([$message1])
+            ->assertCanNotSeeTableRecords([$message2]);
     }
 
     public function test_status_filter(): void
     {
-        $this->msg(['status' => 'pending', 'wctp_message_id' => 'pendingmsg']);
-        $this->msg(['status' => 'delivered', 'wctp_message_id' => 'deliveredmsg']);
+        $pending = $this->msg(['status' => 'pending', 'wctp_message_id' => 'pendingmsg']);
+        $delivered = $this->msg(['status' => 'delivered', 'wctp_message_id' => 'deliveredmsg']);
 
         Livewire::test(WctpMessageViewer::class)
-            ->set('filterStatus', 'pending')
-            ->assertSee('pendingmsg')
-            ->assertDontSee('deliveredmsg')
-            ->set('filterStatus', 'delivered')
-            ->assertSee('deliveredmsg')
-            ->assertDontSee('pendingmsg');
+            ->filterTable('status', 'pending')
+            ->assertCanSeeTableRecords([$pending])
+            ->assertCanNotSeeTableRecords([$delivered])
+            ->filterTable('status', 'delivered')
+            ->assertCanSeeTableRecords([$delivered])
+            ->assertCanNotSeeTableRecords([$pending]);
     }
 
     public function test_direction_filter(): void
     {
-        $this->msg(['direction' => 'outbound', 'wctp_message_id' => 'outboundmsg']);
-        $this->msg(['direction' => 'inbound', 'wctp_message_id' => 'inboundmsg']);
+        $outbound = $this->msg(['direction' => 'outbound', 'wctp_message_id' => 'outboundmsg']);
+        $inbound = $this->msg(['direction' => 'inbound', 'wctp_message_id' => 'inboundmsg']);
 
         Livewire::test(WctpMessageViewer::class)
-            ->set('filterDirection', 'outbound')
-            ->assertSee('outboundmsg')
-            ->assertDontSee('inboundmsg')
-            ->set('filterDirection', 'inbound')
-            ->assertSee('inboundmsg')
-            ->assertDontSee('outboundmsg');
+            ->filterTable('direction', 'outbound')
+            ->assertCanSeeTableRecords([$outbound])
+            ->assertCanNotSeeTableRecords([$inbound])
+            ->filterTable('direction', 'inbound')
+            ->assertCanSeeTableRecords([$inbound])
+            ->assertCanNotSeeTableRecords([$outbound]);
     }
 
     public function test_date_range_filter(): void
     {
-        $this->msg(['created_at' => '2023-01-01 12:00:00', 'wctp_message_id' => 'beforerange']);
-        $this->msg(['created_at' => '2023-03-15 12:00:00', 'wctp_message_id' => 'withinrange']);
-        $this->msg(['created_at' => '2023-06-01 12:00:00', 'wctp_message_id' => 'afterrange']);
+        $before = $this->msg(['created_at' => '2023-01-01 12:00:00', 'wctp_message_id' => 'beforerange']);
+        $within = $this->msg(['created_at' => '2023-03-15 12:00:00', 'wctp_message_id' => 'withinrange']);
+        $after = $this->msg(['created_at' => '2023-06-01 12:00:00', 'wctp_message_id' => 'afterrange']);
 
         Livewire::test(WctpMessageViewer::class)
-            ->set('dateFrom', '2023-03-01')
-            ->set('dateTo', '2023-04-01')
-            ->assertSee('withinrange')
-            ->assertDontSee('beforerange')
-            ->assertDontSee('afterrange');
+            ->filterTable('created_at', ['dateFrom' => '2023-03-01', 'dateTo' => '2023-04-01'])
+            ->assertCanSeeTableRecords([$within])
+            ->assertCanNotSeeTableRecords([$before, $after]);
     }
 
     public function test_view_message_modal(): void
@@ -318,22 +308,23 @@ class WctpMessageViewerTest extends TestCase
     {
         WctpMessage::factory()->count(25)->create(['enterprise_host_id' => $this->host->id]);
 
-        $component = Livewire::test(WctpMessageViewer::class);
-        $this->assertGreaterThan(1, $component->viewData('messages')->lastPage());
-
-        $component->set('search', '555');
-        $this->assertEquals(1, $component->viewData('messages')->currentPage());
+        // Filament owns pagination now; searching from a later page must land back on
+        // page 1 rather than an out-of-range page that would render empty.
+        Livewire::test(WctpMessageViewer::class)
+            ->set('tableRecordsPerPage', 20)
+            ->call('gotoPage', 2)
+            ->assertSet('paginators.page', 2)
+            ->searchTable('555')
+            ->assertSet('paginators.page', 1);
     }
 
     public function test_query_string_properties(): void
     {
         $component = new WctpMessageViewer;
 
+        // Search, status and direction now live in Filament's own query string; only
+        // the host pin is still owned by the component.
         $expectedQueryString = [
-            'search' => ['except' => ''],
-            'filterStatus' => ['except' => ''],
-            'filterDirection' => ['except' => ''],
-            'filterCarrier' => ['except' => ''],
             'host' => ['except' => null],
         ];
 
@@ -349,12 +340,10 @@ class WctpMessageViewerTest extends TestCase
         $this->host->forceFill(['name' => 'Test Host'])->save();
         $this->msg();
 
+        // The Host column reads through the relationship, so seeing the host name
+        // rendered proves it was loaded.
         Livewire::test(WctpMessageViewer::class)
-            ->assertViewHas('messages', function ($messages) {
-                $message = $messages->first();
-
-                return $message->enterpriseHost !== null
-                    && $message->enterpriseHost->name === 'Test Host';
-            });
+            ->assertCanRenderTableColumn('enterpriseHost.name')
+            ->assertSee('Test Host');
     }
 }

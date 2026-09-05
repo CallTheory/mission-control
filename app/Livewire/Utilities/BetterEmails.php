@@ -3,13 +3,24 @@
 namespace App\Livewire\Utilities;
 
 use App\Models\BetterEmails as BetterEmailsModel;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class BetterEmails extends Component
+class BetterEmails extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     public int $editingRecord = 0;
 
@@ -87,10 +98,56 @@ class BetterEmails extends Component
         $this->dispatch('saved');
     }
 
+    public function table(Table $table): Table
+    {
+        // better_emails has no team_id column -- these configurations are system-wide
+        // by schema. Access is gated upstream by the team's utility_better_emails flag.
+        return $table
+            ->query(fn (): Builder => BetterEmailsModel::query())
+            ->columns([
+                TextColumn::make('client_number')
+                    ->label('Client Number')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('subject')
+                    ->label('Email Subject')
+                    ->searchable()
+                    ->wrap(),
+
+                TextColumn::make('recipients')
+                    ->label('Recipients')
+                    ->badge()
+                    ->state(fn (BetterEmailsModel $record): array => (array) json_decode($record->recipients, true)),
+
+                TextColumn::make('drop_location')
+                    ->label('Drop Location')
+                    ->color('gray')
+                    ->fontFamily('mono')
+                    ->state(fn (BetterEmailsModel $record): string => config('app.unc_path')
+                        .'\\better-emails\\'.$record->client_number.'\\'.$record->id),
+            ])
+            ->recordActions([
+                Action::make('edit')
+                    ->label('Edit')
+                    ->link()
+                    ->action(fn (BetterEmailsModel $record) => $this->editBetterEmail($record)),
+
+                Action::make('delete')
+                    ->label('Delete')
+                    ->link()
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete this email configuration?')
+                    ->action(fn (BetterEmailsModel $record) => $this->deleteBetterEmail($record)),
+            ])
+            ->defaultSort('client_number')
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('No email configurations found.');
+    }
+
     public function render(): View
     {
-        $logs = BetterEmailsModel::paginate(25);
-
-        return view('livewire.utilities.better-emails', ['logs' => $logs]);
+        return view('livewire.utilities.better-emails');
     }
 }

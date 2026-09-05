@@ -5,28 +5,119 @@ declare(strict_types=1);
 namespace App\Livewire\Utilities;
 
 use App\Jobs\SendVoicemailDigest;
+use App\Models\VoicemailDigest;
 use App\Models\VoicemailDigestLog;
 use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class VoicemailDigestHistory extends Component
+class VoicemailDigestHistory extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
-    public string $filterStatus = '';
+    /** @var array<string, string> */
+    private const STATUSES = [
+        'queued' => 'Queued',
+        'sent' => 'Sent',
+        'failed' => 'Failed',
+        'no_recordings' => 'No Recordings',
+    ];
 
-    public int $filterSchedule = 0;
+    /** @var array<string, string> */
+    private const STATUS_COLORS = [
+        'queued' => 'warning',
+        'sent' => 'success',
+        'failed' => 'danger',
+        'no_recordings' => 'gray',
+    ];
 
-    public function updatingFilterStatus(): void
+    public function table(Table $table): Table
     {
-        $this->resetPage();
-    }
+        return $table
+            ->query(fn (): Builder => VoicemailDigestLog::forTeam(request()->user()->currentTeam->id)
+                ->with('voicemailDigest'))
+            ->columns([
+                TextColumn::make('voicemailDigest.name')
+                    ->label('Schedule')
+                    ->default('—')
+                    ->searchable()
+                    ->sortable(),
 
-    public function updatingFilterSchedule(): void
-    {
-        $this->resetPage();
+                TextColumn::make('date_range')
+                    ->label('Date Range')
+                    ->color('gray')
+                    ->state(fn (VoicemailDigestLog $record): string => Carbon::parse($record->start_date)->format('M j, Y g:ia')
+                        .' — '.Carbon::parse($record->end_date)->format('M j, Y g:ia')),
+
+                TextColumn::make('recipients')
+                    ->label('Recipients')
+                    ->color('gray')
+                    ->state(function (VoicemailDigestLog $record): string {
+                        $count = count($record->recipients ?? []);
+
+                        return $count.' recipient'.($count === 1 ? '' : 's');
+                    })
+                    ->tooltip(fn (VoicemailDigestLog $record): string => implode(', ', $record->recipients ?? [])),
+
+                TextColumn::make('recording_count')
+                    ->label('Recordings')
+                    ->color('gray')
+                    ->sortable(),
+
+                TextColumn::make('status')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => self::STATUSES[$state] ?? $state)
+                    ->color(fn (string $state): string => self::STATUS_COLORS[$state] ?? 'gray')
+                    ->tooltip(fn (VoicemailDigestLog $record): ?string => $record->error_message)
+                    ->sortable(),
+
+                TextColumn::make('sent_at')
+                    ->label('Sent At')
+                    ->dateTime('M j, Y g:ia')
+                    ->placeholder('—')
+                    ->color('gray')
+                    ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->options(self::STATUSES)
+                    ->placeholder('All Statuses'),
+
+                SelectFilter::make('voicemail_digest_id')
+                    ->label('Schedule')
+                    ->placeholder('All Schedules')
+                    ->options(fn (): array => VoicemailDigest::where('team_id', request()->user()->currentTeam->id)
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all()),
+            ])
+            ->recordActions([
+                Action::make('resend')
+                    ->label('Resend')
+                    ->link()
+                    ->requiresConfirmation()
+                    ->modalHeading('Resend this digest?')
+                    // A log outlives its schedule, and resending needs the schedule's
+                    // timezone and recipients, so hide the action once it is gone.
+                    ->visible(fn (VoicemailDigestLog $record): bool => $record->voicemailDigest !== null)
+                    ->action(fn (VoicemailDigestLog $record) => $this->resend($record)),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('No digest history found.');
     }
 
     public function resend(VoicemailDigestLog $log): void
@@ -39,39 +130,17 @@ class VoicemailDigestHistory extends Component
             return;
         }
 
-        $startDate = Carbon::parse($log->start_date, $digest->timezone);
-        $endDate = Carbon::parse($log->end_date, $digest->timezone);
-
-        SendVoicemailDigest::dispatch($digest, $startDate, $endDate);
+        SendVoicemailDigest::dispatch(
+            $digest,
+            Carbon::parse($log->start_date, $digest->timezone),
+            Carbon::parse($log->end_date, $digest->timezone),
+        );
 
         session()->flash('message', 'Voicemail digest has been queued for resend.');
     }
 
     public function render(): View
     {
-        $team = request()->user()->currentTeam;
-
-        $query = VoicemailDigestLog::forTeam($team->id)
-            ->with('voicemailDigest')
-            ->orderBy('created_at', 'desc');
-
-        if ($this->filterStatus !== '') {
-            $query->where('status', $this->filterStatus);
-        }
-
-        if ($this->filterSchedule > 0) {
-            $query->where('voicemail_digest_id', $this->filterSchedule);
-        }
-
-        $logs = $query->paginate(25);
-
-        $schedules = \App\Models\VoicemailDigest::where('team_id', $team->id)
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        return view('livewire.utilities.voicemail-digest-history', [
-            'logs' => $logs,
-            'schedules' => $schedules,
-        ]);
+        return view('livewire.utilities.voicemail-digest-history');
     }
 }
