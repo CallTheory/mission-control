@@ -13,6 +13,7 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -99,7 +100,7 @@ class Ringcentral extends Component implements HasActions, HasSchemas
      * Extends the shared save with the first-configuration behaviour: enabling the
      * provider automatically the first time a client ID is supplied.
      */
-    protected function persistSettings(array $data): DataSource
+    protected function persistSettings(array $data): Model
     {
         $wasConfigured = DataSource::firstOrNew()->ringcentral_client_id !== null;
 

@@ -1,4 +1,4 @@
-<x-form-section submit="saveFaxNotificationSettings" >
+<x-form-section submit="save">
     <x-slot name="title">
         {{ __('Fax Notification Settings') }}
     </x-slot>
@@ -8,30 +8,13 @@
     </x-slot>
 
     <x-slot name="form">
-
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="fax_failure_notification_email" value="{{ __('Fax Failure Notification Email') }}" />
-            <x-input id="fax_failure_notification_email" type="text" class="mt-1 block w-full " wire:model.live="state.fax_failure_notification_email" />
-            <small class="text-xs text-muted">
-                Email address for fax submission failures. For normal fax failures, please use the built-in notifications in your mFax or RingCentral portal.
-            </small>
-            <x-input-error for="state.fax_failure_notification_email" class="mt-2" />
-        </div>`
-
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="fax_buildup_notification_email" value="{{ __('Fax Failure Buildup Email') }}" />
-            <x-input id="fax_buildup_notification_email" type="text" class="mt-1 block w-full " wire:model.live="state.fax_buildup_notification_email" />
-            <small class="text-xs text-muted">
-                Email address to send notifications when the fax processing folders have files older than 15 minutes. This indicates that ISFax or one of the mFax/RingCentral integrations is not processing files.
-            </small>
-            <x-input-error for="state.fax_buildup_notification_email" class="mt-2" />
+        <div class="col-span-6">
+            {{ $this->form }}
         </div>
-
-
     </x-slot>
 
     <x-slot name="actions">
-        <x-action-message class="mr-3 " on="saved">
+        <x-action-message class="mr-3" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
 

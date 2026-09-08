@@ -1,40 +1,52 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Livewire\System;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
-use App\Models\DataSource;
+use App\Livewire\Concerns\EditsDataSourceSettings;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class FaxNotificationSettings extends Component
+class FaxNotificationSettings extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use EditsDataSourceSettings;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
         return Capability::SystemAccess;
     }
 
-    public array $state;
-
-    public DataSource $datasource;
-
-    public function saveFaxNotificationSettings(): void
+    protected function settingsFields(): array
     {
-        $this->datasource->fax_buildup_notification_email = $this->state['fax_buildup_notification_email'];
-        $this->datasource->fax_failure_notification_email = $this->state['fax_failure_notification_email'];
-        $this->datasource->save();
-        $this->dispatch('saved');
+        return ['fax_buildup_notification_email', 'fax_failure_notification_email'];
     }
 
-    public function mount(): void
+    protected function settingsSchema(): array
     {
-        $this->datasource = DataSource::firstOrFail();
+        return [
+            TextInput::make('fax_buildup_notification_email')
+                ->label('Queue Buildup Notification')
+                ->email()
+                ->helperText('Notified when the outbound fax queue backs up.')
+                ->validationAttribute('queue buildup notification address'),
 
-        $this->state['fax_buildup_notification_email'] = $this->datasource->fax_buildup_notification_email ?? null;
-        $this->state['fax_failure_notification_email'] = $this->datasource->fax_failure_notification_email ?? null;
+            TextInput::make('fax_failure_notification_email')
+                ->label('Failure Notification')
+                ->email()
+                ->helperText('Notified when a fax fails to send.')
+                ->validationAttribute('failure notification address'),
+        ];
     }
 
     public function render(): View

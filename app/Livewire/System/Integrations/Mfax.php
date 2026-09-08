@@ -15,6 +15,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -110,7 +111,7 @@ class Mfax extends Component implements HasActions, HasSchemas
      * provider automatically the first time an API key is supplied, so a fresh setup
      * is not silently switched off. Re-editing an existing key leaves the toggle alone.
      */
-    protected function persistSettings(array $data): DataSource
+    protected function persistSettings(array $data): Model
     {
         $wasConfigured = DataSource::firstOrNew()->mfax_api_key !== null;
 

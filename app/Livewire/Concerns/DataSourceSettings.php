@@ -5,19 +5,33 @@ declare(strict_types=1);
 namespace App\Livewire\Concerns;
 
 use App\Models\DataSource;
+use Illuminate\Database\Eloquent\Model;
 
 /**
- * Reading and writing the single application `DataSource` row.
+ * Reading and writing a single-row settings record.
  *
- * Shared by the two shapes the System settings screens take: the integration tiles,
- * which open a dialog ({@see ConfiguresDataSource}), and the data source panels,
- * which are inline forms ({@see EditsDataSourceSettings}).
+ * Mission Control keeps two of these -- the `DataSource` row holding third-party
+ * credentials, and the `Settings` row holding switch and feature configuration -- and
+ * every settings screen is some arrangement of "load the row, show a few fields, write
+ * them back". This holds that part, so the shapes on top only describe presentation:
+ * the integration tiles open a dialog ({@see ConfiguresDataSource}), the data source
+ * and system panels are inline forms ({@see EditsDataSourceSettings},
+ * {@see EditsSystemSettings}).
  *
- * Encrypted columns are handled transparently by the model's casts, so everything
- * here works in plaintext; see the EncryptedSerialized cast on DataSource.
+ * Encrypted columns are handled transparently by the model's casts, so everything here
+ * works in plaintext; see the EncryptedSerialized cast on DataSource.
  */
 trait DataSourceSettings
 {
+    /**
+     * The single row this screen edits. Defaults to the DataSource row, which is what
+     * most of these screens want.
+     */
+    protected function settingsRecord(): Model
+    {
+        return DataSource::firstOrNew();
+    }
+
     /**
      * The DataSource columns this component owns.
      *
@@ -47,7 +61,7 @@ trait DataSourceSettings
      */
     protected function currentSettings(): array
     {
-        $datasource = DataSource::firstOrNew();
+        $datasource = $this->settingsRecord();
         $preserved = $this->preservedFields();
 
         $state = [];
@@ -64,7 +78,7 @@ trait DataSourceSettings
     /**
      * @param  array<string, mixed>  $data
      */
-    protected function persistSettings(array $data): DataSource
+    protected function persistSettings(array $data): Model
     {
         return $this->persistDataSourceSettings($data);
     }
@@ -76,9 +90,9 @@ trait DataSourceSettings
      *
      * @param  array<string, mixed>  $data
      */
-    final protected function persistDataSourceSettings(array $data): DataSource
+    final protected function persistDataSourceSettings(array $data): Model
     {
-        $datasource = DataSource::firstOrNew();
+        $datasource = $this->settingsRecord();
         $preserved = $this->preservedFields();
 
         foreach ($this->settingsFields() as $field) {

@@ -1,4 +1,4 @@
-<x-form-section submit="saveSwitchTimezone">
+<x-form-section submit="save">
     <x-slot name="title">
         {{ __('Switch Data Timezone') }}
     </x-slot>
@@ -8,21 +8,13 @@
     </x-slot>
 
     <x-slot name="form">
-
-        <div class="col-span-6 sm:col-span-4">
-            <x-label for="timezone" value="{{ __('Select a timezone:') }}" />
-            <x-input id="timezone" type="text" list="timezones" class="mt-1 block w-full " wire:model="state.timezone" />
-            <datalist id="timezones">
-                @include('timezones')
-            </datalist>
-            <x-input-error for="state.timezone" class="mt-2" />
+        <div class="col-span-6">
+            {{ $this->form }}
         </div>
-
-
     </x-slot>
 
     <x-slot name="actions">
-        <x-action-message class="mr-3 " on="saved">
+        <x-action-message class="mr-3" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
 
