@@ -159,6 +159,37 @@ class DesignSystemTest extends TestCase
     }
 
     #[Test]
+    public function every_image_in_a_view_has_a_source_that_exists(): void
+    {
+        // Three integration tiles shipped with src="" after a scripted rewrite lost a
+        // Blade variable. An empty src renders as a broken image rather than an error,
+        // so nothing complains.
+        $offenders = [];
+
+        foreach ($this->bladeFiles() as $file) {
+            $contents = file_get_contents($file->getPathname());
+            $relative = str_replace(resource_path('views').DIRECTORY_SEPARATOR, '', $file->getPathname());
+
+            if (str_contains($contents, 'src=""')) {
+                $offenders[$relative][] = 'empty src';
+            }
+
+            preg_match_all('/src="(\/images\/[^"]+)"/', $contents, $matches);
+
+            foreach ($matches[1] as $path) {
+                if (! file_exists(public_path(ltrim($path, '/')))) {
+                    $offenders[$relative][] = "missing asset: {$path}";
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, $this->explain(
+            'A view references an image that is empty or not present in public/.',
+            $offenders
+        ));
+    }
+
+    #[Test]
     public function every_layout_renders_the_filament_runtime(): void
     {
         // Notification::make()->send() renders nothing without @livewire('notifications'),
