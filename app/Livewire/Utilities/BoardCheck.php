@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesBoardComponent;
+use App\Livewire\Concerns\ReviewsBoardCheckItems;
 use App\Models\BoardCheckItem;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\Stats\BoardCheck\Fill as Recent;
 use App\Models\System\Settings;
 use Exception;
-use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -25,9 +27,17 @@ use Livewire\Component;
 
 class BoardCheck extends Component implements HasActions, HasSchemas, HasTable
 {
+    use AuthorizesBoardComponent;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::UtilityBoardCheck;
+    }
+
     use InteractsWithActions;
     use InteractsWithSchemas;
     use InteractsWithTable;
+    use ReviewsBoardCheckItems;
 
     protected $listeners = ['boardCheckItemUpdated' => 'getRecent'];
 
@@ -77,6 +87,26 @@ class BoardCheck extends Component implements HasActions, HasSchemas, HasTable
         $this->currentUrl = url()->current();
     }
 
+    protected function acceptOutcome(): array
+    {
+        return ['label' => 'Confirm Message', 'activity' => 'Dispatcher Approved'];
+    }
+
+    protected function escalateOutcome(): array
+    {
+        return ['label' => 'Escalate to Supervisor', 'activity' => 'Dispatcher Flagged'];
+    }
+
+    protected function acceptColumns(): array
+    {
+        return ['marked_ok', 'approved'];
+    }
+
+    protected function escalateColumns(): array
+    {
+        return ['problem_found'];
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -95,14 +125,7 @@ class BoardCheck extends Component implements HasActions, HasSchemas, HasTable
                     ->state('Needs Reviewed'),
             ])
             ->recordActions([
-                Action::make('review')
-                    ->label('Review Message')
-                    ->icon('heroicon-m-magnifying-glass-circle')
-                    ->link()
-                    ->action(fn (BoardCheckItem $record) => $this->dispatch('openModal', component: 'utilities.board-dispatcher-review-message', arguments: [
-                        'msgId' => $record->msgId,
-                        'isCallID' => $record->callId,
-                    ])),
+                $this->reviewAction(),
             ])
             ->defaultSort('msgId')
             ->paginated([25, 50, 100])

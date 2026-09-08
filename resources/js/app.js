@@ -1,5 +1,4 @@
 import './bootstrap';
-import '../../vendor/wire-elements/modal/resources/js/modal';
 
 document.addEventListener("DOMContentLoaded", setupScreenWidthButton);
 function setupScreenWidthButton(){

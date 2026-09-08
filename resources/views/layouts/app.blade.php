@@ -55,7 +55,6 @@
 
         @stack('modals')
 
-        @livewire('wire-elements-modal')
 
         @filamentScripts
     </body>

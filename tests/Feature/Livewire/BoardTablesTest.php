@@ -6,20 +6,14 @@ namespace Tests\Feature\Livewire;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesBoardComponent;
-use App\Livewire\Utilities\BoardApproveMessage;
+use App\Livewire\Utilities\BoardActivity;
 use App\Livewire\Utilities\BoardCheck;
-use App\Livewire\Utilities\BoardConfirmProblem;
-use App\Livewire\Utilities\BoardDispatcherReviewMessage;
-use App\Livewire\Utilities\BoardFlagIssue;
-use App\Livewire\Utilities\BoardMessageOk;
 use App\Livewire\Utilities\BoardReport;
 use App\Livewire\Utilities\BoardReview;
-use App\Livewire\Utilities\BoardSupervisorReviewMessage;
 use App\Models\BoardCheckItem;
 use App\Models\Team;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use LivewireUI\Modal\ModalComponent;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 use Tests\Traits\CreatesTeamUsers;
@@ -108,60 +102,51 @@ class BoardTablesTest extends TestCase
     }
 
     // ------------------------------------------------------------------
-    // The board modals write board check items, so they must gate themselves:
-    // Livewire does not re-apply the page controller's authorize() on
-    // POST /livewire/update, and four of them are linked from no page at all.
+    // The review dialog is now a Filament action on the listing, so the listing
+    // is what has to gate it. Livewire does not re-apply the page controller's
+    // authorize() on POST /livewire/update, and these listings previously had no
+    // component-level guard at all.
     // ------------------------------------------------------------------
 
     /**
      * @return array<string, array{class-string, Capability}>
      */
-    public static function boardModals(): array
+    public static function boardListings(): array
     {
         return [
-            'approve (dispatcher)' => [BoardApproveMessage::class, Capability::UtilityBoardCheck],
-            'flag issue (dispatcher)' => [BoardFlagIssue::class, Capability::UtilityBoardCheck],
-            'dispatcher review' => [BoardDispatcherReviewMessage::class, Capability::UtilityBoardCheck],
-            'confirm problem (supervisor)' => [BoardConfirmProblem::class, Capability::BoardReview],
-            'message ok (supervisor)' => [BoardMessageOk::class, Capability::BoardReview],
-            'supervisor review' => [BoardSupervisorReviewMessage::class, Capability::BoardReview],
+            'board check' => [BoardCheck::class, Capability::UtilityBoardCheck],
+            'board review' => [BoardReview::class, Capability::BoardReview],
+            'board report' => [BoardReport::class, Capability::BoardReport],
+            'board activity' => [BoardActivity::class, Capability::BoardActivity],
         ];
     }
 
-    #[DataProvider('boardModals')]
-    public function test_board_modals_deny_a_user_without_the_capability(string $component, Capability $capability): void
+    #[DataProvider('boardListings')]
+    public function test_board_listings_deny_a_user_without_the_capability(string $component, Capability $capability): void
     {
-        $item = $this->item();
         $denied = $this->createUserWithout($this->team, 'admin', $capability);
 
         Livewire::actingAs($denied)
-            ->test($component, ['msgId' => $item->msgId])
+            ->test($component)
             ->assertForbidden();
     }
 
-    #[DataProvider('boardModals')]
-    public function test_board_modals_allow_a_user_holding_the_capability(string $component, Capability $capability): void
+    #[DataProvider('boardListings')]
+    public function test_board_listings_allow_a_user_holding_the_capability(string $component, Capability $capability): void
     {
-        $item = $this->item();
-        $allowed = $this->createUserWithRole($this->team, 'admin');
-
-        Livewire::actingAs($allowed)
-            ->test($component, ['msgId' => $item->msgId])
+        Livewire::actingAs($this->createUserWithRole($this->team, 'admin'))
+            ->test($component)
             ->assertOk();
     }
 
-    /**
-     * The regression guard that matters: a board modal added later without a
-     * capability declaration fails here rather than shipping as an open write.
-     */
-    public function test_every_board_modal_declares_a_capability(): void
+    public function test_every_board_listing_declares_a_capability(): void
     {
         $missing = [];
 
         foreach (glob(app_path('Livewire/Utilities/Board*.php')) as $path) {
             $class = 'App\\Livewire\\Utilities\\'.basename($path, '.php');
 
-            if (! class_exists($class) || ! is_subclass_of($class, ModalComponent::class)) {
+            if (! class_exists($class)) {
                 continue;
             }
 
@@ -170,6 +155,56 @@ class BoardTablesTest extends TestCase
             }
         }
 
-        $this->assertSame([], $missing, 'Board modals missing AuthorizesBoardComponent: '.implode(', ', $missing));
+        $this->assertSame([], $missing, 'Board components missing AuthorizesBoardComponent: '.implode(', ', $missing));
+    }
+
+    // ------------------------------------------------------------------
+    // The review action itself.
+    // ------------------------------------------------------------------
+
+    public function test_confirming_a_message_approves_it(): void
+    {
+        $item = $this->item();
+
+        Livewire::actingAs($this->createUserWithRole($this->team, 'admin'))
+            ->test(BoardCheck::class)
+            ->callTableAction('review', $item);
+
+        $item->refresh();
+
+        $this->assertNotNull($item->approved_at);
+        $this->assertNotNull($item->marked_ok_at);
+        $this->assertNull($item->problem_found_at);
+    }
+
+    public function test_a_denied_user_cannot_confirm_a_message(): void
+    {
+        $item = $this->item();
+        $denied = $this->createUserWithout($this->team, 'admin', Capability::UtilityBoardCheck);
+
+        try {
+            Livewire::actingAs($denied)
+                ->test(BoardCheck::class)
+                ->callTableAction('review', $item);
+        } catch (\Throwable) {
+            // Livewire renders the authorization failure; the property under test is
+            // that nothing was written.
+        }
+
+        $this->assertNull($item->refresh()->approved_at);
+    }
+
+    public function test_the_review_action_records_the_outcome_in_the_activity_log(): void
+    {
+        $item = $this->item();
+
+        Livewire::actingAs($this->createUserWithRole($this->team, 'admin'))
+            ->test(BoardCheck::class)
+            ->callTableAction('review', $item);
+
+        $this->assertDatabaseHas('activities', [
+            'msgId' => $item->msgId,
+            'activity_type' => 'Dispatcher Approved',
+        ]);
     }
 }

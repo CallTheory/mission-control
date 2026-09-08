@@ -101,8 +101,8 @@ class CallLookup extends Component
 
         $this->validate([
             'isCallID' => 'required|numeric|between:1,10000000000',
-        ], [
-            'isCallID' => $this->isCallID ?? null,
+        ], [], [
+            'isCallID' => 'call ID',
         ]);
 
         $this->dispatch('searchTermUpdate', $this->isCallID)->to(Search::class);

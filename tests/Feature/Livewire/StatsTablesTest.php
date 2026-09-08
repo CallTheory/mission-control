@@ -17,6 +17,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
+use Tests\Traits\CreatesTeamUsers;
 
 /**
  * The Analytics screens read the Amtelco SQL Server through App\Models\Stats\*, which
@@ -27,11 +28,21 @@ use Tests\TestCase;
  */
 class StatsTablesTest extends TestCase
 {
+    use CreatesTeamUsers;
     use RefreshDatabase;
 
     private function actor(): User
     {
         return User::factory()->create();
+    }
+
+    /**
+     * BoardActivity is gated by the board.activity capability, so its tests need a
+     * user who actually holds it rather than a bare factory user.
+     */
+    private function boardActor(): User
+    {
+        return $this->createUserWithRole($this->createSeededTeam(), 'admin');
     }
 
     /** A user on a real (non-personal) team, which the account-scoped screens require. */
@@ -105,7 +116,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_lists_records_newest_first(): void
     {
-        $user = $this->actor();
+        $user = $this->boardActor();
 
         $older = Activity::create([
             'user_id' => $user->id, 'msgId' => 1001,
@@ -125,7 +136,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_resolves_the_user_through_the_relationship(): void
     {
-        $user = $this->actor();
+        $user = $this->boardActor();
         $user->forceFill(['name' => 'Dana Whitfield'])->save();
 
         Activity::create([
@@ -139,7 +150,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_falls_back_when_the_user_is_gone(): void
     {
-        $actor = $this->actor();
+        $actor = $this->boardActor();
 
         Activity::create([
             'user_id' => 999_999, 'msgId' => 1001, 'activity_type' => 'reviewed',
@@ -152,7 +163,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_can_be_pinned_to_a_message_id_on_mount(): void
     {
-        $user = $this->actor();
+        $user = $this->boardActor();
 
         $wanted = Activity::create(['user_id' => $user->id, 'msgId' => 1001, 'activity_type' => 'reviewed']);
         $other = Activity::create(['user_id' => $user->id, 'msgId' => 2002, 'activity_type' => 'approved']);
@@ -165,7 +176,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_filters_by_user(): void
     {
-        $actor = $this->actor();
+        $actor = $this->boardActor();
         $other = User::factory()->create();
 
         $mine = Activity::create(['user_id' => $actor->id, 'msgId' => 1001, 'activity_type' => 'reviewed']);
@@ -180,7 +191,7 @@ class StatsTablesTest extends TestCase
 
     public function test_board_activity_searches_by_activity_type(): void
     {
-        $user = $this->actor();
+        $user = $this->boardActor();
 
         $reviewed = Activity::create(['user_id' => $user->id, 'msgId' => 1001, 'activity_type' => 'reviewed']);
         $approved = Activity::create(['user_id' => $user->id, 'msgId' => 2002, 'activity_type' => 'approved']);

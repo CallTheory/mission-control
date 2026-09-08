@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
+use App\Enums\Capability;
+use App\Livewire\Concerns\AuthorizesBoardComponent;
 use App\Models\Stats\BoardCheck\Activity as BoardCheckActivity;
 use App\Models\User;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -22,9 +24,15 @@ use Livewire\Component;
 
 class BoardActivity extends Component implements HasActions, HasSchemas, HasTable
 {
+    use AuthorizesBoardComponent;
     use InteractsWithActions;
     use InteractsWithSchemas;
     use InteractsWithTable;
+
+    protected function requiredCapability(): Capability
+    {
+        return Capability::BoardActivity;
+    }
 
     public string|int $msgId;
 
