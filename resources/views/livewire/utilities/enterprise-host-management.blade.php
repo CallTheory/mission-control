@@ -1,6 +1,4 @@
 <div>
-    <x-flash />
-
     <x-page-header title="Enterprise Host Management">
         <x-slot name="actions">
             <x-button wire:click="createHost">

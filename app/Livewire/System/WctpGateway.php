@@ -8,6 +8,7 @@ use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\DataSource;
 use App\Models\EnterpriseHost;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -118,7 +119,10 @@ class WctpGateway extends Component
         ];
 
         $this->loadEnterpriseHosts();
-        session()->flash('message', 'Enterprise Host added successfully. Configure phone numbers in the Enterprise Host Management page.');
+        Notification::make()
+            ->title('Enterprise Host added successfully. Configure phone numbers in the Enterprise Host Management page.')
+            ->success()
+            ->send();
     }
 
     public function toggleEnterpriseHost(int $hostId): void
@@ -128,7 +132,10 @@ class WctpGateway extends Component
         if ($host) {
             $host->update(['enabled' => ! $host->enabled]);
             $this->loadEnterpriseHosts();
-            session()->flash('message', 'Enterprise Host '.($host->enabled ? 'enabled' : 'disabled'));
+            Notification::make()
+                ->title('Enterprise Host '.($host->enabled ? 'enabled' : 'disabled'))
+                ->success()
+                ->send();
         }
     }
 
@@ -139,7 +146,10 @@ class WctpGateway extends Component
         if ($host) {
             // Check if host has messages
             if ($host->messages()->exists()) {
-                session()->flash('error', 'Cannot delete host with existing messages. Disable it instead.');
+                Notification::make()
+                    ->title('Cannot delete host with existing messages. Disable it instead.')
+                    ->danger()
+                    ->send();
 
                 return;
             }
@@ -148,7 +158,10 @@ class WctpGateway extends Component
             $host->delete();
 
             $this->loadEnterpriseHosts();
-            session()->flash('message', "Enterprise Host '{$hostName}' removed");
+            Notification::make()
+                ->title("Enterprise Host '{$hostName}' removed")
+                ->success()
+                ->send();
         }
     }
 
@@ -178,7 +191,10 @@ class WctpGateway extends Component
             $host->update(['phone_numbers' => array_unique($numbers) ?: []]);
             $this->loadEnterpriseHosts();
 
-            session()->flash('message', "Phone numbers updated for {$host->name}");
+            Notification::make()
+                ->title("Phone numbers updated for {$host->name}")
+                ->success()
+                ->send();
         }
     }
 

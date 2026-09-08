@@ -48,7 +48,8 @@ class UiComponentsTest extends TestCase
     /*
      * The x-table set, x-status-badge, x-filter-select, x-search-input and x-card were
      * removed once every listing became a Filament table; their behaviour is covered by
-     * the table tests on the components themselves.
+     * the table tests on the components themselves. x-flash went with them once every
+     * message became a Filament notification.
      */
 
     public function test_badge_renders_with_its_semantic_colour(): void
@@ -59,17 +60,6 @@ class UiComponentsTest extends TestCase
 
         $danger = $this->render('<x-badge color="red">Failed</x-badge>');
         $this->assertStringContainsString('bg-danger-soft', $danger);
-    }
-
-    public function test_flash_renders_session_messages(): void
-    {
-        session()->flash('message', 'Saved OK');
-        session()->flash('error', 'Bad thing');
-
-        $html = $this->render('<x-flash />');
-
-        $this->assertStringContainsString('Saved OK', $html);
-        $this->assertStringContainsString('Bad thing', $html);
     }
 
     public function test_toggle_and_page_header(): void

@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -194,7 +195,10 @@ class WctpMessageViewer extends Component implements HasActions, HasSchemas, Has
             $message->update(['status' => 'pending', 'failed_at' => null]);
             ProcessWctpMessage::dispatch($message);
 
-            session()->flash('message', 'Message queued for retry.');
+            Notification::make()
+                ->title('Message queued for retry.')
+                ->success()
+                ->send();
         }
     }
 

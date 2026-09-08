@@ -198,7 +198,7 @@ final class VoicemailDigestHistoryTest extends TestCase
         Livewire::actingAs($this->user)
             ->test(VoicemailDigestHistory::class)
             ->call('resend', $log->id)
-            ->assertSee('Voicemail digest has been queued for resend.');
+            ->assertNotified('Voicemail digest has been queued for resend.');
     }
 
     public function test_model_mark_as_sent(): void

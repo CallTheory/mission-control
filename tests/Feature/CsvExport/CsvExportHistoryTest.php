@@ -178,7 +178,9 @@ final class CsvExportHistoryTest extends TestCase
         Livewire::actingAs($this->user)
             ->test(CsvExportHistory::class)
             ->call('reexport', $log->id)
-            ->assertSee('Export log not found.');
+            // The rejection is surfaced as a Filament notification now, not a flash
+            // rendered into the component's own markup.
+            ->assertNotified('Export log not found.');
     }
 
     public function test_model_mark_as_completed(): void

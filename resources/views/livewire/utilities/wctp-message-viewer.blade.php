@@ -1,6 +1,4 @@
 <div>
-    <x-flash />
-
     {{-- Header --}}
     <div class="mb-6">
         <h2 class="text-2xl font-semibold text-surface-fg">WCTP Message Log</h2>

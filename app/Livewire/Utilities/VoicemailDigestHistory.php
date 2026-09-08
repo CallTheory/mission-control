@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -125,7 +126,10 @@ class VoicemailDigestHistory extends Component implements HasActions, HasSchemas
         $digest = $log->voicemailDigest;
 
         if (! $digest) {
-            session()->flash('error', 'The parent schedule no longer exists.');
+            Notification::make()
+                ->title('The parent schedule no longer exists.')
+                ->danger()
+                ->send();
 
             return;
         }
@@ -136,7 +140,10 @@ class VoicemailDigestHistory extends Component implements HasActions, HasSchemas
             Carbon::parse($log->end_date, $digest->timezone),
         );
 
-        session()->flash('message', 'Voicemail digest has been queued for resend.');
+        Notification::make()
+            ->title('Voicemail digest has been queued for resend.')
+            ->success()
+            ->send();
     }
 
     public function render(): View

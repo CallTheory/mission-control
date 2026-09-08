@@ -1,11 +1,5 @@
 <div class="w-full">
 
-    @if (session()->has('message'))
-        <div class="bg-success-soft border border-success text-success-soft-fg px-4 py-3 rounded relative mb-4" role="alert">
-            <span class="block sm:inline">{{ session('message') }}</span>
-        </div>
-    @endif
-
     <div class="block bg-surface rounded border border-border shadow space-y-2 w-full my-4 py-4">
         <div class="px-4">
             <div class="sm:flex sm:items-center">

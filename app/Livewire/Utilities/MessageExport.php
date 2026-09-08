@@ -11,6 +11,7 @@ use App\Models\Stats\Messages\AccountFieldDiscovery;
 use Carbon\Carbon;
 use DateTimeZone;
 use Exception;
+use Filament\Notifications\Notification;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -305,7 +306,10 @@ class MessageExport extends Component
         $this->runNowExportId = 0;
         $this->runNowState = [];
 
-        session()->flash('message', 'Message export job has been queued. Check the Export History tab for results.');
+        Notification::make()
+            ->title('Message export job has been queued. Check the Export History tab for results.')
+            ->success()
+            ->send();
     }
 
     public function getTimezones(): array

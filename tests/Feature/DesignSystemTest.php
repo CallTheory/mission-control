@@ -159,6 +159,25 @@ class DesignSystemTest extends TestCase
     }
 
     #[Test]
+    public function every_layout_renders_the_filament_runtime(): void
+    {
+        // Notification::make()->send() renders nothing without @livewire('notifications'),
+        // and a Filament schema renders unstyled without @filamentStyles. Both fail
+        // silently -- the page still loads, the feedback just never appears.
+        foreach (['app', 'guest'] as $layout) {
+            $contents = file_get_contents(resource_path("views/layouts/{$layout}.blade.php"));
+
+            foreach (['@filamentStyles', '@filamentScripts', "@livewire('notifications')"] as $directive) {
+                $this->assertStringContainsString(
+                    $directive,
+                    $contents,
+                    "layouts/{$layout}.blade.php is missing {$directive}."
+                );
+            }
+        }
+    }
+
+    #[Test]
     public function no_element_paints_text_and_background_with_the_same_token(): void
     {
         // bg-success + text-success is green on green. It reads as a valid pair because

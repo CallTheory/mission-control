@@ -1,17 +1,5 @@
 <div>
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        @if (session()->has('message'))
-            <div class="mb-4 bg-success-soft border border-success text-success-soft-fg px-4 py-3 rounded relative" role="alert">
-                <span class="block sm:inline">{{ session('message') }}</span>
-            </div>
-        @endif
-
-        @if (session()->has('error'))
-            <div class="mb-4 bg-danger-soft border border-danger text-danger-soft-fg px-4 py-3 rounded relative" role="alert">
-                <span class="block sm:inline">{{ session('error') }}</span>
-            </div>
-        @endif
-
         <div class="bg-surface overflow-hidden shadow-xl sm:rounded-lg">
             <div class="p-6">
                 <h2 class="text-2xl font-bold text-surface-fg mb-6">WCTP SMS Gateway Configuration</h2>

@@ -10,6 +10,7 @@ use App\Models\VoicemailDigest as VoicemailDigestModel;
 use Carbon\Carbon;
 use DateTimeZone;
 use Exception;
+use Filament\Notifications\Notification;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -231,7 +232,10 @@ class VoicemailDigest extends Component
         $this->closeSendNowModal();
         $this->dispatch('saved');
 
-        session()->flash('message', 'Voicemail digest job has been queued.');
+        Notification::make()
+            ->title('Voicemail digest job has been queued.')
+            ->success()
+            ->send();
     }
 
     public function getTimezones(): array

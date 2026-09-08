@@ -9,6 +9,7 @@ use App\Models\EnterpriseHost;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -200,7 +201,10 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
 
             $this->editingHost->update($data);
 
-            session()->flash('message', 'Enterprise Host updated successfully.');
+            Notification::make()
+                ->title('Enterprise Host updated successfully.')
+                ->success()
+                ->send();
         } else {
             // Validate unique senderID for new hosts
             $this->validate([
@@ -211,7 +215,10 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
 
             EnterpriseHost::create($data);
 
-            session()->flash('message', 'Enterprise Host created successfully.');
+            Notification::make()
+                ->title('Enterprise Host created successfully.')
+                ->success()
+                ->send();
         }
 
         $this->resetForm();
@@ -223,14 +230,20 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
         $this->authorizeHost($host);
 
         if ($host->messages()->exists()) {
-            session()->flash('error', 'Cannot delete host with existing messages. Disable it instead.');
+            Notification::make()
+                ->title('Cannot delete host with existing messages. Disable it instead.')
+                ->danger()
+                ->send();
 
             return;
         }
 
         $host->delete();
 
-        session()->flash('message', 'Enterprise Host deleted successfully.');
+        Notification::make()
+            ->title('Enterprise Host deleted successfully.')
+            ->success()
+            ->send();
     }
 
     public function toggleEnabled(EnterpriseHost $host)
@@ -240,7 +253,10 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
         $host->update(['enabled' => ! $host->enabled]);
 
         $status = $host->enabled ? 'enabled' : 'disabled';
-        session()->flash('message', "Enterprise Host {$status} successfully.");
+        Notification::make()
+            ->title("Enterprise Host {$status} successfully.")
+            ->success()
+            ->send();
     }
 
     public function generateSecurityCode()

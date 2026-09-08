@@ -27,6 +27,9 @@
 
         </div>
         @stack('scripts')
+        {{-- Filament's toast container. Notification::make()->send() renders nothing without it. --}}
+        @livewire('notifications')
+
         @filamentScripts
     </body>
 </html>

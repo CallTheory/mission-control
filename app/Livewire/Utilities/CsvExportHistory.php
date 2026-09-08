@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -118,7 +119,10 @@ class CsvExportHistory extends Component implements HasActions, HasSchemas, HasT
         // The table query is already team-scoped; this keeps the guard on the action
         // itself, which is what an id posted straight to /livewire/update would hit.
         if ((int) $log->team_id !== (int) $team->id) {
-            session()->flash('error', 'Export log not found.');
+            Notification::make()
+                ->title('Export log not found.')
+                ->danger()
+                ->send();
 
             return;
         }
