@@ -6,6 +6,7 @@ namespace Tests\Feature\Livewire;
 
 use App\Livewire\Utilities\BetterEmails;
 use App\Models\BetterEmails as BetterEmailsModel;
+use App\Models\System\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -88,14 +89,65 @@ class BetterEmailsTableTest extends TestCase
             ->assertSee('\\\\fileserver\\share\\better-emails\\4242\\'.$record->id, escape: false);
     }
 
-    public function test_edit_action_loads_the_record_into_the_modal(): void
+    public function test_edit_action_loads_the_record_into_the_dialog(): void
     {
-        $record = $this->config(['client_number' => '7777']);
+        $record = $this->config([
+            'client_number' => '7777',
+            'recipients' => json_encode(['ops@example.test', 'dispatch@example.test']),
+        ]);
 
         Livewire::test(BetterEmails::class)
-            ->call('editBetterEmail', $record->id)
-            ->assertSet('editingRecord', $record->id)
-            ->assertSet('state.client_number', '7777');
+            ->mountTableAction('edit', $record)
+            ->assertActionDataSet([
+                'client_number' => '7777',
+                // Stored as JSON; the textarea renders it as one address per line.
+                'recipients' => "ops@example.test\ndispatch@example.test",
+            ]);
+    }
+
+    public function test_creating_a_configuration_prefills_the_system_defaults(): void
+    {
+        // better_emails_* are not in the model's $fillable, so build the row directly.
+        $settings = new Settings;
+        $settings->forceFill([
+            'better_emails_title' => 'Default Title',
+            'better_emails_subject' => 'Default Subject',
+        ])->save();
+
+        Livewire::test(BetterEmails::class)
+            ->mountAction('createConfiguration')
+            ->assertActionDataSet([
+                'title' => 'Default Title',
+                'subject' => 'Default Subject',
+            ]);
+    }
+
+    public function test_a_created_configuration_stores_recipients_as_json(): void
+    {
+        Livewire::test(BetterEmails::class)
+            ->callAction('createConfiguration', [
+                'client_number' => '3003',
+                'subject' => 'Nightly',
+                'title' => 'Nightly Summary',
+                'description' => 'Overnight messages',
+                'recipients' => "ops@example.test\ndispatch@example.test",
+                'report_metadata' => true,
+                'message_history' => true,
+                'theme' => 'standard',
+                'logo' => 'https://example.test/logo.png',
+                'logo_alt' => 'Example',
+                'logo_link' => 'https://example.test',
+                'button_text' => 'View',
+                'button_link' => 'https://example.test/portal',
+            ])
+            ->assertHasNoErrors();
+
+        $record = BetterEmailsModel::where('client_number', '3003')->firstOrFail();
+
+        $this->assertSame(
+            ['ops@example.test', 'dispatch@example.test'],
+            json_decode($record->recipients, true)
+        );
     }
 
     public function test_delete_action_removes_the_record(): void

@@ -20,7 +20,6 @@
 
             <div class="block min-w-full px-2 mx-auto">
                 <div>
-                    <livewire:utilities.better-email-new lazy="lazy" />
                 </div>
                 <div>
                     <livewire:utilities.better-emails lazy="lazy" />
