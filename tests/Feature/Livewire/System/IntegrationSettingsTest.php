@@ -51,7 +51,8 @@ class IntegrationSettingsTest extends TestCase
                 'twilio_auth_token' => 'super-secret-token',
                 'twilio_from_number' => '+15551234567',
             ])
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertNotified('Settings saved');
 
         $datasource = DataSource::first();
 
