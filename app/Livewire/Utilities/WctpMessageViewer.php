@@ -12,7 +12,9 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\DatePicker;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -32,8 +34,6 @@ class WctpMessageViewer extends Component implements HasActions, HasSchemas, Has
     use InteractsWithTable;
 
     public $host = null;
-
-    public $selectedMessage = null;
 
     protected $queryString = [
         'host' => ['except' => null],
@@ -152,7 +152,32 @@ class WctpMessageViewer extends Component implements HasActions, HasSchemas, Has
                 Action::make('view')
                     ->label('View')
                     ->link()
-                    ->action(fn (WctpMessage $record) => $this->viewMessage($record)),
+                    ->modalHeading('Message Details')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    // Read-only, so this is an infolist rather than a form: the entries
+                    // read straight off the record and there is nothing to submit.
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextEntry::make('wctp_message_id')->label('Message ID')->fontFamily('mono'),
+                            TextEntry::make('carrier_message_uid')->label('Carrier Message ID')->placeholder('N/A')->fontFamily('mono'),
+                            TextEntry::make('status')->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                            TextEntry::make('carrier')->formatStateUsing(fn (?string $state): string => ucfirst((string) $state))->placeholder('N/A'),
+                            TextEntry::make('from')->label('From'),
+                            TextEntry::make('to')->label('To'),
+                            TextEntry::make('message')->columnSpanFull()->prose(),
+                            TextEntry::make('status_details')
+                                ->label('Status Details')
+                                ->columnSpanFull()
+                                ->visible(fn (WctpMessage $record): bool => filled($record->status_details))
+                                ->formatStateUsing(fn ($state): string => json_encode($state, JSON_PRETTY_PRINT))
+                                ->fontFamily('mono'),
+                            TextEntry::make('created_at')->label('Created')->dateTime('Y-m-d H:i:s'),
+                            TextEntry::make('submitted_at')->label('Submitted')->dateTime('Y-m-d H:i:s')->placeholder('N/A'),
+                            TextEntry::make('processed_at')->label('Processed')->dateTime('Y-m-d H:i:s')->placeholder('N/A'),
+                            TextEntry::make('retry_count')->label('Retries'),
+                        ]),
+                    ]),
 
                 Action::make('retry')
                     ->label('Retry')
@@ -173,18 +198,6 @@ class WctpMessageViewer extends Component implements HasActions, HasSchemas, Has
         $this->authorizeWctpManagement();
 
         return view('livewire.utilities.wctp-message-viewer');
-    }
-
-    public function viewMessage(WctpMessage $message)
-    {
-        $this->authorizeMessage($message);
-
-        $this->selectedMessage = $message;
-    }
-
-    public function closeMessageModal()
-    {
-        $this->selectedMessage = null;
     }
 
     public function retryMessage(WctpMessage $message)

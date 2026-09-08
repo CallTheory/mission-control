@@ -9,7 +9,11 @@ use App\Models\EnterpriseHost;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -28,40 +32,123 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
     use InteractsWithSchemas;
     use InteractsWithTable;
 
-    public $showModal = false;
-
-    public $editingHost = null;
-
-    // Form fields
-    public $name = '';
-
-    public $senderID = '';
-
-    public $securityCode = '';
-
-    public $enabled = true;
-
-    public $callback_url = '';
-
-    public $team_id = null;
-
-    public $phoneNumbers = [];
-
-    public $newPhoneNumber = '';
-
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'senderID' => 'required|string|max:255',
-        'securityCode' => 'required|string|min:8',
-        'enabled' => 'boolean',
-        'callback_url' => 'nullable|url',
-        'phoneNumbers' => 'array',
-        'phoneNumbers.*' => 'string|regex:/^[\+]?[1-9]\d{1,14}$/',
-    ];
-
     public function mount()
     {
         $this->authorizeWctpManagement();
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function hostSchema(bool $isEdit): array
+    {
+        return [
+            TextInput::make('name')->required()->maxLength(255),
+
+            TextInput::make('senderID')
+                ->label('Sender ID')
+                ->required()
+                ->maxLength(255)
+                // senderID identifies the host to the carrier, so it has to be unique
+                // across every host, not just this team's.
+                ->unique('enterprise_hosts', 'senderID', ignoreRecord: true),
+
+            TextInput::make('securityCode')
+                ->label('Security Code')
+                ->password()
+                ->revealable()
+                ->minLength(8)
+                ->required(! $isEdit)
+                ->helperText($isEdit
+                    ? 'Leave blank to keep the stored code.'
+                    : 'At least 8 characters.')
+                ->suffixAction(
+                    Action::make('generate')
+                        ->icon('heroicon-m-sparkles')
+                        ->label('Generate')
+                        ->action(fn (Set $set) => $set('securityCode', Str::random(16))),
+                ),
+
+            TextInput::make('callback_url')->label('Callback URL')->url()->maxLength(255),
+
+            TagsInput::make('phone_numbers')
+                ->label('Phone Numbers')
+                ->placeholder('+15551234567')
+                ->helperText('Entered numbers are normalised to E.164.')
+                ->nestedRecursiveRules(['string', 'regex:/^[\\+]?[1-9]\\d{1,14}$/']),
+
+            Toggle::make('enabled')->default(true),
+        ];
+    }
+
+    private function normalisePhoneNumbers(array $numbers): array
+    {
+        return array_values(array_unique(array_map(function (string $number): string {
+            $digits = preg_replace('/\D+/', '', $number);
+
+            // A bare 10-digit number is North American; prepend the country code.
+            if (! str_starts_with($digits, '1') && strlen($digits) === 10) {
+                $digits = '1'.$digits;
+            }
+
+            return '+'.$digits;
+        }, $numbers)));
+    }
+
+    public function createHostAction(): Action
+    {
+        return Action::make('createHost')
+            ->label('Create Enterprise Host')
+            ->modalHeading('Create Enterprise Host')
+            ->schema($this->hostSchema(isEdit: false))
+            ->action(function (array $data): void {
+                $this->authorizeWctpManagement();
+
+                EnterpriseHost::create([
+                    ...$data,
+                    'phone_numbers' => $this->normalisePhoneNumbers($data['phone_numbers'] ?? []),
+                    // Ownership is always the acting team -- never a client-supplied id.
+                    'team_id' => $this->currentTeamId(),
+                ]);
+
+                Notification::make()->title('Enterprise Host created successfully.')->success()->send();
+            });
+    }
+
+    public function editHostAction(): Action
+    {
+        return Action::make('edit')
+            ->label('Edit')
+            ->link()
+            ->modalHeading('Edit Enterprise Host')
+            ->fillForm(fn (EnterpriseHost $record): array => [
+                'name' => $record->name,
+                'senderID' => $record->senderID,
+                // Never prefilled: it would put the stored code in the DOM.
+                'securityCode' => '',
+                'callback_url' => $record->callback_url,
+                'phone_numbers' => $record->phone_numbers ?? [],
+                'enabled' => $record->enabled,
+            ])
+            ->schema($this->hostSchema(isEdit: true))
+            ->action(function (EnterpriseHost $record, array $data): void {
+                $this->authorizeHost($record);
+
+                $attributes = [
+                    ...$data,
+                    'phone_numbers' => $this->normalisePhoneNumbers($data['phone_numbers'] ?? []),
+                    'team_id' => $this->currentTeamId(),
+                ];
+
+                // Blank means "keep the stored code", as the field says.
+                if (blank($attributes['securityCode'])) {
+                    unset($attributes['securityCode']);
+                }
+
+                $record->update($attributes);
+
+                Notification::make()->title('Enterprise Host updated successfully.')->success()->send();
+            });
     }
 
     public function table(Table $table): Table
@@ -113,11 +200,11 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
                     ->trueLabel('Enabled')
                     ->falseLabel('Disabled'),
             ])
+            ->headerActions([
+                $this->createHostAction(),
+            ])
             ->recordActions([
-                Action::make('edit')
-                    ->label('Edit')
-                    ->link()
-                    ->action(fn (EnterpriseHost $record) => $this->editHost($record)),
+                $this->editHostAction(),
 
                 Action::make('toggleEnabled')
                     ->label(fn (EnterpriseHost $record): string => $record->enabled ? 'Disable' : 'Enable')
@@ -149,80 +236,6 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
         $this->authorizeWctpManagement();
 
         return view('livewire.utilities.enterprise-host-management');
-    }
-
-    public function createHost()
-    {
-        $this->resetForm();
-        $this->showModal = true;
-    }
-
-    public function editHost(EnterpriseHost $host)
-    {
-        $this->authorizeHost($host);
-
-        $this->editingHost = $host;
-        $this->name = $host->name;
-        $this->senderID = $host->senderID;
-        $this->securityCode = ''; // Don't show existing encrypted code
-        $this->enabled = $host->enabled;
-        $this->callback_url = $host->callback_url ?? '';
-        $this->team_id = $host->team_id;
-        $this->phoneNumbers = $host->phone_numbers ?? [];
-        $this->newPhoneNumber = '';
-
-        $this->showModal = true;
-    }
-
-    public function save()
-    {
-        $this->authorizeWctpManagement();
-
-        $this->validate();
-
-        $data = [
-            'name' => $this->name,
-            'senderID' => $this->senderID,
-            'enabled' => $this->enabled,
-            'callback_url' => $this->callback_url ?: null,
-            // Ownership is always the acting team — never trust a client-supplied team_id.
-            'team_id' => $this->currentTeamId(),
-            'phone_numbers' => array_values($this->phoneNumbers), // Ensure it's a sequential array
-        ];
-
-        if ($this->editingHost) {
-            // Re-authorize the target on write: the bound model must belong to the team.
-            $this->authorizeHost($this->editingHost);
-
-            // Only update security code if a new one was provided
-            if ($this->securityCode) {
-                $data['securityCode'] = $this->securityCode;
-            }
-
-            $this->editingHost->update($data);
-
-            Notification::make()
-                ->title('Enterprise Host updated successfully.')
-                ->success()
-                ->send();
-        } else {
-            // Validate unique senderID for new hosts
-            $this->validate([
-                'senderID' => 'unique:enterprise_hosts,senderID',
-            ]);
-
-            $data['securityCode'] = $this->securityCode;
-
-            EnterpriseHost::create($data);
-
-            Notification::make()
-                ->title('Enterprise Host created successfully.')
-                ->success()
-                ->send();
-        }
-
-        $this->resetForm();
-        $this->showModal = false;
     }
 
     public function deleteHost(EnterpriseHost $host)
@@ -257,53 +270,6 @@ class EnterpriseHostManagement extends Component implements HasActions, HasSchem
             ->title("Enterprise Host {$status} successfully.")
             ->success()
             ->send();
-    }
-
-    public function generateSecurityCode()
-    {
-        $this->securityCode = Str::random(16);
-    }
-
-    public function addPhoneNumber()
-    {
-        $this->validate(['newPhoneNumber' => 'required|regex:/^[\+]?[1-9]\d{1,14}$/']);
-
-        // Normalize the phone number
-        $normalized = preg_replace('/\D+/', '', $this->newPhoneNumber);
-        if (! str_starts_with($normalized, '1') && strlen($normalized) == 10) {
-            $normalized = '1'.$normalized;
-        }
-        $formatted = '+'.$normalized;
-
-        if (! in_array($formatted, $this->phoneNumbers)) {
-            $this->phoneNumbers[] = $formatted;
-        }
-
-        $this->newPhoneNumber = '';
-    }
-
-    public function removePhoneNumber($index)
-    {
-        unset($this->phoneNumbers[$index]);
-        $this->phoneNumbers = array_values($this->phoneNumbers);
-    }
-
-    public function resetForm()
-    {
-        $this->reset([
-            'name',
-            'senderID',
-            'securityCode',
-            'enabled',
-            'callback_url',
-            'team_id',
-            'phoneNumbers',
-            'newPhoneNumber',
-            'editingHost',
-        ]);
-
-        $this->resetValidation();
-        $this->showModal = false;
     }
 
     public function viewMessages(EnterpriseHost $host)

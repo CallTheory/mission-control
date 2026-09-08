@@ -121,9 +121,10 @@ class EnterpriseHostManagementTest extends TestCase
         $otherTeam = Team::factory()->create(['personal_team' => false]);
         $theirs = EnterpriseHost::factory()->create(['team_id' => $otherTeam->id]);
 
+        // Editing is a table record action now, so the guard is the table's own team
+        // scoping: another team's host is not a row the action can be mounted against.
         Livewire::test(EnterpriseHostManagement::class)
-            ->call('editHost', $theirs)
-            ->assertForbidden();
+            ->assertCanNotSeeTableRecords([$theirs]);
     }
 
     public function test_cannot_delete_another_teams_host(): void
@@ -152,16 +153,16 @@ class EnterpriseHostManagementTest extends TestCase
 
     public function test_created_host_is_owned_by_current_team(): void
     {
+        // team_id is no longer a form field at all, so it cannot be supplied; the
+        // action always stamps the acting team.
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Enterprise')
-            ->set('senderID', 'test_sender')
-            ->set('securityCode', 'secret123456')
-            ->set('enabled', true)
-            // Attempt to plant the host in another team — must be ignored.
-            ->set('team_id', Team::factory()->create()->id)
-            ->call('save')
-            ->assertHasNoErrors()
-            ->assertSet('showModal', false);
+            ->callAction('createHost', [
+                'name' => 'Test Enterprise',
+                'senderID' => 'test_sender',
+                'securityCode' => 'secret123456',
+                'enabled' => true,
+            ])
+            ->assertHasNoErrors();
 
         $host = EnterpriseHost::where('senderID', 'test_sender')->firstOrFail();
         $this->assertSame($this->team->id, $host->team_id);
@@ -210,13 +211,13 @@ class EnterpriseHostManagementTest extends TestCase
     public function test_successful_host_creation_encrypts_security_code(): void
     {
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Enterprise')
-            ->set('senderID', 'test_sender')
-            ->set('securityCode', 'secret123456')
-            ->set('enabled', true)
-            ->call('save')
-            ->assertHasNoErrors()
-            ->assertSet('showModal', false);
+            ->callAction('createHost', [
+                'name' => 'Test Enterprise',
+                'senderID' => 'test_sender',
+                'securityCode' => 'secret123456',
+                'enabled' => true,
+            ])
+            ->assertHasNoErrors();
 
         $this->assertDatabaseHas('enterprise_hosts', [
             'name' => 'Test Enterprise',
@@ -235,12 +236,8 @@ class EnterpriseHostManagementTest extends TestCase
     public function test_host_creation_validation(): void
     {
         Livewire::test(EnterpriseHostManagement::class)
-            ->call('save')
-            ->assertHasErrors([
-                'name' => 'required',
-                'senderID' => 'required',
-                'securityCode' => 'required',
-            ]);
+            ->callAction('createHost', [])
+            ->assertHasFormErrors(['name', 'senderID', 'securityCode']);
     }
 
     public function test_unique_sender_id_validation(): void
@@ -248,21 +245,23 @@ class EnterpriseHostManagementTest extends TestCase
         $this->host(['senderID' => 'existing_sender']);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Enterprise')
-            ->set('senderID', 'existing_sender')
-            ->set('securityCode', 'secret123456')
-            ->call('save')
-            ->assertHasErrors(['senderID' => 'unique']);
+            ->callAction('createHost', [
+                'name' => 'Test Enterprise',
+                'senderID' => 'existing_sender',
+                'securityCode' => 'secret123456',
+            ])
+            ->assertHasFormErrors(['senderID']);
     }
 
     public function test_security_code_minimum_length_validation(): void
     {
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Enterprise')
-            ->set('senderID', 'test_sender')
-            ->set('securityCode', 'short')
-            ->call('save')
-            ->assertHasErrors(['securityCode' => 'min']);
+            ->callAction('createHost', [
+                'name' => 'Test Enterprise',
+                'senderID' => 'test_sender',
+                'securityCode' => 'short',
+            ])
+            ->assertHasFormErrors(['securityCode']);
     }
 
     public function test_edit_host_modal_opens_with_data(): void
@@ -276,13 +275,15 @@ class EnterpriseHostManagementTest extends TestCase
         ]);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->call('editHost', $host)
-            ->assertSet('showModal', true)
-            ->assertSet('name', 'Test Host')
-            ->assertSet('senderID', 'test123')
-            ->assertSet('securityCode', '')
-            ->assertSet('callback_url', 'https://example.com')
-            ->assertSet('enabled', false);
+            ->mountTableAction('edit', $host)
+            ->assertActionDataSet([
+                'name' => 'Test Host',
+                'senderID' => 'test123',
+                // Never prefilled: the stored code must not reach the DOM.
+                'securityCode' => '',
+                'callback_url' => 'https://example.com',
+                'enabled' => false,
+            ]);
     }
 
     public function test_successful_host_update(): void
@@ -290,13 +291,13 @@ class EnterpriseHostManagementTest extends TestCase
         $host = $this->host(['name' => 'Original Name', 'securityCode' => 'original_secret']);
 
         Livewire::test(EnterpriseHostManagement::class)
-            ->call('editHost', $host)
-            ->set('name', 'Updated Name')
-            ->set('enabled', false)
-            ->set('securityCode', 'new_security_code_123')
-            ->call('save')
-            ->assertHasNoErrors()
-            ->assertSet('showModal', false);
+            ->callTableAction('edit', $host, [
+                'name' => 'Updated Name',
+                'senderID' => $host->senderID,
+                'enabled' => false,
+                'securityCode' => 'new_security_code_123',
+            ])
+            ->assertHasNoErrors();
 
         $host->refresh();
         $this->assertEquals('Updated Name', $host->name);
@@ -337,11 +338,21 @@ class EnterpriseHostManagementTest extends TestCase
         $this->assertTrue($host->refresh()->enabled);
     }
 
-    public function test_generate_security_code(): void
+    public function test_leaving_the_security_code_blank_on_edit_keeps_the_stored_one(): void
     {
+        $host = $this->host(['securityCode' => 'original_secret']);
+
         Livewire::test(EnterpriseHostManagement::class)
-            ->call('generateSecurityCode')
-            ->assertSet('securityCode', fn ($value) => strlen($value) === 16);
+            ->callTableAction('edit', $host, [
+                'name' => 'Renamed',
+                'senderID' => $host->senderID,
+                'securityCode' => '',
+            ])
+            ->assertHasNoErrors();
+
+        $host->refresh();
+        $this->assertSame('Renamed', $host->name);
+        $this->assertSame('original_secret', $host->securityCode);
     }
 
     public function test_view_messages_redirect(): void
@@ -356,22 +367,24 @@ class EnterpriseHostManagementTest extends TestCase
     public function test_callback_url_validation(): void
     {
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Host')
-            ->set('senderID', 'test123')
-            ->set('securityCode', 'secret123456')
-            ->set('callback_url', 'invalid-url')
-            ->call('save')
-            ->assertHasErrors(['callback_url' => 'url']);
+            ->callAction('createHost', [
+                'name' => 'Test Host',
+                'senderID' => 'test123',
+                'securityCode' => 'secret123456',
+                'callback_url' => 'invalid-url',
+            ])
+            ->assertHasFormErrors(['callback_url']);
     }
 
     public function test_phone_numbers_validation(): void
     {
         Livewire::test(EnterpriseHostManagement::class)
-            ->set('name', 'Test Host')
-            ->set('senderID', 'test123')
-            ->set('securityCode', 'secret123456')
-            ->set('phoneNumbers', ['invalid-phone', '+1234567890123456789'])
-            ->call('save')
-            ->assertHasErrors(['phoneNumbers.0', 'phoneNumbers.1']);
+            ->callAction('createHost', [
+                'name' => 'Test Host',
+                'senderID' => 'test123',
+                'securityCode' => 'secret123456',
+                'phone_numbers' => ['invalid-phone', '+1234567890123456789'],
+            ])
+            ->assertHasFormErrors(['phone_numbers.0', 'phone_numbers.1']);
     }
 }

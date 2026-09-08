@@ -10,6 +10,7 @@ use App\Models\EnterpriseHost;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\WctpMessage;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -135,9 +136,15 @@ class WctpMessageViewerTest extends TestCase
     {
         $theirs = WctpMessage::factory()->create(['enterprise_host_id' => $this->otherTeamHost()->id]);
 
-        Livewire::test(WctpMessageViewer::class)
-            ->call('viewMessage', $theirs)
-            ->assertForbidden();
+        // The detail dialog is a table record action now, so the guard is the table's
+        // own team scoping: a message outside it is not a row, and an action cannot be
+        // mounted against a record the table will not resolve.
+        $component = Livewire::test(WctpMessageViewer::class)
+            ->assertCanNotSeeTableRecords([$theirs]);
+
+        $component->mountTableAction('view', $theirs);
+
+        $component->assertDontSee($theirs->wctp_message_id);
     }
 
     public function test_cannot_retry_another_teams_message(): void
@@ -258,23 +265,16 @@ class WctpMessageViewerTest extends TestCase
             ->assertCanNotSeeTableRecords([$before, $after]);
     }
 
-    public function test_view_message_modal(): void
+    public function test_view_message_modal_shows_the_detail(): void
     {
         $message = $this->msg(['wctp_message_id' => 'test123']);
 
+        // Filament loads modal bodies lazily through a separate partial, so the
+        // assertion is that the action mounted against this record -- the schema it
+        // renders is declarative and reads straight off it.
         Livewire::test(WctpMessageViewer::class)
-            ->call('viewMessage', $message)
-            ->assertSet('selectedMessage', $message);
-    }
-
-    public function test_close_message_modal(): void
-    {
-        $message = $this->msg();
-
-        Livewire::test(WctpMessageViewer::class)
-            ->set('selectedMessage', $message)
-            ->call('closeMessageModal')
-            ->assertSet('selectedMessage', null);
+            ->mountTableAction('view', $message)
+            ->assertActionMounted(TestAction::make('view')->table($message));
     }
 
     public function test_retry_failed_message(): void
