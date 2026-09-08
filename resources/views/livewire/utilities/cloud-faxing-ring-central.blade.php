@@ -72,7 +72,7 @@
                             @endif
 
                             @if(($row['messageStatus'] ?? '') === 'SendingFailed' || ($row['messageStatus'] ?? '') === 'Sent')
-                                <a wire:click="openSendFaxDialog('{{ $row['id'] }}')" wire:loading.attr="disabled"
+                                <a wire:click="mountAction('resendFax', { messageId: '{{ $row['id'] }}' })" wire:loading.attr="disabled"
                                    title="Resend fax" class="hover:text-primary cursor-pointer">
                                     <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                                 </a>
@@ -86,37 +86,7 @@
         </div>
 
         <!-- Delete User Confirmation Modal -->
-        <x-dialog-modal wire:model.live="confirmResendFax">
-            <x-slot name="title">
-                {{ __('Resend Fax') }}
-            </x-slot>
 
-            <x-slot name="content">
-                <span class="italic text-lg ">Are you sure you want to resend the fax?</span>
-                <strong class="block text-muted">
-                    Ring Central Fax ID <code class=" text-surface-fg-soft">{{ $faxIdToSend }}</code>
-                </strong>
-
-                <label class="mt-4 mb-0 block">Send fax to a different number:</label>
-                <x-input class="my-2 py-2 px-2" id="faxInfo" wire:model.live="state.faxInfo.faxNumber" />
-
-                <p class="text-xs text-muted">
-                    <strong>Careful!</strong> This must be an <a href="https://www.twilio.com/docs/glossary/what-e164" target="_blank" class="hover:underline">E.164</a> formatted telephone number!
-                    <small class="block text-surface-fg-soft">For U.S. and Canada, this will mean <code>+1</code> then your 10-digit telephone number. I.e., +15551234567</small>
-                </p>
-
-            </x-slot>
-
-            <x-slot name="footer">
-                <x-secondary-button wire:click="$toggle('confirmResendFax')" wire:loading.attr="disabled">
-                    {{ __('Cancel') }}
-                </x-secondary-button>
-
-                <x-danger-button class="ml-2" wire:click="resendFax()" wire:loading.attr="disabled">
-                    {{ __('Resend Fax') }}
-                </x-danger-button>
-            </x-slot>
-        </x-dialog-modal>
     @else
         <x-alert-info title="RingCentral API Results" description="No fax message results were found." />
     @endif
@@ -266,4 +236,5 @@
             </dl>
         </div>
     </div>
+    <x-filament-actions::modals />
 </div>

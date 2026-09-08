@@ -5,6 +5,12 @@ namespace App\Livewire\Utilities;
 use App\Console\Commands\ISFaxing\BuildRingCentralFaxDashboard;
 use App\Models\DataSource;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -15,8 +21,11 @@ use Livewire\Component;
 use RingCentral\SDK\Http\ApiException;
 use RingCentral\SDK\SDK as RingCentralSDK;
 
-class CloudFaxingRingCentral extends Component
+class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     #[Locked]
     public ?string $client_id = null;
 
@@ -34,8 +43,6 @@ class CloudFaxingRingCentral extends Component
     public array $state = [];
 
     public mixed $datasource;
-
-    public bool $confirmResendFax = false;
 
     public ?string $faxIdToSend;
 
@@ -79,6 +86,31 @@ class CloudFaxingRingCentral extends Component
     /**
      * @throws ApiException
      */
+    public function resendFaxAction(): Action
+    {
+        return Action::make('resendFax')
+            ->label(__('Resend Fax'))
+            ->color('danger')
+            ->modalHeading(__('Resend Fax'))
+            ->modalSubmitActionLabel(__('Resend'))
+            // Prefilling calls the provider for the fax's current recipient, which is
+            // what openSendFaxDialog() did when the old dialog was toggled open.
+            ->fillForm(function (array $arguments): array {
+                $this->openSendFaxDialog($arguments['messageId'] ?? null);
+
+                return ['faxNumber' => $this->state['faxInfo']['faxNumber'] ?? ''];
+            })
+            ->schema([
+                TextInput::make('faxNumber')
+                    ->label(__('Recipient Fax Number'))
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $this->state['faxInfo']['faxNumber'] = $data['faxNumber'];
+                $this->resendFax();
+            });
+    }
+
     public function openSendFaxDialog($messageId): void
     {
         /* Authenticate a user using a personal JWT token */
@@ -104,7 +136,6 @@ class CloudFaxingRingCentral extends Component
         }
 
         $this->faxIdToSend = $messageId;
-        $this->confirmResendFax = true;
 
     }
 
@@ -115,7 +146,6 @@ class CloudFaxingRingCentral extends Component
     {
         if ($this->faxIdToSend === null) {
             $this->faxIdToSend = null;
-            $this->confirmResendFax = false;
 
             return;
         }
@@ -145,7 +175,6 @@ class CloudFaxingRingCentral extends Component
             Log::error($e->getMessage());
         }
 
-        $this->confirmResendFax = false;
         $this->dispatch('resendFax', $this->faxIdToSend);
         $this->faxIdToSend = null;
         $this->redirect('/utilities/cloud-faxing/ringcentral');

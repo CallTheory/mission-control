@@ -5,6 +5,12 @@ namespace App\Livewire\Utilities;
 use App\Models\DataSource;
 use App\Services\Observability\GuzzleTracing;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use GuzzleHttp\Client as Guzzle;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
@@ -13,8 +19,11 @@ use Illuminate\View\View;
 use JsonException;
 use Livewire\Component;
 
-class CloudFaxing extends Component
+class CloudFaxing extends Component implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     private $guzzle;
 
     public array $tags = [];
@@ -22,8 +31,6 @@ class CloudFaxing extends Component
     public array $state = [];
 
     public DataSource $datasource;
-
-    public bool $confirmResendFax = false;
 
     public ?string $faxIdToSend;
 
@@ -44,6 +51,31 @@ class CloudFaxing extends Component
      * @throws GuzzleException
      * @throws Exception
      */
+    public function resendFaxAction(): Action
+    {
+        return Action::make('resendFax')
+            ->label(__('Resend Fax'))
+            ->color('danger')
+            ->modalHeading(__('Resend Fax'))
+            ->modalSubmitActionLabel(__('Resend'))
+            // Prefilling calls the provider for the fax's current recipient, which is
+            // what openSendFaxDialog() did when the old dialog was toggled open.
+            ->fillForm(function (array $arguments): array {
+                $this->openSendFaxDialog($arguments['messageId'] ?? null);
+
+                return ['faxNumber' => $this->state['faxInfo']['faxNumber'] ?? ''];
+            })
+            ->schema([
+                TextInput::make('faxNumber')
+                    ->label(__('Recipient Fax Number'))
+                    ->required(),
+            ])
+            ->action(function (array $data): void {
+                $this->state['faxInfo']['faxNumber'] = $data['faxNumber'];
+                $this->resendFax();
+            });
+    }
+
     public function openSendFaxDialog($messageId): void
     {
 
@@ -66,7 +98,6 @@ class CloudFaxing extends Component
         }
 
         $this->faxIdToSend = $messageId;
-        $this->confirmResendFax = true;
 
     }
 
@@ -74,14 +105,12 @@ class CloudFaxing extends Component
     {
         if ($this->faxIdToSend === null) {
             $this->faxIdToSend = null;
-            $this->confirmResendFax = false;
 
             return;
         }
 
         if ($this->datasource->mfax_api_key === null) {
             $this->faxIdToSend = null;
-            $this->confirmResendFax = false;
 
             return;
         }
@@ -131,12 +160,10 @@ class CloudFaxing extends Component
 
         if ($resend->getStatusCode() !== 200) {
             $this->faxIdToSend = null;
-            $this->confirmResendFax = false;
 
             return;
         }
 
-        $this->confirmResendFax = false;
         $this->dispatch('resendFax', $this->faxIdToSend);
         $this->faxIdToSend = null;
         $this->redirect('/utilities/cloud-faxing');
