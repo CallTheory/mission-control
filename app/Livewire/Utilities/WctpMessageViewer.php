@@ -162,7 +162,10 @@ class WctpMessageViewer extends Component implements HasActions, HasSchemas, Has
                             TextEntry::make('wctp_message_id')->label('Message ID')->fontFamily('mono'),
                             TextEntry::make('carrier_message_uid')->label('Carrier Message ID')->placeholder('N/A')->fontFamily('mono'),
                             TextEntry::make('status')->formatStateUsing(fn (string $state): string => ucfirst($state)),
-                            TextEntry::make('carrier')->formatStateUsing(fn (?string $state): string => ucfirst((string) $state))->placeholder('N/A'),
+                            // No "Carrier" entry: wctp_messages has no carrier column.
+                            // The old dialog rendered $message->carrier, which does not
+                            // exist, so that field has always displayed blank.
+                            TextEntry::make('twilio_sid')->label('Twilio SID')->placeholder('N/A')->fontFamily('mono'),
                             TextEntry::make('from')->label('From'),
                             TextEntry::make('to')->label('To'),
                             TextEntry::make('message')->columnSpanFull()->prose(),
