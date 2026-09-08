@@ -45,41 +45,20 @@ class UiComponentsTest extends TestCase
         $this->assertStringContainsString('Pick', $html);
     }
 
-    public function test_table_set_renders(): void
-    {
-        $html = $this->render(<<<'BLADE'
-            <x-table>
-                <x-slot name="head">
-                    <x-table.heading>Name</x-table.heading>
-                </x-slot>
-                <x-table.row>
-                    <x-table.cell>Alice</x-table.cell>
-                    <x-table.cell muted>muted</x-table.cell>
-                </x-table.row>
-                <x-table.empty :colspan="2">Nothing here.</x-table.empty>
-                <x-slot name="footer">PAGER</x-slot>
-            </x-table>
-        BLADE);
+    /*
+     * The x-table set, x-status-badge, x-filter-select, x-search-input and x-card were
+     * removed once every listing became a Filament table; their behaviour is covered by
+     * the table tests on the components themselves.
+     */
 
-        $this->assertStringContainsString('<table', $html);
-        $this->assertStringContainsString('Name', $html);
-        $this->assertStringContainsString('Alice', $html);
-        $this->assertStringContainsString('colspan="2"', $html);
-        $this->assertStringContainsString('PAGER', $html);
-    }
-
-    public function test_badge_and_status_badge(): void
+    public function test_badge_renders_with_its_semantic_colour(): void
     {
         $badge = $this->render('<x-badge color="green">Live</x-badge>');
         $this->assertStringContainsString('Live', $badge);
         $this->assertStringContainsString('bg-success-soft', $badge);
 
-        $delivered = $this->render('<x-status-badge status="delivered" />');
-        $this->assertStringContainsString('bg-success-soft', $delivered);
-        $this->assertStringContainsString('Delivered', $delivered);
-
-        $failed = $this->render('<x-status-badge status="failed" />');
-        $this->assertStringContainsString('bg-danger-soft', $failed);
+        $danger = $this->render('<x-badge color="red">Failed</x-badge>');
+        $this->assertStringContainsString('bg-danger-soft', $danger);
     }
 
     public function test_flash_renders_session_messages(): void
@@ -93,29 +72,11 @@ class UiComponentsTest extends TestCase
         $this->assertStringContainsString('Bad thing', $html);
     }
 
-    public function test_filter_select_and_search_input(): void
-    {
-        $select = $this->render(
-            '<x-filter-select for="status" label="Status" wire-model="filterStatus" :options="$opts" />',
-            ['opts' => [['id' => 'a', 'name' => 'Alpha'], ['id' => 'b', 'name' => 'Beta']]]
-        );
-        $this->assertStringContainsString('wire:model.live="filterStatus"', $select);
-        $this->assertStringContainsString('Alpha', $select);
-        $this->assertStringContainsString('value="a"', $select);
-
-        $search = $this->render('<x-search-input wire-model="search" />');
-        $this->assertStringContainsString('wire:model.live="search"', $search);
-    }
-
-    public function test_toggle_card_and_page_header(): void
+    public function test_toggle_and_page_header(): void
     {
         $toggle = $this->render('<x-toggle wire-model="enabled" label="Enabled" help="on/off" />');
         $this->assertStringContainsString('wire:model="enabled"', $toggle);
         $this->assertStringContainsString('Enabled', $toggle);
-
-        $card = $this->render('<x-card title="My Card">Body</x-card>');
-        $this->assertStringContainsString('My Card', $card);
-        $this->assertStringContainsString('Body', $card);
 
         $header = $this->render('<x-page-header title="Hosts"><x-slot name="actions">BTN</x-slot></x-page-header>');
         $this->assertStringContainsString('Hosts', $header);

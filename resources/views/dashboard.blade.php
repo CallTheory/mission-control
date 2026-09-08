@@ -25,7 +25,11 @@
         @if(request()->user()->currentTeam->personal_team === true)
             <livewire:personal-dashboard :user="request()->user()"></livewire:personal-dashboard>
         @else
-            <div class="max-w-9xl mx-auto px-4">
+            {{-- Full width by design. This carried `max-w-9xl`, which Tailwind's scale
+                 stops short of, so it never applied and the dashboard has always been
+                 unconstrained. Dropping the dead class rather than inventing a width
+                 nobody has seen. --}}
+            <div class="mx-auto px-4">
                 @if(request()->user()->currentTeam->allowed_accounts || request()->user()->currentTeam->allowed_billing)
                     <div class="bg-primary-soft text-primary flex mb-2 rounded-lg px-2 py-2 shadow border border-primary text-xs">
                         @if(request()->user()->currentTeam->allowed_accounts)
