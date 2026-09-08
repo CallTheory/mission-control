@@ -8,15 +8,23 @@ use App\Models\Role;
 use App\Models\Stats\Agents\Listing;
 use App\Models\Team;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Laravel\Jetstream\Events\TeamMemberRemoved;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
-class User extends Component
+class User extends Component implements HasActions, HasSchemas
 {
     use AuthorizesSystemComponent;
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     protected function requiredCapability(): Capability
     {
@@ -44,19 +52,33 @@ class User extends Component
 
     public string $user_timezone;
 
-    public bool $confirmingUserDeletion = false;
-
     protected $listeners = ['saved' => '$refresh', 'assigned' => '$refresh'];
+
+    public function deleteUserAction(): Action
+    {
+        return Action::make('deleteUser')
+            ->label(__('Delete Account'))
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading(__('Delete Account'))
+            ->modalDescription('All resources and data will be permanently removed, including the account\'s personal team and all application user records.')
+            ->modalSubmitActionLabel(__('Delete Account'))
+            ->action(fn () => $this->deleteUser());
+    }
 
     public function deleteUser()
     {
-
-        $this->clearValidation();
-
         foreach ($this->user->ownedTeams as $team) {
             if (! $team->personal_team) {
-                $this->addError('delete_user', 'A user cannot be deleted if they own a team (personal teams are excluded)');
-                exit;
+                // Previously `exit`, which killed the PHP process mid-request: the
+                // error was recorded and then never delivered, so the browser saw a
+                // failed response rather than the reason.
+                Notification::make()
+                    ->title('A user cannot be deleted if they own a team (personal teams are excluded).')
+                    ->danger()
+                    ->send();
+
+                return null;
             }
         }
 
@@ -73,11 +95,6 @@ class User extends Component
         $this->user->delete();
 
         return redirect()->route('system.users');
-    }
-
-    public function confirmUserDeletion(): void
-    {
-        $this->confirmingUserDeletion = true;
     }
 
     public function saveUserDetails(): void

@@ -289,42 +289,11 @@
             </div>
 
             <div class="mt-5">
-                <x-danger-button wire:click="confirmUserDeletion" wire:loading.attr="disabled">
-                    {{ __('Delete Account') }}
-                </x-danger-button>
-            </div>
+                {{ $this->deleteUserAction }}
 
-            <!-- Delete User Confirmation Modal -->
-            <x-dialog-modal wire:model.live="confirmingUserDeletion">
-                <x-slot name="title">
-                    {{ __('Delete Account') }}
-                </x-slot>
-
-                <x-slot name="content">
-                    <span class="italic text-lg ">Are you sure you want to delete this account?</span>
-                    <p class="my-4">
-                        <strong>All resources and data will be permanently removed - including</strong>:
-                        <ul class="list-disc list-inside ml-4">
-                            <li>the account's personal team</li>
-                            <li>all application user records</li>
-                        </ul>
-                    </p>
-
-                    <x-input-error for="delete_user" class="mt-2" />
-                </x-slot>
-
-                <x-slot name="footer">
-                    <x-secondary-button wire:click="$toggle('confirmingUserDeletion')" wire:loading.attr="disabled">
-                        {{ __('Cancel') }}
-                    </x-secondary-button>
-
-                    <x-danger-button class="ml-2" wire:click="deleteUser" wire:loading.attr="disabled">
-                        {{ __('Delete Account') }}
-                    </x-danger-button>
-                </x-slot>
-            </x-dialog-modal>
         </x-slot>
     </x-action-section>
 
 
+    <x-filament-actions::modals />
 </div>
