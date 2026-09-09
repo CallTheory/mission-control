@@ -4,168 +4,39 @@ declare(strict_types=1);
 
 namespace App\Livewire\Utilities;
 
-use App\Jobs\SendVoicemailDigest as SendVoicemailDigestJob;
+use App\Jobs\SendVoicemailDigest;
 use App\Models\Stats\Clients\Overview;
 use App\Models\VoicemailDigest as VoicemailDigestModel;
 use Carbon\Carbon;
 use DateTimeZone;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-class VoicemailDigest extends Component
+class VoicemailDigest extends Component implements HasActions, HasSchemas, HasTable
 {
-    use WithPagination;
-
-    public int $editingRecord = 0;
-
-    public bool $showCreateModal = false;
-
-    public bool $showSendNowModal = false;
-
-    public int $sendNowScheduleId = 0;
-
-    public array $state = [];
-
-    public array $sendNowState = [];
-
-    public $listeners = ['saved' => '$refresh'];
-
-    protected array $rules = [
-        'state.name' => 'required|string|max:100',
-        'state.client_number' => 'nullable|string|max:50',
-        'state.billing_code' => 'nullable|string|max:50',
-        'state.recipients' => 'required|string',
-        'state.subject' => 'required|string|max:255',
-        'state.schedule_type' => 'required|in:immediate,hourly,daily,weekly,monthly',
-        'state.schedule_time' => 'nullable|string',
-        'state.schedule_day_of_week' => 'nullable|integer|min:0|max:6',
-        'state.schedule_day_of_month' => 'nullable|integer|min:1|max:31',
-        'state.include_transcription' => 'boolean',
-        'state.include_call_metadata' => 'boolean',
-        'state.timezone' => 'required|string',
-    ];
-
-    public function mount(): void
-    {
-        $this->resetState();
-    }
-
-    public function resetState(): void
-    {
-        $this->state = [
-            'name' => '',
-            'client_number' => '',
-            'billing_code' => '',
-            'recipients' => '',
-            'subject' => 'Voicemail Digest',
-            'schedule_type' => 'daily',
-            'schedule_time' => '08:00',
-            'schedule_day_of_week' => 0,
-            'schedule_day_of_month' => 1,
-            'include_transcription' => true,
-            'include_call_metadata' => true,
-            'timezone' => 'America/New_York',
-        ];
-    }
-
-    public function openCreateModal(): void
-    {
-        $this->resetState();
-        $this->showCreateModal = true;
-    }
-
-    public function closeCreateModal(): void
-    {
-        $this->showCreateModal = false;
-        $this->resetState();
-    }
-
-    public function create(): void
-    {
-        $this->validate();
-
-        $team = request()->user()->currentTeam;
-
-        $isImmediate = $this->state['schedule_type'] === 'immediate';
-
-        VoicemailDigestModel::create([
-            'team_id' => $team->id,
-            'name' => $this->state['name'],
-            'client_number' => $this->state['client_number'] ?: null,
-            'billing_code' => $this->state['billing_code'] ?: null,
-            'recipients' => array_filter(array_map('trim', explode("\n", $this->state['recipients']))),
-            'subject' => $this->state['subject'],
-            'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $isImmediate ? null : ($this->state['schedule_time'] ?: null),
-            'schedule_day_of_week' => $isImmediate ? null : $this->state['schedule_day_of_week'],
-            'schedule_day_of_month' => $isImmediate ? null : $this->state['schedule_day_of_month'],
-            'include_transcription' => $this->state['include_transcription'],
-            'include_call_metadata' => $this->state['include_call_metadata'],
-            'timezone' => $this->state['timezone'],
-            'enabled' => true,
-            'next_run_at' => null,
-        ]);
-
-        $this->closeCreateModal();
-        $this->dispatch('saved');
-    }
-
-    public function edit(VoicemailDigestModel $schedule): void
-    {
-        $this->state = [
-            'name' => $schedule->name,
-            'client_number' => $schedule->client_number ?? '',
-            'billing_code' => $schedule->billing_code ?? '',
-            'recipients' => implode("\n", $schedule->recipients ?? []),
-            'subject' => $schedule->subject,
-            'schedule_type' => $schedule->schedule_type,
-            'schedule_time' => $schedule->schedule_time ?? '08:00',
-            'schedule_day_of_week' => $schedule->schedule_day_of_week ?? 0,
-            'schedule_day_of_month' => $schedule->schedule_day_of_month ?? 1,
-            'include_transcription' => $schedule->include_transcription,
-            'include_call_metadata' => $schedule->include_call_metadata,
-            'timezone' => $schedule->timezone,
-        ];
-        $this->editingRecord = $schedule->id;
-    }
-
-    public function closeEditModal(): void
-    {
-        $this->state = [];
-        $this->editingRecord = 0;
-    }
-
-    public function update(VoicemailDigestModel $schedule): void
-    {
-        $this->validate();
-
-        $isImmediate = $this->state['schedule_type'] === 'immediate';
-
-        $schedule->update([
-            'name' => $this->state['name'],
-            'client_number' => $this->state['client_number'] ?: null,
-            'billing_code' => $this->state['billing_code'] ?: null,
-            'recipients' => array_filter(array_map('trim', explode("\n", $this->state['recipients']))),
-            'subject' => $this->state['subject'],
-            'schedule_type' => $this->state['schedule_type'],
-            'schedule_time' => $isImmediate ? null : ($this->state['schedule_time'] ?: null),
-            'schedule_day_of_week' => $isImmediate ? null : $this->state['schedule_day_of_week'],
-            'schedule_day_of_month' => $isImmediate ? null : $this->state['schedule_day_of_month'],
-            'include_transcription' => $this->state['include_transcription'],
-            'include_call_metadata' => $this->state['include_call_metadata'],
-            'timezone' => $this->state['timezone'],
-        ]);
-
-        // Recalculate next run time
-        $schedule->next_run_at = $schedule->calculateNextRunAt();
-        $schedule->save();
-
-        $this->closeEditModal();
-        $this->dispatch('saved');
-    }
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
 
     public function delete(VoicemailDigestModel $schedule): void
     {
@@ -183,59 +54,6 @@ class VoicemailDigest extends Component
 
         $schedule->save();
         $this->dispatch('saved');
-    }
-
-    public function openSendNowModal(int $scheduleId): void
-    {
-        $schedule = VoicemailDigestModel::find($scheduleId);
-        if (! $schedule) {
-            return;
-        }
-
-        $this->sendNowScheduleId = $scheduleId;
-
-        // Pre-fill dates based on schedule type
-        [$defaultStart, $defaultEnd] = $schedule->getDateRange();
-
-        $this->sendNowState = [
-            'start_date' => $defaultStart->format('Y-m-d\TH:i'),
-            'end_date' => $defaultEnd->format('Y-m-d\TH:i'),
-        ];
-
-        $this->showSendNowModal = true;
-    }
-
-    public function closeSendNowModal(): void
-    {
-        $this->showSendNowModal = false;
-        $this->sendNowScheduleId = 0;
-        $this->sendNowState = [];
-    }
-
-    public function sendNow(): void
-    {
-        $this->validate([
-            'sendNowState.start_date' => 'required|date',
-            'sendNowState.end_date' => 'required|date|after:sendNowState.start_date',
-        ]);
-
-        $schedule = VoicemailDigestModel::find($this->sendNowScheduleId);
-        if (! $schedule) {
-            return;
-        }
-
-        $startDate = Carbon::parse($this->sendNowState['start_date'], $schedule->timezone);
-        $endDate = Carbon::parse($this->sendNowState['end_date'], $schedule->timezone);
-
-        SendVoicemailDigestJob::dispatch($schedule, $startDate, $endDate);
-
-        $this->closeSendNowModal();
-        $this->dispatch('saved');
-
-        Notification::make()
-            ->title('Voicemail digest job has been queued.')
-            ->success()
-            ->send();
     }
 
     public function getTimezones(): array
@@ -291,20 +109,182 @@ class VoicemailDigest extends Component
         }
     }
 
+    /**
+     * The schedule form, shared by create and edit.
+     *
+     * @return array<int, mixed>
+     */
+    private function digestSchema(): array
+    {
+        return [
+            TextInput::make('name')->required()->maxLength(100),
+
+            TextInput::make('client_number')->label('Account')->maxLength(50)
+                ->helperText('Leave blank to cover every account the team can see.'),
+
+            TextInput::make('billing_code')->label('Billing Code')->maxLength(50),
+
+            Textarea::make('recipients')->required()->rows(3)->helperText('One address per line.'),
+
+            TextInput::make('subject')->required()->maxLength(255),
+
+            Select::make('schedule_type')
+                ->options(fn (): array => $this->getScheduleTypes())
+                ->required()
+                ->live()
+                ->default('immediate'),
+
+            TimePicker::make('schedule_time')
+                ->label('Time')
+                ->seconds(false)
+                ->visible(fn (Get $get): bool => ! in_array($get('schedule_type'), ['immediate', null], true)),
+
+            Select::make('schedule_day_of_week')
+                ->label('Day of Week')
+                ->options(fn (): array => $this->getDaysOfWeek())
+                ->visible(fn (Get $get): bool => $get('schedule_type') === 'weekly'),
+
+            TextInput::make('schedule_day_of_month')
+                ->label('Day of Month')->numeric()->minValue(1)->maxValue(31)
+                ->visible(fn (Get $get): bool => $get('schedule_type') === 'monthly'),
+
+            Toggle::make('include_transcription')->label('Include transcription'),
+            Toggle::make('include_call_metadata')->label('Include call metadata'),
+
+            Select::make('timezone')
+                ->options(fn (): array => collect($this->getTimezones())->mapWithKeys(fn (string $tz): array => [$tz => $tz])->all())
+                ->searchable()->required()->default('UTC'),
+        ];
+    }
+
+    /**
+     * An immediate digest carries no timing columns, which the isImmediate branches
+     * expressed by hand in create() and again in update().
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function toAttributes(array $data): array
+    {
+        $isImmediate = ($data['schedule_type'] ?? 'immediate') === 'immediate';
+
+        return [
+            ...$data,
+            'client_number' => $data['client_number'] ?: null,
+            'billing_code' => $data['billing_code'] ?: null,
+            'recipients' => collect(preg_split('/\r\n|\r|\n/', (string) ($data['recipients'] ?? '')))
+                ->map(fn (string $line): string => trim($line))->filter()->values()->all(),
+            'schedule_time' => $isImmediate ? null : ($data['schedule_time'] ?: null),
+            'schedule_day_of_week' => $isImmediate ? null : ($data['schedule_day_of_week'] ?? null),
+            'schedule_day_of_month' => $isImmediate ? null : ($data['schedule_day_of_month'] ?? null),
+        ];
+    }
+
+    public function createDigestAction(): Action
+    {
+        return Action::make('createDigest')
+            ->label('New Digest')
+            ->modalHeading('New Voicemail Digest')
+            ->schema($this->digestSchema())
+            ->action(function (array $data): void {
+                VoicemailDigestModel::create([
+                    ...$this->toAttributes($data),
+                    'team_id' => request()->user()->currentTeam->id,
+                    'enabled' => true,
+                    'next_run_at' => null,
+                ]);
+
+                Notification::make()->title('Digest created.')->success()->send();
+            });
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(fn (): Builder => VoicemailDigestModel::query()
+                ->where('team_id', request()->user()->currentTeam->id))
+            ->columns([
+                TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('client_number')->label('Account')->placeholder('All accounts')->searchable(),
+                TextColumn::make('schedule_type')->label('Schedule')->badge()
+                    ->formatStateUsing(fn (string $state): string => $this->getScheduleTypes()[$state] ?? $state),
+                TextColumn::make('last_run_at')->label('Last Run')->dateTime()->placeholder('Never')->sortable(),
+                TextColumn::make('next_run_at')->label('Next Run')->dateTime()->placeholder('—')->sortable(),
+                IconColumn::make('enabled')->boolean(),
+            ])
+            ->headerActions([
+                $this->createDigestAction(),
+            ])
+            ->recordActions([
+                Action::make('sendNow')
+                    ->label('Send Now')
+                    ->link()
+                    ->modalHeading('Send Digest Now')
+                    ->fillForm(function (VoicemailDigestModel $record): array {
+                        [$start, $end] = $record->getDateRange();
+
+                        return ['start_date' => $start, 'end_date' => $end];
+                    })
+                    ->schema([
+                        DateTimePicker::make('start_date')->label('Start')->required()->seconds(false),
+                        DateTimePicker::make('end_date')->label('End')->required()->seconds(false)->after('start_date'),
+                    ])
+                    ->action(function (VoicemailDigestModel $record, array $data): void {
+                        SendVoicemailDigest::dispatch(
+                            $record,
+                            Carbon::parse($data['start_date'], $record->timezone),
+                            Carbon::parse($data['end_date'], $record->timezone),
+                        );
+
+                        Notification::make()
+                            ->title('Voicemail digest job has been queued. Check the Digest History tab for results.')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('edit')
+                    ->label('Edit')
+                    ->link()
+                    ->modalHeading('Edit Voicemail Digest')
+                    ->fillForm(fn (VoicemailDigestModel $record): array => [
+                        ...$record->only([
+                            'name', 'client_number', 'billing_code', 'subject', 'schedule_type',
+                            'schedule_time', 'schedule_day_of_week', 'schedule_day_of_month',
+                            'include_transcription', 'include_call_metadata', 'timezone',
+                        ]),
+                        'recipients' => implode("\n", $record->recipients ?? []),
+                    ])
+                    ->schema($this->digestSchema())
+                    ->action(function (VoicemailDigestModel $record, array $data): void {
+                        $record->fill($this->toAttributes($data));
+
+                        if ($record->schedule_type !== 'immediate') {
+                            $record->next_run_at = $record->calculateNextRunAt();
+                        }
+
+                        $record->save();
+
+                        Notification::make()->title('Digest updated.')->success()->send();
+                    }),
+
+                Action::make('toggleEnabled')
+                    ->label(fn (VoicemailDigestModel $record): string => $record->enabled ? 'Disable' : 'Enable')
+                    ->link()
+                    ->action(fn (VoicemailDigestModel $record) => $this->toggleEnabled($record)),
+
+                Action::make('delete')
+                    ->label('Delete')->link()->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete this digest?')
+                    ->action(fn (VoicemailDigestModel $record) => $this->delete($record)),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('No voicemail digests yet.');
+    }
+
     public function render(): View
     {
-        $team = request()->user()->currentTeam;
-
-        $schedules = VoicemailDigestModel::where('team_id', $team->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(25);
-
-        return view('livewire.utilities.voicemail-digest', [
-            'schedules' => $schedules,
-            'timezones' => $this->getTimezones(),
-            'scheduleTypes' => $this->getScheduleTypes(),
-            'daysOfWeek' => $this->getDaysOfWeek(),
-            'clients' => $this->getClients(),
-        ]);
+        return view('livewire.utilities.voicemail-digest');
     }
 }

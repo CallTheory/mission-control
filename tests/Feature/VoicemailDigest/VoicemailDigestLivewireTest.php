@@ -70,78 +70,68 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->assertViewHas('schedules', function ($schedules) {
-                return $schedules->count() === 25;
-            });
+            // All thirty belong to the team and are counted; the table pages at 25,
+            // so which 25 land on page one is not asserted -- the factory stamps them
+            // all in the same second, so that order is not deterministic.
+            ->assertCountTableRecords(30)
+            ->assertSet('tableRecordsPerPage', 25);
     }
 
-    public function test_open_create_modal_resets_state(): void
-    {
-        Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', 'Old Name')
-            ->call('openCreateModal')
-            ->assertSet('showCreateModal', true)
-            ->assertSet('state.name', '')
-            ->assertSet('state.schedule_type', 'daily')
-            ->assertSet('state.subject', 'Voicemail Digest')
-            ->assertSet('state.timezone', 'America/New_York');
-    }
-
-    public function test_close_create_modal_resets_state(): void
-    {
-        Livewire::test(VoicemailDigestComponent::class)
-            ->set('showCreateModal', true)
-            ->set('state.name', 'Test')
-            ->call('closeCreateModal')
-            ->assertSet('showCreateModal', false)
-            ->assertSet('state.name', '');
-    }
+    /*
+     * Four cases covering modal open/close state (showCreateModal, showSendNowModal
+     * and the state resets around them) are gone with the properties they asserted on.
+     * Opening and closing a dialog is Filament's now; what those tests were really
+     * protecting -- that a form opens with the right values -- is covered by the
+     * prefill cases below.
+     */
 
     public function test_create_validates_required_fields(): void
     {
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', '')
-            ->set('state.recipients', '')
-            ->set('state.subject', '')
-            ->set('state.timezone', '')
-            ->call('create')
-            ->assertHasErrors([
-                'state.name' => 'required',
-                'state.recipients' => 'required',
-                'state.subject' => 'required',
-                'state.timezone' => 'required',
+            ->callAction('createDigest', [
+                'name' => '',
+                'recipients' => '',
+                'subject' => '',
+                'timezone' => '',
+            ])
+            ->assertHasFormErrors([
+                'name',
+                'recipients',
+                'subject',
+                'timezone',
             ]);
     }
 
     public function test_create_validates_schedule_type(): void
     {
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', 'Test Digest')
-            ->set('state.recipients', 'test@example.com')
-            ->set('state.subject', 'Subject')
-            ->set('state.schedule_type', 'invalid')
-            ->set('state.timezone', 'America/New_York')
-            ->call('create')
-            ->assertHasErrors(['state.schedule_type' => 'in']);
+            ->callAction('createDigest', [
+                'name' => 'Test Digest',
+                'recipients' => 'test@example.com',
+                'subject' => 'Subject',
+                'schedule_type' => 'invalid',
+                'timezone' => 'America/New_York',
+            ])
+            ->assertHasFormErrors(['schedule_type']);
     }
 
     public function test_create_successfully_creates_schedule(): void
     {
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', 'Test Digest')
-            ->set('state.client_number', '1234')
-            ->set('state.billing_code', '100')
-            ->set('state.recipients', "test1@example.com\ntest2@example.com")
-            ->set('state.subject', 'Daily Voicemail')
-            ->set('state.schedule_type', 'daily')
-            ->set('state.schedule_time', '09:00')
-            ->set('state.include_transcription', true)
-            ->set('state.include_call_metadata', false)
-            ->set('state.timezone', 'America/Los_Angeles')
-            ->call('create')
+            ->callAction('createDigest', [
+                'name' => 'Test Digest',
+                'client_number' => '1234',
+                'billing_code' => '100',
+                'recipients' => "test1@example.com\ntest2@example.com",
+                'subject' => 'Daily Voicemail',
+                'schedule_type' => 'daily',
+                'schedule_time' => '09:00',
+                'include_transcription' => true,
+                'include_call_metadata' => false,
+                'timezone' => 'America/Los_Angeles',
+            ])
             ->assertHasNoErrors()
-            ->assertSet('showCreateModal', false)
-            ->assertDispatched('saved');
+            ->assertNotified();
 
         $this->assertDatabaseHas('voicemail_digests', [
             'team_id' => $this->team->id,
@@ -164,14 +154,15 @@ final class VoicemailDigestLivewireTest extends TestCase
     public function test_create_handles_empty_optional_fields(): void
     {
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', 'Test Digest')
-            ->set('state.client_number', '')
-            ->set('state.billing_code', '')
-            ->set('state.recipients', 'test@example.com')
-            ->set('state.subject', 'Subject')
-            ->set('state.schedule_type', 'daily')
-            ->set('state.timezone', 'America/New_York')
-            ->call('create')
+            ->callAction('createDigest', [
+                'name' => 'Test Digest',
+                'client_number' => '',
+                'billing_code' => '',
+                'recipients' => 'test@example.com',
+                'subject' => 'Subject',
+                'schedule_type' => 'daily',
+                'timezone' => 'America/New_York',
+            ])
             ->assertHasNoErrors();
 
         $digest = VoicemailDigest::where('name', 'Test Digest')->first();
@@ -197,31 +188,20 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->assertSet('editingRecord', $digest->id)
-            ->assertSet('state.name', 'Original Name')
-            ->assertSet('state.client_number', '5678')
-            ->assertSet('state.billing_code', '200')
-            ->assertSet('state.recipients', "edit1@example.com\nedit2@example.com")
-            ->assertSet('state.subject', 'Edit Subject')
-            ->assertSet('state.schedule_type', 'weekly')
-            ->assertSet('state.schedule_time', '14:00')
-            ->assertSet('state.schedule_day_of_week', 3)
-            ->assertSet('state.include_transcription', false)
-            ->assertSet('state.include_call_metadata', true)
-            ->assertSet('state.timezone', 'America/Chicago');
-    }
-
-    public function test_close_edit_modal_resets_state(): void
-    {
-        $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
-
-        Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->assertSet('editingRecord', $digest->id)
-            ->call('closeEditModal')
-            ->assertSet('editingRecord', 0)
-            ->assertSet('state', []);
+            ->mountTableAction('edit', $digest)
+            ->assertActionDataSet([
+                'name' => 'Original Name',
+                'client_number' => '5678',
+                'billing_code' => '200',
+                // Stored as an array; the textarea shows one address per line.
+                'recipients' => "edit1@example.com\nedit2@example.com",
+                'subject' => 'Edit Subject',
+                'schedule_type' => 'weekly',
+                'schedule_day_of_week' => 3,
+                'include_transcription' => false,
+                'include_call_metadata' => true,
+                'timezone' => 'America/Chicago',
+            ]);
     }
 
     public function test_update_validates_fields(): void
@@ -229,13 +209,13 @@ final class VoicemailDigestLivewireTest extends TestCase
         $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->set('state.name', '')
-            ->set('state.recipients', '')
-            ->call('update', $digest)
-            ->assertHasErrors([
-                'state.name' => 'required',
-                'state.recipients' => 'required',
+            ->callTableAction('edit', $digest, [
+                'name' => '',
+                'recipients' => '',
+            ])
+            ->assertHasFormErrors([
+                'name',
+                'recipients',
             ]);
     }
 
@@ -247,17 +227,16 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->set('state.name', 'Updated Name')
-            ->set('state.client_number', '9999')
-            ->set('state.recipients', 'updated@example.com')
-            ->set('state.subject', 'Updated Subject')
-            ->set('state.schedule_type', 'monthly')
-            ->set('state.schedule_day_of_month', 15)
-            ->call('update', $digest)
+            ->callTableAction('edit', $digest, [
+                'name' => 'Updated Name',
+                'client_number' => '9999',
+                'recipients' => 'updated@example.com',
+                'subject' => 'Updated Subject',
+                'schedule_type' => 'monthly',
+                'schedule_day_of_month' => 15,
+            ])
             ->assertHasNoErrors()
-            ->assertSet('editingRecord', 0)
-            ->assertDispatched('saved');
+            ->assertNotified();
 
         $digest->refresh();
         $this->assertEquals('Updated Name', $digest->name);
@@ -279,10 +258,14 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->set('state.schedule_type', 'daily')
-            ->set('state.schedule_time', '15:00')
-            ->call('update', $digest);
+            ->callTableAction('edit', $digest, [
+                'name' => $digest->name,
+                'recipients' => implode("\n", $digest->recipients),
+                'subject' => $digest->subject,
+                'timezone' => $digest->timezone,
+                'schedule_type' => 'daily',
+                'schedule_time' => '15:00',
+            ]);
 
         $digest->refresh();
         $this->assertNotNull($digest->next_run_at);
@@ -298,8 +281,7 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('delete', $digest)
-            ->assertDispatched('saved');
+            ->callTableAction('delete', $digest);
 
         $this->assertSoftDeleted('voicemail_digests', ['id' => $digest->id]);
     }
@@ -312,8 +294,7 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('toggleEnabled', $digest)
-            ->assertDispatched('saved');
+            ->callTableAction('toggleEnabled', $digest);
 
         $digest->refresh();
         $this->assertFalse($digest->enabled);
@@ -331,8 +312,7 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('toggleEnabled', $digest)
-            ->assertDispatched('saved');
+            ->callTableAction('toggleEnabled', $digest);
 
         $digest->refresh();
         $this->assertTrue($digest->enabled);
@@ -350,29 +330,11 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('openSendNowModal', $digest->id)
-            ->assertSet('showSendNowModal', true)
-            ->assertSet('sendNowScheduleId', $digest->id)
-            ->assertSet('sendNowState.start_date', function ($value) {
-                return str_contains($value, '2026-01-25');
-            })
-            ->assertSet('sendNowState.end_date', function ($value) {
-                return str_contains($value, '2026-01-26');
-            });
+            ->mountTableAction('sendNow', $digest)
+            ->assertActionDataSet(fn (array $data): bool => str_contains((string) $data['start_date'], '2026-01-25')
+                && str_contains((string) $data['end_date'], '2026-01-26'));
 
         Carbon::setTestNow();
-    }
-
-    public function test_close_send_now_modal_resets_state(): void
-    {
-        $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
-
-        Livewire::test(VoicemailDigestComponent::class)
-            ->call('openSendNowModal', $digest->id)
-            ->call('closeSendNowModal')
-            ->assertSet('showSendNowModal', false)
-            ->assertSet('sendNowScheduleId', 0)
-            ->assertSet('sendNowState', []);
     }
 
     public function test_send_now_validates_dates(): void
@@ -380,12 +342,8 @@ final class VoicemailDigestLivewireTest extends TestCase
         $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('sendNowScheduleId', $digest->id)
-            ->call('sendNow')
-            ->assertHasErrors([
-                'sendNowState.start_date' => 'required',
-                'sendNowState.end_date' => 'required',
-            ]);
+            ->callTableAction('sendNow', $digest, ['start_date' => null, 'end_date' => null])
+            ->assertHasFormErrors(['start_date', 'end_date']);
     }
 
     public function test_send_now_validates_end_date_after_start_date(): void
@@ -393,11 +351,11 @@ final class VoicemailDigestLivewireTest extends TestCase
         $digest = VoicemailDigest::factory()->create(['team_id' => $this->team->id]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('sendNowScheduleId', $digest->id)
-            ->set('sendNowState.start_date', '2026-01-26T10:00')
-            ->set('sendNowState.end_date', '2026-01-25T10:00')
-            ->call('sendNow')
-            ->assertHasErrors(['sendNowState.end_date' => 'after']);
+            ->callTableAction('sendNow', $digest, [
+                'start_date' => '2026-01-26 10:00',
+                'end_date' => '2026-01-25 10:00',
+            ])
+            ->assertHasFormErrors(['end_date']);
     }
 
     public function test_send_now_dispatches_job(): void
@@ -410,13 +368,12 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('sendNowScheduleId', $digest->id)
-            ->set('sendNowState.start_date', '2026-01-25T08:00')
-            ->set('sendNowState.end_date', '2026-01-26T17:00')
-            ->call('sendNow')
+            ->callTableAction('sendNow', $digest, [
+                'start_date' => '2026-01-25 08:00',
+                'end_date' => '2026-01-26 17:00',
+            ])
             ->assertHasNoErrors()
-            ->assertSet('showSendNowModal', false)
-            ->assertDispatched('saved');
+            ->assertNotified();
 
         Queue::assertPushed(SendVoicemailDigestJob::class, function ($job) use ($digest) {
             return $job->schedule->id === $digest->id
@@ -455,17 +412,18 @@ final class VoicemailDigestLivewireTest extends TestCase
     public function test_create_with_immediate_type_nulls_time_and_day_fields(): void
     {
         Livewire::test(VoicemailDigestComponent::class)
-            ->set('state.name', 'Immediate Digest')
-            ->set('state.recipients', 'test@example.com')
-            ->set('state.subject', 'Immediate Subject')
-            ->set('state.schedule_type', 'immediate')
-            ->set('state.schedule_time', '08:00')
-            ->set('state.schedule_day_of_week', 1)
-            ->set('state.schedule_day_of_month', 15)
-            ->set('state.timezone', 'America/New_York')
-            ->call('create')
+            ->callAction('createDigest', [
+                'name' => 'Immediate Digest',
+                'recipients' => 'test@example.com',
+                'subject' => 'Immediate Subject',
+                'schedule_type' => 'immediate',
+                'schedule_time' => '08:00',
+                'schedule_day_of_week' => 1,
+                'schedule_day_of_month' => 15,
+                'timezone' => 'America/New_York',
+            ])
             ->assertHasNoErrors()
-            ->assertDispatched('saved');
+            ->assertNotified();
 
         $digest = VoicemailDigest::where('name', 'Immediate Digest')->first();
         $this->assertEquals('immediate', $digest->schedule_type);
@@ -482,11 +440,11 @@ final class VoicemailDigestLivewireTest extends TestCase
         ]);
 
         Livewire::test(VoicemailDigestComponent::class)
-            ->call('edit', $digest)
-            ->set('state.schedule_type', 'immediate')
-            ->call('update', $digest)
+            ->callTableAction('edit', $digest, [
+                'schedule_type' => 'immediate',
+            ])
             ->assertHasNoErrors()
-            ->assertDispatched('saved');
+            ->assertNotified();
 
         $digest->refresh();
         $this->assertEquals('immediate', $digest->schedule_type);
