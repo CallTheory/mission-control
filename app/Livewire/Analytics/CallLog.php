@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Analytics;
 
-use App\Models\Stats\Agents\Listing;
-use App\Models\Stats\Calls\CallLog as CallLogStats;
+use App\Livewire\Concerns\FiltersCallLog;
 use App\Models\Stats\Helpers;
-use App\Models\Stats\Messages\Keywords;
-use App\Models\System\Settings;
 use App\Support\Tables\StatRecords;
 use Carbon\Carbon;
 use Exception;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -32,47 +25,15 @@ use Livewire\Component;
 
 class CallLog extends Component implements HasActions, HasSchemas, HasTable
 {
+    use FiltersCallLog;
     use InteractsWithActions;
     use InteractsWithSchemas;
     use InteractsWithTable;
-
-    /** Call types, keyed by id, for the filter select. */
-    public array $ck = [];
-
-    /** Agent listing for the filter select. */
-    public array $agents = [];
-
-    /** Message keywords for the filter select. */
-    public array $keywords = [];
 
     /** The generated T-SQL and its bindings, surfaced by the debug panel. */
     public array $sql_params = [];
 
     public string $sql_code = '';
-
-    /** Switch data timezone; the Amtelco timestamps are recorded in it. */
-    public string $timezone = 'UTC';
-
-    public function mount(): void
-    {
-        try {
-            $this->agents = (new Listing)->results;
-        } catch (Exception) {
-            $this->agents = [];
-        }
-
-        try {
-            $this->keywords = (new Keywords)->results;
-        } catch (Exception) {
-            $this->keywords = [];
-        }
-
-        $ck = Helpers::callTypes();
-        asort($ck);
-        $this->ck = $ck;
-
-        $this->timezone = Settings::firstOrFail()->switch_data_timezone ?? 'UTC';
-    }
 
     public function table(Table $table): Table
     {
@@ -127,33 +88,7 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
             ])
             ->filters([
                 Filter::make('call')
-                    ->schema([
-                        DateTimePicker::make('start_date')
-                            ->label('Start Date ('.$this->timezone.')')
-                            ->seconds(false)
-                            ->default(now($this->timezone)->subHour()),
-                        DateTimePicker::make('end_date')
-                            ->label('End Date ('.$this->timezone.')')
-                            ->seconds(false)
-                            ->default(now($this->timezone)),
-                        TextInput::make('client_number')->label('Client Number'),
-                        TextInput::make('ani')->label('ANI'),
-                        Select::make('call_type')->label('Call Type')->options($this->ck)->searchable(),
-                        Select::make('agent')
-                            ->label('Agent')
-                            ->options(collect($this->agents)->pluck('Name', 'Name')->all())
-                            ->searchable(),
-                        TextInput::make('min_duration')->label('Min. Duration (seconds)')->numeric(),
-                        TextInput::make('max_duration')->label('Max. Duration (seconds)')->numeric(),
-                        Select::make('keyword')
-                            ->label('Keyword')
-                            ->options(collect($this->keywords)->pluck('Keyword', 'Keyword')->all())
-                            ->searchable(),
-                        TextInput::make('keyword_search')->label('Keyword Contains'),
-                        Checkbox::make('has_messages')->label('Has messages'),
-                        Checkbox::make('has_recordings')->label('Has recordings'),
-                        Checkbox::make('has_video')->label('Has screen capture'),
-                    ])
+                    ->schema($this->callLogFilterSchema())
                     ->columns(3)
                     // Every filter is applied inside the T-SQL rather than over the
                     // returned rows, so there is no query builder to modify here.
@@ -173,39 +108,8 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
      */
     private function callRows(array $filters, ?string $sortColumn, ?string $sortDirection): array
     {
-        $f = $filters['call'] ?? [];
-        $team = request()->user()->currentTeam;
-
-        $hasMessages = (bool) ($f['has_messages'] ?? false);
-        $hasRecordings = (bool) ($f['has_recordings'] ?? false);
-        $hasVideo = (bool) ($f['has_video'] ?? false);
-
         try {
-            $callLog = new CallLogStats(
-                Carbon::parse($f['start_date'] ?? now($this->timezone)->subHour())->format('Y-m-d H:i:s'),
-                Carbon::parse($f['end_date'] ?? now($this->timezone))->format('Y-m-d H:i:s'),
-                $this->timezone,
-                $f['client_number'] ?? null,
-                $f['ani'] ?? null,
-                $f['call_type'] ?? null,
-                $f['agent'] ?? null,
-                $f['min_duration'] ?? null,
-                $f['max_duration'] ?? null,
-                $f['keyword'] ?? null,
-                $f['keyword_search'] ?? null,
-                // CallLogStats allow-lists both before interpolating them into its
-                // ORDER BY, so an unexpected column falls back rather than injecting.
-                $this->sortColumnToSql($sortColumn),
-                $sortDirection,
-                $hasMessages,
-                $hasRecordings,
-                $hasVideo,
-                // "any" is the absence of a specific asset requirement, which is what
-                // the old has_any checkbox meant.
-                ! $hasMessages && ! $hasRecordings && ! $hasVideo,
-                $team->allowed_accounts,
-                $team->allowed_billing,
-            );
+            $callLog = $this->callLogQuery($filters['call'] ?? [], $sortColumn, $sortDirection);
 
             $this->sql_code = $callLog->tsql();
             $this->sql_params = $callLog->parameters;
@@ -214,17 +118,6 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
         } catch (Exception) {
             return [];
         }
-    }
-
-    /**
-     * Map a table column name onto the SQL expression the stats query orders by.
-     */
-    private function sortColumnToSql(?string $column): string
-    {
-        return match ($column) {
-            'CallDuration' => 'CallDuration',
-            default => 'statCallStart.Stamp',
-        };
     }
 
     public function placeholder(): string
