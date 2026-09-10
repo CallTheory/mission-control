@@ -1,6 +1,5 @@
 @section('title', 'Config Editor')
 @push('scripts')
-    @vite('resources/js/config-editor.js')
 @endpush
 <x-app-layout>
     <x-slot name="header">

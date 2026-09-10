@@ -15,8 +15,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/scss/diff-table.scss',
-                'resources/js/config-editor.js'
+                'resources/scss/diff-table.scss'
             ],
             refresh: true, // hot refresh
         }),

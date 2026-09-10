@@ -5,13 +5,26 @@ declare(strict_types=1);
 namespace App\Livewire\Utilities;
 
 use App\Models\DataSource;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\CodeEditor;
+use Filament\Forms\Components\CodeEditor\Enums\Language;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Component;
 
-class ConfigEditor extends Component
+class ConfigEditor extends Component implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     public string $encryptedInput = '';
 
     public string $xmlContent = '';
@@ -315,7 +328,6 @@ class ConfigEditor extends Component
             }
 
             $this->xmlContent = $decrypted;
-            $this->dispatch('xmlUpdated', xml: $this->xmlContent);
         } catch (\Exception $e) {
             $this->errorMessage = 'Decryption error: '.$e->getMessage();
         }
@@ -348,6 +360,127 @@ class ConfigEditor extends Component
         } catch (\Exception $e) {
             $this->errorMessage = 'Encryption error: '.$e->getMessage();
         }
+    }
+
+    /**
+     * The XML editor and the two ciphertext boxes.
+     *
+     * The editor was a CodeMirror instance mounted by hand: a wire:ignore div, an
+     * Alpine component polling for window.initConfigEditor, a bespoke resources/js
+     * bundle, and an xmlUpdated event to push server-side changes back into it.
+     * Filament's CodeEditor is the same editor, bound like any other field, so all of
+     * that goes -- including the 424 kB chunk it needed.
+     */
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Textarea::make('encryptedInput')
+                    ->label('Encrypted Input')
+                    ->rows(3)
+                    ->autosize()
+                    ->helperText('Base64 ciphertext from a config field or schedule record.'),
+
+                CodeEditor::make('xmlContent')
+                    ->label('Configuration XML')
+                    ->language(Language::Xml),
+
+                Textarea::make('encryptedOutput')
+                    ->label('Encrypted Output')
+                    ->rows(3)
+                    ->autosize()
+                    ->readOnly()
+                    ->helperText('Paste this back into the source field.'),
+            ])
+            ->statePath('');
+    }
+
+    public function decryptAction(): Action
+    {
+        return Action::make('decrypt')
+            ->label('Decrypt')
+            ->action(function (): void {
+                $this->decrypt();
+
+                if ($this->errorMessage !== '') {
+                    Notification::make()->title($this->errorMessage)->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Decrypted.')->success()->send();
+            });
+    }
+
+    public function encryptAction(): Action
+    {
+        return Action::make('encrypt')
+            ->label('Encrypt')
+            ->color('primary')
+            ->action(function (): void {
+                $this->encrypt();
+
+                if ($this->errorMessage !== '') {
+                    Notification::make()->title($this->errorMessage)->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Encrypted. Copy the output below.')->success()->send();
+            });
+    }
+
+    public function loadFromDatabaseAction(): Action
+    {
+        return Action::make('loadFromDatabase')
+            ->label('Load from Database')
+            ->color('gray')
+            ->action(function (): void {
+                $this->loadFromDatabase();
+
+                Notification::make()
+                    ->title($this->databaseLoaded ? 'Sources loaded.' : 'Unable to reach the configuration database.')
+                    ->status($this->databaseLoaded ? 'success' : 'danger')
+                    ->send();
+            });
+    }
+
+    public function saveToScheduleAction(): Action
+    {
+        return Action::make('saveToSchedule')
+            ->label('Save to Schedule Record')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Overwrite the schedule record?')
+            ->modalDescription('This writes the encrypted XML back to the Amtelco schedule record it came from.')
+            ->visible(fn (): bool => str_starts_with($this->activeSource, 'schedule:'))
+            ->action(function (): void {
+                $this->saveToSchedule();
+
+                Notification::make()
+                    ->title($this->errorMessage !== '' ? $this->errorMessage : 'Schedule record updated.')
+                    ->status($this->errorMessage !== '' ? 'danger' : 'success')
+                    ->send();
+            });
+    }
+
+    public function saveToEmailAccountAction(): Action
+    {
+        return Action::make('saveToEmailAccount')
+            ->label('Save to Email Account')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Overwrite the email account?')
+            ->modalDescription('This writes the encrypted XML back to the Amtelco email account it came from.')
+            ->visible(fn (): bool => str_starts_with($this->activeSource, 'email:'))
+            ->action(function (): void {
+                $this->saveToEmailAccount();
+
+                Notification::make()
+                    ->title($this->errorMessage !== '' ? $this->errorMessage : 'Email account updated.')
+                    ->status($this->errorMessage !== '' ? 'danger' : 'success')
+                    ->send();
+            });
     }
 
     public function render(): View
