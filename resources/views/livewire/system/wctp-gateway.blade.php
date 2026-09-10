@@ -81,122 +81,7 @@
 
                 <!-- Enterprise Hosts Tab -->
                 @if($activeTab === 'hosts')
-                    <div class="space-y-4">
-                        <!-- Add New Host Form -->
-                        <div class="bg-surface-2 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold mb-3">Add New Enterprise Host</h3>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-surface-fg-soft mb-1">Name</label>
-                                    <input type="text" wire:model="newHost.name" 
-                                           class="w-full border-border rounded-md shadow-sm text-sm"
-                                           placeholder="My Enterprise Host">
-                                    @error('newHost.name') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-surface-fg-soft mb-1">Sender ID</label>
-                                    <input type="text" wire:model="newHost.senderID" 
-                                           class="w-full border-border rounded-md shadow-sm text-sm"
-                                           placeholder="UNIQUE_ID">
-                                    @error('newHost.senderID') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-surface-fg-soft mb-1">Security Code</label>
-                                    <div class="flex gap-2">
-                                        <input type="text" wire:model="newHost.securityCode" 
-                                               class="flex-1 border-border rounded-md shadow-sm text-sm"
-                                               placeholder="Min 8 characters">
-                                        <button type="button" wire:click="generateSecurityCode"
-                                                class="px-3 py-1 bg-surface-3 text-surface-fg-soft rounded-md hover:bg-surface-3 text-sm">
-                                            Generate
-                                        </button>
-                                    </div>
-                                    @error('newHost.securityCode') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-surface-fg-soft mb-1">Callback URL (Optional)</label>
-                                    <input type="url" wire:model="newHost.callback_url" 
-                                           class="w-full border-border rounded-md shadow-sm text-sm"
-                                           placeholder="https://example.com/wctp">
-                                    @error('newHost.callback_url') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <button wire:click="addEnterpriseHost" 
-                                        class="px-4 py-2 bg-info text-info-fg rounded-md hover:bg-info-hover text-sm">
-                                    Add Enterprise Host
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Existing Hosts List -->
-                        <div>
-                            <h3 class="text-lg font-semibold mb-3">Existing Enterprise Hosts</h3>
-                            @if($enterpriseHosts->isEmpty())
-                                <p class="text-muted text-sm">No enterprise hosts configured yet.</p>
-                            @else
-                                <div class="space-y-3">
-                                    @foreach($enterpriseHosts as $host)
-                                        <div class="border rounded-lg p-4 {{ !$host->enabled ? 'bg-surface-2' : '' }}">
-                                            <div class="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <h4 class="font-semibold">{{ $host->name }}</h4>
-                                                    <p class="text-sm text-surface-fg-soft">
-                                                        Sender ID: <code class="bg-surface-2 px-1 rounded">{{ $host->senderID }}</code>
-                                                        @if($host->callback_url)
-                                                            | Callback: <span class="text-xs">{{ $host->callback_url }}</span>
-                                                        @endif
-                                                    </p>
-                                                </div>
-                                                <div class="flex gap-2">
-                                                    <button wire:click="toggleEnterpriseHost({{ $host->id }})"
-                                                            class="px-3 py-1 {{ $host->enabled ? 'bg-success-soft text-success-soft-fg' : 'bg-surface-2 text-surface-fg-soft' }} rounded text-sm">
-                                                        {{ $host->enabled ? 'Enabled' : 'Disabled' }}
-                                                    </button>
-                                                    @if(!$host->messages()->exists())
-                                                        <button wire:click="removeEnterpriseHost({{ $host->id }})"
-                                                                onclick="return confirm('Are you sure?')"
-                                                                class="px-3 py-1 bg-danger-soft text-danger-soft-fg rounded text-sm hover:bg-danger-soft">
-                                                            Delete
-                                                        </button>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Phone Numbers -->
-                                            <div class="mt-3">
-                                                <label class="block text-sm font-medium text-surface-fg-soft mb-1">
-                                                    Phone Numbers (comma-separated)
-                                                </label>
-                                                <div class="flex gap-2">
-                                                    <input type="text" 
-                                                           wire:model="hostPhoneNumbers.{{ $host->id }}"
-                                                           placeholder="+12025551234, +13035555678"
-                                                           class="flex-1 border-border rounded-md shadow-sm text-sm">
-                                                    <button wire:click="updateHostPhoneNumbers({{ $host->id }})"
-                                                            class="px-3 py-1 bg-info text-info-fg rounded text-sm hover:bg-info-hover">
-                                                        Update
-                                                    </button>
-                                                </div>
-                                                @if($host->phone_numbers && count($host->phone_numbers) > 0)
-                                                    <div class="mt-1 text-xs text-surface-fg-soft">
-                                                        Current: {{ implode(', ', $host->phone_numbers) }}
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                            
-                            <div class="mt-4 p-3 bg-warning-soft border border-warning rounded">
-                                <p class="text-sm text-warning">
-                                    <strong>Note:</strong> For full Enterprise Host management including detailed phone number configuration, 
-                                    visit the <a href="{{ route('utilities.enterprise-hosts') }}" class="underline">Enterprise Host Management</a> page.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    {{ $this->table }}
                 @endif
 
                 <!-- Twilio Status Tab -->
@@ -264,4 +149,5 @@
             </div>
         </div>
     </div>
+    <x-filament-actions::modals />
 </div>

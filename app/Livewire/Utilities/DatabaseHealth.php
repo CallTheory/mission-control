@@ -14,12 +14,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class DatabaseHealth extends Component
 {
-    use WithPagination;
-
     #[Url]
     public int $page;
 

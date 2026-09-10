@@ -49,25 +49,12 @@ class UiComponentsTest extends TestCase
      * The x-table set, x-status-badge, x-filter-select, x-search-input and x-card were
      * removed once every listing became a Filament table; their behaviour is covered by
      * the table tests on the components themselves. x-flash went with them once every
-     * message became a Filament notification.
+     * message became a Filament notification, and x-badge and x-toggle once Filament
+     * columns and form fields replaced their last call sites.
      */
 
-    public function test_badge_renders_with_its_semantic_colour(): void
+    public function test_page_header(): void
     {
-        $badge = $this->render('<x-badge color="green">Live</x-badge>');
-        $this->assertStringContainsString('Live', $badge);
-        $this->assertStringContainsString('bg-success-soft', $badge);
-
-        $danger = $this->render('<x-badge color="red">Failed</x-badge>');
-        $this->assertStringContainsString('bg-danger-soft', $danger);
-    }
-
-    public function test_toggle_and_page_header(): void
-    {
-        $toggle = $this->render('<x-toggle wire-model="enabled" label="Enabled" help="on/off" />');
-        $this->assertStringContainsString('wire:model="enabled"', $toggle);
-        $this->assertStringContainsString('Enabled', $toggle);
-
         $header = $this->render('<x-page-header title="Hosts"><x-slot name="actions">BTN</x-slot></x-page-header>');
         $this->assertStringContainsString('Hosts', $header);
         $this->assertStringContainsString('BTN', $header);
