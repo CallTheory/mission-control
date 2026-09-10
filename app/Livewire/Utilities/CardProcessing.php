@@ -5,6 +5,17 @@ namespace App\Livewire\Utilities;
 use App\Models\DataSource;
 use Carbon\Carbon;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -22,8 +33,11 @@ use Stripe\Stripe;
 use Stripe\StripeClient;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-class CardProcessing extends Component
+class CardProcessing extends Component implements HasActions, HasSchemas, HasTable
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+    use InteractsWithTable;
     use WithFileUploads;
 
     public $tbsExportFile;
@@ -364,6 +378,129 @@ class CardProcessing extends Component
         session()->put('utilities.card-processing.import_headers', json_encode($this->headers));
 
         $this->dispatch('saved');
+    }
+
+    /**
+     * Upload replaces the bare <input type="file"> and its save() handler: the same
+     * parsing runs, behind a field that states the accepted type and size.
+     */
+    public function uploadAction(): Action
+    {
+        return Action::make('upload')
+            ->label('Import TBS Export')
+            ->modalHeading('Import TBS Export')
+            ->schema([
+                FileUpload::make('tbsExportFile')
+                    ->label('TBS Export File')
+                    ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                    ->maxSize(2048)
+                    ->required()
+                    ->helperText('CSV exported from TBS. Up to 2 MB.'),
+            ])
+            ->action(function (array $data): void {
+                $this->tbsExportFile = $data['tbsExportFile'];
+                $this->save();
+
+                Notification::make()
+                    ->title('Import loaded. Review the rows before processing.')
+                    ->success()
+                    ->send();
+            });
+    }
+
+    /**
+     * Charging runs. Test mode talks to Stripe with the test key; live mode charges
+     * real cards, which is why it confirms in a modal that says so rather than the
+     * browser's own confirm() dialog the buttons used to rely on.
+     */
+    public function processAction(bool $production): Action
+    {
+        return Action::make($production ? 'processLive' : 'processTest')
+            ->label($production ? 'Process LIVE' : 'Process in Test Mode')
+            ->color($production ? 'danger' : 'gray')
+            ->requiresConfirmation()
+            ->modalHeading($production ? 'Charge these cards for real?' : 'Run a test batch?')
+            ->modalDescription($production
+                ? 'This charges live cards through Stripe. It cannot be undone from this screen.'
+                : 'This runs the batch against Stripe test keys. No real money moves.')
+            ->modalSubmitActionLabel($production ? 'Charge cards' : 'Run test batch')
+            ->disabled(fn (): bool => blank($this->records))
+            ->action(function () use ($production): void {
+                $this->processCardsSmallBatch($production);
+
+                $charges = count($this->processResults['charges'] ?? []);
+                $failures = count($this->processResults['failures'] ?? []);
+
+                Notification::make()
+                    ->title("{$charges} charged, {$failures} failed")
+                    ->status($failures > 0 ? 'warning' : 'success')
+                    ->send();
+            });
+    }
+
+    public function downloadAction(): Action
+    {
+        return Action::make('download')
+            ->label('Download TBS Import')
+            ->color('gray')
+            ->action(fn () => $this->downloadExportFile());
+    }
+
+    public function clearAction(): Action
+    {
+        return Action::make('clear')
+            ->label('Clear Import')
+            ->color('gray')
+            ->requiresConfirmation()
+            ->modalHeading('Clear the loaded import?')
+            ->action(function (): void {
+                $this->clearSession();
+
+                Notification::make()->title('Import cleared.')->success()->send();
+            });
+    }
+
+    /**
+     * The parsed rows awaiting processing. They come from an uploaded file rather than
+     * a database, so the table is fed from the array the parse produced.
+     */
+    public function table(Table $table): Table
+    {
+        $headers = $this->headers ?? [];
+
+        return $table
+            ->records(fn (): array => collect($this->records ?? [])
+                ->map(fn (array $row, $key): array => [...$row, '__key' => (string) $key])
+                ->values()
+                ->all())
+            ->columns([
+                TextColumn::make('0')->label($headers[0] ?? 'Client'),
+                TextColumn::make('1')->label($headers[1] ?? 'Name'),
+                TextColumn::make('2')->label($headers[2] ?? 'Account'),
+                TextColumn::make('5')->label($headers[5] ?? 'Payment ID')->fontFamily('mono'),
+                TextColumn::make('7')->label($headers[7] ?? 'Amount'),
+
+                TextColumn::make('processed')
+                    ->label('Processed')
+                    ->badge()
+                    ->state(function (array $record): string {
+                        $id = $record[5] ?? null;
+
+                        return match (true) {
+                            isset($this->processResults['charges'][$id]) => 'Charged',
+                            isset($this->processResults['failures'][$id]) => 'Failed',
+                            default => 'Pending',
+                        };
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Charged' => 'success',
+                        'Failed' => 'danger',
+                        default => 'gray',
+                    }),
+            ])
+            ->paginated([25, 50, 100])
+            ->emptyStateHeading('No import loaded')
+            ->emptyStateDescription('Import a TBS export to see the rows waiting to be charged.');
     }
 
     public function render(): View
