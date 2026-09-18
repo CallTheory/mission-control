@@ -15,16 +15,32 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
 
     public array $paths;
 
+    /**
+     * The individual stuck files, each with the Intelligent Series account it belongs to,
+     * so the alert says whose faxing is stalled rather than only which folder is backing
+     * up. Empty when the buildup is in the pending_faxes table rather than on disk.
+     *
+     * @var array<int, array<string, mixed>>
+     */
+    public array $stuckFiles;
+
+    /**
+     * Where to send the reader to clear the buildup, now that spool files can be deleted
+     * from the fax utility page.
+     */
+    public string $spoolUrl;
+
     private DataSource $datasource;
 
     /**
      * Create a new message instance.
      *
-     * @return void
+     * @param  array<int, string>  $paths
+     * @param  array<int, array<string, mixed>>  $stuckFiles
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(array $paths)
+    public function __construct(array $paths, array $stuckFiles = [], string $provider = 'mfax')
     {
         $this->datasource = DataSource::firstOrFail();
 
@@ -33,6 +49,8 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
         }
 
         $this->paths = $paths;
+        $this->stuckFiles = $stuckFiles;
+        $this->spoolUrl = secure_url('/utilities/cloud-faxing'.($provider === 'ringcentral' ? '/ringcentral' : ''));
         $this->queue = 'outbound-email';
     }
 

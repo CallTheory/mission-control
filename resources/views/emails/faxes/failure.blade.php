@@ -1,7 +1,7 @@
 @component('mail::message')
 # Fax Failure Notification
 
-We had an issue submitting a fax through the mFax API.
+We had an issue submitting a fax through the cloud fax provider.
 
 @component('mail::panel')
 This fax will show in Infinity as failed with error <strong>261</strong>. Please contact support for help.

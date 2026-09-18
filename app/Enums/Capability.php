@@ -55,6 +55,12 @@ enum Capability: string
     case WctpManage = 'wctp.manage';
     case WctpMessages = 'wctp.messages';
 
+    // Cloud faxing spool maintenance. Separate from utility.cloud_faxing because
+    // reading the fax status page is routine supervisor work, while deleting files
+    // out of the spool directories bypasses Amtelco's fax service entirely and
+    // cannot be undone -- that belongs to whoever would otherwise have SSH'd in.
+    case FaxManageSpool = 'fax.manage_spool';
+
     // Board sub-pages (gated under the Board Check utility's flags)
     case BoardReview = 'board.review';
     case BoardReport = 'board.report';
@@ -68,6 +74,7 @@ enum Capability: string
         return match (true) {
             str_starts_with($this->value, 'utility.') => 'Utilities',
             str_starts_with($this->value, 'wctp.') => 'WCTP Gateway',
+            str_starts_with($this->value, 'fax.') => 'Cloud Faxing',
             str_starts_with($this->value, 'board.') => 'Board',
             $this === self::TeamManage, $this === self::TeamAddMember => 'Team',
             $this === self::AnalyticsView,
@@ -92,6 +99,7 @@ enum Capability: string
             self::SystemIntegrations => 'Manage Integrations',
             self::WctpManage => 'Manage WCTP Gateway',
             self::WctpMessages => 'View WCTP Messages',
+            self::FaxManageSpool => 'Manage Fax Spool Files',
             self::AnalyticsView => 'View Analytics',
             self::UtilitiesAccess => 'Access Utilities',
             self::AccountsView => 'View Accounts',

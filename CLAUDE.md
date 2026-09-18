@@ -137,7 +137,11 @@ php artisan db:seed
   (SMS carriers are pluggable and chosen per phone number; the gateway is an
   admin-only system area at `/system/wctp`, gated on `wctp.manage` / `wctp.messages`
   rather than a per-team utility flag — see `docs/wctp-sms-carriers.md`)
-- **Fax Services**: Multiple providers with unified interface
+- **Fax Services**: Documo mFax and RingCentral behind a shared spool pipeline
+  (IS drops `.cap`/`.fs` files, Mission Control submits and reports back). Delivery
+  webhooks are the primary status path and `isfax:check-pending` the fallback; faxes are
+  attributed to an Intelligent Series account, and spool files can be deleted from the
+  utility page under `fax.manage_spool` — see `docs/cloud-faxing.md`
 - **Payment**: Stripe integration for billing
 - **Authentication**: SAML2, OAuth (various providers)
 - **Audio**: WhisperCPP for transcription, sox/lame for processing

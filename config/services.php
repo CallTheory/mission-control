@@ -82,7 +82,40 @@ return [
             'client_secret' => env('RING_CENTRAL_CLIENT_SECRET'),
             'jwt_token' => env('RING_CENTRAL_JWT_TOKEN'),
             'api_endpoint' => env('RING_CENTRAL_API_ENDPOINT', 'https://platform.ringcentral.com'),
+
+            // Outbound fax submissions allowed per minute. RingCentral throttles the fax
+            // endpoint as a "heavy" API group; this is the client-side limiter that keeps
+            // us under it. Raising it past what the account actually allows just trades
+            // queue waits for 429s.
+            'sends_per_minute' => env('RING_CENTRAL_SENDS_PER_MINUTE', 10),
+
+            // How long a throttled fax keeps waiting its turn before it is treated as
+            // failed. This is deliberately long: a rate limit should delay a fax, not
+            // discard it, and a backlog during a busy period is normal.
+            'retry_window' => env('RING_CENTRAL_RETRY_WINDOW', 7200),
+
+            // Prefix the uploaded document's filename with the Intelligent Series account
+            // number, so the account is visible against the message in RingCentral's own
+            // message store — the nearest equivalent of the mFax tag, since RingCentral has
+            // no tag concept. Attachment names are metadata and are not rendered onto the
+            // fax itself; set this to false to send the bare filename regardless.
+            'tag_attachment_name' => env('RING_CENTRAL_TAG_ATTACHMENT_NAME', true),
+
+            // Ceiling on how many pending faxes isfax:check-pending polls in one run.
+            // Each poll is an API call competing with actual fax sends for the same
+            // quota, so the poller is deliberately capped.
+            'poll_batch_size' => env('RING_CENTRAL_POLL_BATCH_SIZE', 15),
         ],
+
+        // Grace period before a submitted fax is polled for a delivery status at all,
+        // and the minimum gap between polls of the same fax. Provider webhooks
+        // (api.webhooks.fax.*) normally resolve a fax well inside this window; polling
+        // is the fallback for when they are not configured or not arriving.
+        'poll_grace_seconds' => env('FAX_POLL_GRACE_SECONDS', 120),
+        'poll_interval_seconds' => env('FAX_POLL_INTERVAL_SECONDS', 120),
+
+        // How long a fax may stay pending before it is given up on.
+        'pending_timeout_seconds' => env('FAX_PENDING_TIMEOUT_SECONDS', 7200),
     ],
     'saml2' => [
         'metadata' => '',

@@ -167,17 +167,38 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'inbound-email', 'outbound-email', 'ringcentral', 'mfax', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia', 'genesis', 'voicemail-digest', 'message-export'],
+            'queue' => ['default', 'inbound-email', 'outbound-email', 'better-emails', 'ffmpeg', 'sox', 'people-praise', 'copia', 'genesis', 'voicemail-digest', 'message-export'],
             'balance' => 'auto',
             'maxProcesses' => 1,
             'memory' => 128,
             'tries' => 5,
             'nice' => 0,
             'timeout' => 90,
-            'retry_after' => 90,
+        ],
+
+        // Outbound faxing gets its own lane.
+        //
+        // These queues used to share supervisor-1 with audio transcoding, email and
+        // export work, so a burst of media jobs could leave faxes waiting behind them
+        // while their retry windows ran down. The dedicated supervisor also lets the
+        // fax timeout be sized for a document upload without affecting everything else.
+        'supervisor-faxing' => [
+            // A dedicated queue connection purely so the reservation window can exceed
+            // this supervisor's timeout — see the comments in config/queue.php.
+            'connection' => 'redis-faxing',
+            'queue' => ['ringcentral', 'mfax'],
+            'balance' => 'auto',
+            'maxProcesses' => 2,
+            'memory' => 128,
+            // The jobs define their own retry behaviour: SendFaxRingCentral bounds itself
+            // with retryUntil so a throttled fax keeps waiting, and SendFaxJob sets
+            // $tries = 3. This is only the fallback for anything that doesn't.
+            'tries' => 3,
+            'nice' => 0,
+            'timeout' => 120,
         ],
         'supervisor-transcriptions' => [
-            'connection' => 'redis',
+            'connection' => 'redis-transcriptions',
             'queue' => ['transcriptions'],
             'balance' => 'simple',
             'maxProcesses' => 1,
@@ -185,7 +206,6 @@ return [
             'tries' => 10,
             'nice' => 0,
             'timeout' => 1830,
-            'retry_after' => 1860,
         ],
     ],
 
@@ -193,6 +213,13 @@ return [
         'production' => [
             'supervisor-1' => [
                 'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+            // Three is ample: the RingCentral limiter allows 10 submissions a minute, so
+            // the constraint is the provider's rate limit, not worker count.
+            'supervisor-faxing' => [
+                'maxProcesses' => 3,
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
@@ -204,6 +231,9 @@ return [
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+            'supervisor-faxing' => [
+                'maxProcesses' => 2,
             ],
             'supervisor-transcriptions' => [
                 'maxProcesses' => 1,

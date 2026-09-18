@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Utilities;
 
+use App\Livewire\Concerns\ManagesFaxSpool;
 use App\Models\DataSource;
+use App\Services\Faxing\FaxDeliveryWebhooks;
+use App\Services\Faxing\FaxSpool;
 use App\Services\Observability\GuzzleTracing;
 use Exception;
 use Filament\Actions\Action;
@@ -23,6 +26,7 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions;
     use InteractsWithSchemas;
+    use ManagesFaxSpool;
 
     private $guzzle;
 
@@ -248,17 +252,26 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
 
     public function updateFaxData(): void
     {
-        $this->state['files_to_send'] = array_diff(scandir(storage_path('app/mfax/tosend/')), ['.', '..', '.gitignore']);
-        $this->state['files_in_sent'] = array_diff(scandir(storage_path('app/mfax/sent/')), ['.', '..', '.gitignore']);
-        $this->state['files_in_fail'] = array_diff(scandir(storage_path('app/mfax/fail/')), ['.', '..', '.gitignore']);
-        $this->state['files_in_pre'] = array_diff(scandir(storage_path('app/mfax/preproc/')), ['.', '..', '.gitignore']);
+        $this->refreshFaxSpoolState();
 
-        $this->state['files_to_send_count'] = count($this->state['files_to_send']);
-        $this->state['files_in_sent_count'] = count($this->state['files_in_sent']);
-        $this->state['files_in_fail_count'] = count($this->state['files_in_fail']);
-        $this->state['files_in_pre_count'] = count($this->state['files_in_pre']);
         $this->state['mfax_failed_faxes'] = $this->getFailedFaxes();
+        $this->state['webhook_last_received_at'] = FaxDeliveryWebhooks::lastReceivedAt('mfax');
+    }
 
+    protected function faxProvider(): string
+    {
+        return 'mfax';
+    }
+
+    /**
+     * Read the spool folders. Unlike the RingCentral page there is no cached snapshot to
+     * update here — this page has always scanned the directories per request.
+     */
+    protected function refreshFaxSpoolState(): void
+    {
+        foreach ((new FaxSpool)->snapshot('mfax') as $key => $value) {
+            $this->state[$key] = $value;
+        }
     }
 
     public function placeholder(): string

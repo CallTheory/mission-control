@@ -53,6 +53,16 @@ $wctpSection = [
     Capability::WctpMessages->value,
 ];
 
+// Cloud faxing spool maintenance: deleting stuck .cap/.fs files out of the spool
+// directories from the web UI instead of over SSH. Administrative and irreversible,
+// so it goes to the admin and technical roles only. The technical role also needs
+// utility.cloud_faxing itself -- it was never granted the fax utility, so without it
+// there is no page to perform the maintenance on.
+$faxSpoolSection = [
+    Capability::UtilityCloudFaxing->value,
+    Capability::FaxManageSpool->value,
+];
+
 return [
 
     'defaults' => [
@@ -101,7 +111,7 @@ return [
             'label' => 'Technical',
             'description' => 'Technical users can access utilities and manage API tokens, but not individual user data.',
             'sort_order' => 40,
-            'capabilities' => array_merge($openUtilities, $wctpSection, [
+            'capabilities' => array_merge($openUtilities, $wctpSection, $faxSpoolSection, [
                 Capability::ApiTokensManage->value,
             ]),
         ],

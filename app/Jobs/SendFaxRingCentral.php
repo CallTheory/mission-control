@@ -6,6 +6,9 @@ use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
+use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralThrottle;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
@@ -19,7 +22,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
-use RingCentral\SDK\SDK as RingCentralSDK;
 use Throwable;
 
 class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
@@ -27,21 +29,16 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Real send failures are capped by maxExceptions. Rate-limit releases from the
-     * RateLimited middleware are NOT exceptions, so they no longer burn the retry
-     * budget — retryUntil bounds how long we keep re-queueing past the limiter.
+     * Real send failures are capped by maxExceptions. Neither a release from the
+     * RateLimited middleware nor a 429 from RingCentral is an exception, so being
+     * throttled no longer burns the retry budget — retryUntil bounds how long we keep
+     * re-queueing.
      */
     public int $maxExceptions = 3;
 
     public array $backoff = [30, 60];
 
     public int $jobID;
-
-    public string $client_id;
-
-    public string $client_secret;
-
-    public string $api_endpoint;
 
     public string $fsFileName;
 
@@ -52,12 +49,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public string $phone;
 
     public string $status;
-
-    public string $jwtToken;
-
-    public string $notes;
-
-    public DataSource $datasource;
 
     /**
      * Create a new job instance.
@@ -84,13 +75,17 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     }
 
     /**
-     * Keep re-queueing past rate-limit releases for up to 10 minutes. Combined with
-     * maxExceptions, this caps real failures at 3 while never failing a fax just
-     * because the limiter released it.
+     * How long to keep re-queueing a fax that keeps getting throttled.
+     *
+     * This used to be 10 minutes, which — against a 10/minute limiter — meant a backlog
+     * of more than ~100 faxes started *failing* the moment it formed: files moved to
+     * fail/, alert emails sent, for faxes that were merely waiting their turn. A rate
+     * limit should apply backpressure, not discard work, so the window is now hours and
+     * configurable. maxExceptions still caps genuine send errors at three.
      */
     public function retryUntil(): \DateTimeInterface
     {
-        return now()->addMinutes(10);
+        return now()->addSeconds($this->retryWindowSeconds());
     }
 
     /**
@@ -104,121 +99,133 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         return $this->fsFileName;
     }
 
+    /**
+     * Bound the unique lock so it cannot outlive the job that holds it.
+     *
+     * Without this the lock was held until the job completed — so a worker killed
+     * mid-send (a deploy, a Horizon restart, an OOM) left a lock nobody would ever
+     * release, and isfax:process-ring-central silently refused to re-dispatch that .fs
+     * forever. The file just sat in tosend/ as a phantom until the buildup alert fired.
+     */
+    public function uniqueFor(): int
+    {
+        return $this->retryWindowSeconds() + 600;
+    }
+
     public function handle(): void
     {
-        $this->datasource = DataSource::first();
-        if ($this->datasource->ringcentral_client_id !== null) {
-            $this->client_id = $this->datasource->ringcentral_client_id;
-            $this->api_endpoint = $this->datasource->ringcentral_api_endpoint;
-            try {
-                $this->client_secret = $this->datasource->ringcentral_client_secret;
-                $this->jwtToken = $this->datasource->ringcentral_jwt_token;
-            } catch (Exception $e) {
-                $this->fail($e);
+        if (! Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+            Log::info('SendFaxringCentral Feature Turned Off');
 
-                return;
-            }
-        } else {
+            return;
+        }
+
+        $datasource = DataSource::first();
+
+        if ($datasource === null) {
+            $this->fail(new Exception('No data source configured'));
+
+            return;
+        }
+
+        $client = new RingCentralClient($datasource);
+
+        if (! $client->configured()) {
             $this->fail(new Exception('Empty ringcentral client details'));
 
             return;
         }
 
-        if (Helpers::isSystemFeatureEnabled('cloud-faxing')) {
+        $toNumber = $this->normalizedRecipient();
 
-            if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
-                $toNumber = "+1{$this->phone}";
-            } elseif (Str::startsWith($this->phone, '9') && strlen($this->phone) === 11) {
-                $toNumber = '+1'.Str::after($this->phone, '9');
-            } elseif (Str::startsWith($this->phone, '91') && strlen($this->phone) === 12) {
-                $toNumber = '+1'.Str::after($this->phone, '91');
-            } elseif (! Str::startsWith($this->phone, '+')) {
-                $toNumber = "+{$this->phone}";
-            } else {
-                $toNumber = "{$this->phone}";
-            }
+        $faxFsDetails = [
+            'jobID' => $this->jobID,
+            'capfile' => $this->capfile,
+            'filename' => $this->filename,
+            'phone' => $this->phone,
+            'status' => $this->status,
+            'fsFileName' => $this->fsFileName,
+        ];
 
-            $faxFsDetails = [
-                'jobID' => $this->jobID,
-                'capfile' => $this->capfile,
+        // Resolve the Intelligent Series account before sending, so the record we write
+        // is identifiable even if the IS database becomes unreachable later. A failure
+        // here never blocks the fax — it just goes out unlabelled.
+        $account = FaxAccountLookup::make($datasource)->forJobId($this->jobID);
+
+        $payloadPath = $this->capFilePath();
+
+        if (! is_file($payloadPath)) {
+            $this->fail(new Exception("Fax payload missing: {$payloadPath}"));
+
+            return;
+        }
+
+        try {
+            $rcsdk = $client->sdk();
+
+            $bodyParams = $rcsdk->createMultipartBuilder()
+                ->setBody([
+                    'to' => [
+                        ['phoneNumber' => $toNumber],
+                    ],
+                    'faxResolution' => 'High',
+                    'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
+                ])
+                ->add(file_get_contents($payloadPath), $this->attachmentName($account))
+                ->request('/restapi/v1.0/account/~/extension/~/fax');
+
+            $resp = $rcsdk->platform()->sendRequest($bodyParams);
+            $respData = $resp->json();
+            $apiMessageId = (string) ($respData->id ?? '');
+
+            PendingFax::create([
+                'api_fax_id' => $apiMessageId,
+                'fax_provider' => 'ringcentral',
+                'job_id' => $this->jobID,
+                'fs_file_name' => $this->fsFileName,
+                'cap_file' => $this->capfile,
                 'filename' => $this->filename,
                 'phone' => $this->phone,
-                'status' => $this->status,
-                'fsFileName' => $this->fsFileName,
-            ];
+                'client_number' => $account['number'] ?? null,
+                'client_name' => $account['name'] ?? null,
+                'original_status' => $this->status,
+                'delivery_status' => 'pending',
+                'submitted_at' => now(),
+            ]);
 
-            /* Authenticate a user using a personal JWT token */
-            try {
+            Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails + ['account' => $account['number'] ?? null]);
+        } catch (ApiException $e) {
+            // Being throttled is not a failed fax. Wait out the window the API asked for
+            // and try again without touching the exception budget.
+            if (RingCentralThrottle::isRateLimited($e)) {
+                $retryAfter = RingCentralThrottle::retryAfter($e);
 
-                // Instantiate the SDK and get the platform instance
-                $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
-                $platform = $rcsdk->platform();
-                $platform->login(['jwt' => $this->jwtToken]);
-            } catch (ApiException $e) {
-                Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
+                Log::warning("SendFaxRingCentral throttled by RingCentral; retrying in {$retryAfter}s", $faxFsDetails);
 
-                throw $e;
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
+                $this->release($retryAfter);
 
-                throw $e;
+                return;
             }
 
-            try {
+            // A rejected token means the shared one is stale — drop it so the next
+            // attempt authenticates cleanly rather than replaying a dead token.
+            if (RingCentralThrottle::isUnauthorized($e)) {
+                $client->forgetToken();
 
-                if (config('app.switch_engine') == 'infinity') {
-                    $bodyParams = $rcsdk->createMultipartBuilder()
-                        ->setBody([
-                            'to' => [
-                                ['phoneNumber' => $toNumber],
-                            ],
-                            'faxResolution' => 'High',
-                            'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
-                        ])
-                        ->add(file_get_contents(storage_path('app/ringcentral/messages/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
-                        ->request('/restapi/v1.0/account/~/extension/~/fax');
-                } else {
-                    $bodyParams = $rcsdk->createMultipartBuilder()
-                        ->setBody([
-                            'to' => [
-                                ['phoneNumber' => $toNumber],
-                            ],
-                            'faxResolution' => 'High',
-                            'coverIndex' => 0, // no fax cover page, otherwise uses default from the account
-                        ])
-                        ->add(file_get_contents(storage_path('app/ringcentral/tosend/'.$this->capfile)), str_replace('.cap', '.txt', $this->filename))
-                        ->request('/restapi/v1.0/account/~/extension/~/fax');
-                }
+                Log::warning('SendFaxRingCentral: RingCentral rejected the cached token; re-authenticating.', $faxFsDetails);
 
-                $resp = $platform->sendRequest($bodyParams);
-                $respData = $resp->json();
-                $apiMessageId = (string) ($respData->id ?? '');
+                $this->release(10);
 
-                PendingFax::create([
-                    'api_fax_id' => $apiMessageId,
-                    'fax_provider' => 'ringcentral',
-                    'job_id' => $this->jobID,
-                    'fs_file_name' => $this->fsFileName,
-                    'cap_file' => $this->capfile,
-                    'filename' => $this->filename,
-                    'phone' => $this->phone,
-                    'original_status' => $this->status,
-                    'delivery_status' => 'pending',
-                    'submitted_at' => now(),
-                ]);
-
-                Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails);
-            } catch (ApiException $e) {
-                Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
-
-                throw $e;
-            } catch (Exception $e) {
-                Log::error($e->getMessage());
-
-                throw $e;
+                return;
             }
-        } else {
-            Log::info('SendFaxringCentral Feature Turned Off');
+
+            Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
+
+            throw $e;
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+
+            throw $e;
         }
     }
 
@@ -231,10 +238,88 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             'phone' => $this->phone,
             'status' => $this->status,
             'fsFileName' => $this->fsFileName,
+            // Cached from the send attempt, so this costs nothing and tells whoever reads
+            // the alert whose fax failed.
+            'account' => $this->accountLabel(),
         ];
 
         Log::error("SendFaxRingCentral failed: {$exception->getMessage()}", $faxFsDetails);
         Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
         MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+    }
+
+    private function accountLabel(): string
+    {
+        try {
+            $account = FaxAccountLookup::make()->forJobId($this->jobID);
+        } catch (Throwable $e) {
+            return 'Unknown';
+        }
+
+        if ($account === null) {
+            return 'Unknown';
+        }
+
+        return trim($account['number'].(blank($account['name']) ? '' : " — {$account['name']}"));
+    }
+
+    private function retryWindowSeconds(): int
+    {
+        return max(60, (int) config('services.fax.ringcentral.retry_window', 7200));
+    }
+
+    /**
+     * Where the .cap payload lives depends on the switch engine: Infinity keeps messages
+     * in its own directory, classic IS leaves them alongside the .fs in tosend.
+     */
+    private function capFilePath(): string
+    {
+        return config('app.switch_engine') === 'infinity'
+            ? storage_path('app/ringcentral/messages/'.$this->capfile)
+            : storage_path('app/ringcentral/tosend/'.$this->capfile);
+    }
+
+    /**
+     * Name the uploaded document after the account it belongs to.
+     *
+     * RingCentral has no tag API, so this is the nearest equivalent of the mFax tag:
+     * the account number becomes part of the attachment name that shows up against the
+     * message in RingCentral's own message store. The .txt extension has to survive —
+     * RingCentral decides how to render the document from it.
+     *
+     * @param  array{number: string, name: string}|null  $account
+     */
+    private function attachmentName(?array $account): string
+    {
+        $name = str_replace('.cap', '.txt', $this->filename);
+
+        if ($account === null || ! config('services.fax.ringcentral.tag_attachment_name', true)) {
+            return $name;
+        }
+
+        $number = preg_replace('/[^A-Za-z0-9_-]/', '', $account['number']);
+
+        return $number === '' ? $name : "{$number}_{$name}";
+    }
+
+    private function normalizedRecipient(): string
+    {
+        if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
+            return "+1{$this->phone}";
+        }
+
+        if (Str::startsWith($this->phone, '9') && strlen($this->phone) === 11) {
+            return '+1'.Str::after($this->phone, '9');
+        }
+
+        if (Str::startsWith($this->phone, '91') && strlen($this->phone) === 12) {
+            return '+1'.Str::after($this->phone, '91');
+        }
+
+        if (! Str::startsWith($this->phone, '+')) {
+            return "+{$this->phone}";
+        }
+
+        return $this->phone;
     }
 }

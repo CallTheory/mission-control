@@ -10,6 +10,7 @@ use App\Jobs\MoveFailedFaxFiles;
 use App\Jobs\MoveSuccessfulFaxFiles;
 use App\Mail\FaxFailAlert;
 use App\Models\PendingFax;
+use App\Services\Faxing\FaxDeliveryWebhooks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -37,6 +38,8 @@ class FaxWebhookController extends Controller
         if (! $this->webhookSecretValid($request)) {
             return response()->json(['message' => 'unauthorized'], 403);
         }
+
+        FaxDeliveryWebhooks::record('mfax');
 
         $data = $request->all();
         $faxUuid = $data['uuid'] ?? $data['faxId'] ?? null;
@@ -69,6 +72,8 @@ class FaxWebhookController extends Controller
         if (! $this->webhookSecretValid($request)) {
             return response()->json(['message' => 'unauthorized'], 403);
         }
+
+        FaxDeliveryWebhooks::record('ringcentral');
 
         $data = $request->all();
 
@@ -112,6 +117,7 @@ class FaxWebhookController extends Controller
             'phone' => $pendingFax->phone,
             'status' => $pendingFax->original_status,
             'fsFileName' => $pendingFax->fs_file_name,
+            'account' => $pendingFax->accountLabel() ?? 'Unknown',
         ];
 
         if ($outcome === 'success') {

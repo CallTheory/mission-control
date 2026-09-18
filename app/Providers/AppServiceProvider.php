@@ -30,8 +30,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerFilamentColors();
 
+        // Client-side throttle on outbound RingCentral fax submissions. Configurable
+        // because the ceiling depends on the RingCentral account's API tier, and a wrong
+        // guess shows up as 429s rather than as a clean queue wait.
         RateLimiter::for('ringcentral', function (object $job) {
-            return Limit::perMinute(10);
+            return Limit::perMinute(max(1, (int) config('services.fax.ringcentral.sends_per_minute', 10)));
         });
 
         // Override the default SAML2 provider with our PHP 8.4 compatible version

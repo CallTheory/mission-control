@@ -3,7 +3,10 @@
 namespace App\Livewire\Utilities;
 
 use App\Console\Commands\ISFaxing\BuildRingCentralFaxDashboard;
+use App\Livewire\Concerns\ManagesFaxSpool;
 use App\Models\DataSource;
+use App\Services\Faxing\FaxSpool;
+use App\Services\Faxing\RingCentralClient;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -16,27 +19,14 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\View\View;
 use JsonException;
-use Livewire\Attributes\Locked;
 use Livewire\Component;
 use RingCentral\SDK\Http\ApiException;
-use RingCentral\SDK\SDK as RingCentralSDK;
 
 class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
 {
     use InteractsWithActions;
     use InteractsWithSchemas;
-
-    #[Locked]
-    public ?string $client_id = null;
-
-    #[Locked]
-    public string $client_secret;
-
-    #[Locked]
-    public string $jwtToken;
-
-    #[Locked]
-    public string $api_endpoint;
+    use ManagesFaxSpool;
 
     public array $tags = [];
 
@@ -56,16 +46,6 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
     public function mount(): void
     {
         $this->datasource = DataSource::firstOrFail();
-        $this->client_id = $this->datasource->ringcentral_client_id ?? '';
-        try {
-            $this->client_secret = $this->datasource->ringcentral_client_secret ?? '';
-            $this->jwtToken = $this->datasource->ringcentral_jwt_token ?? '';
-        } catch (Exception $e) {
-            $this->client_secret = '';
-            $this->jwtToken = '';
-        }
-
-        $this->api_endpoint = $this->datasource->ringcentral_api_endpoint ?? '';
         $this->state['ringcentral_failed_faxes'] = [];
         $this->state['files_to_send'] = [];
         $this->state['files_in_sent'] = [];
@@ -77,6 +57,7 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         $this->state['files_in_fail_count'] = 0;
         $this->state['files_in_pre_count'] = 0;
         $this->state['generated_at'] = null;
+        $this->state['webhook_last_received_at'] = null;
 
         // Populate immediately from the cached snapshot so the (lazy-loaded) page paints
         // with data on first render instead of waiting for the first poll.
@@ -113,12 +94,10 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
 
     public function openSendFaxDialog($messageId): void
     {
-        /* Authenticate a user using a personal JWT token */
         try {
-            // Instantiate the SDK and get the platform instance
-            $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
-            $platform = $rcsdk->platform();
-            $platform->login(['jwt' => $this->jwtToken]);
+            // Reuses the shared access token rather than performing its own JWT login;
+            // looking at a fax used to cost two token requests before it even resent.
+            $platform = $this->ringCentral()->platform();
         } catch (Exception $e) {
             Log::error($e->getMessage());
 
@@ -150,10 +129,12 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
             return;
         }
 
-        $rcsdk = new RingCentralSDK($this->client_id, $this->client_secret, $this->api_endpoint);
-        $platform = $rcsdk->platform();
+        $client = $this->ringCentral();
+
         try {
-            $platform->login(['jwt' => $this->jwtToken]);
+            $rcsdk = $client->sdk();
+            // Already authenticated by sdk(); calling $client->platform() would repeat it.
+            $platform = $rcsdk->platform();
         } catch (Exception $e) {
             Log::error($e->getMessage());
 
@@ -203,15 +184,61 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         }
 
         $this->state['ringcentral_failed_faxes'] = $data['failed_faxes'] ?? [];
-        $this->state['files_to_send'] = $data['files_to_send'] ?? [];
-        $this->state['files_in_sent'] = $data['files_in_sent'] ?? [];
-        $this->state['files_in_fail'] = $data['files_in_fail'] ?? [];
-        $this->state['files_in_pre'] = $data['files_in_pre'] ?? [];
+        // normalizeListing() so a snapshot written by the previous version of the builder
+        // — plain filename strings, still in Redis until its TTL expires after a deploy —
+        // renders instead of breaking the page.
+        $this->state['files_to_send'] = FaxSpool::normalizeListing($data['files_to_send'] ?? []);
+        $this->state['files_in_sent'] = FaxSpool::normalizeListing($data['files_in_sent'] ?? []);
+        $this->state['files_in_fail'] = FaxSpool::normalizeListing($data['files_in_fail'] ?? []);
+        $this->state['files_in_pre'] = FaxSpool::normalizeListing($data['files_in_pre'] ?? []);
         $this->state['files_to_send_count'] = $data['files_to_send_count'] ?? 0;
         $this->state['files_in_sent_count'] = $data['files_in_sent_count'] ?? 0;
         $this->state['files_in_fail_count'] = $data['files_in_fail_count'] ?? 0;
         $this->state['files_in_pre_count'] = $data['files_in_pre_count'] ?? 0;
         $this->state['generated_at'] = $data['generated_at'] ?? null;
+        $this->state['webhook_last_received_at'] = $data['webhook_last_received_at'] ?? null;
+    }
+
+    private function ringCentral(): RingCentralClient
+    {
+        return new RingCentralClient($this->datasource);
+    }
+
+    protected function faxProvider(): string
+    {
+        return 'ringcentral';
+    }
+
+    /**
+     * Re-scan the spool folders after a deletion and write the result straight back into
+     * the shared snapshot.
+     *
+     * The page normally renders from the snapshot the scheduler builds each minute, so
+     * without this a deleted file would keep appearing for up to a minute — for every
+     * viewer, not just the one who deleted it.
+     */
+    protected function refreshFaxSpoolState(): void
+    {
+        $snapshot = (new FaxSpool)->snapshot('ringcentral');
+
+        $cached = Redis::get(BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY);
+
+        if ($cached !== null) {
+            try {
+                $existing = json_decode($cached, true, 512, JSON_THROW_ON_ERROR);
+                Redis::setEx(
+                    BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY,
+                    180,
+                    json_encode(array_merge($existing, $snapshot), JSON_UNESCAPED_SLASHES)
+                );
+            } catch (JsonException $e) {
+                Log::error('CloudFaxingRingCentral: unable to update dashboard snapshot: '.$e->getMessage());
+            }
+        }
+
+        foreach ($snapshot as $key => $value) {
+            $this->state[$key] = $value;
+        }
     }
 
     public function placeholder(): string

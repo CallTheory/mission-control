@@ -1,8 +1,7 @@
 @php
     use Carbon\Carbon;
-    use Illuminate\Support\Str;
 @endphp
-<div wire:poll.5000ms.visible="updateFaxData" class="w-full px-4">
+<div wire:poll.30s.visible="updateFaxData" class="w-full px-4">
 
     @if($datasource->mfax_api_key === null)
         <x-alert-info title="mFax API Not Configured" description="Please setup the mFax integration in System settings." />
@@ -134,6 +133,17 @@
         <p class="mt-1 max-w-2xl text-sm text-muted">
             This section is informational for troubleshooting the IS Fax and mFax integration within Mission Control.
         </p>
+        {{-- Whether delivery confirmations are arriving by webhook, or whether the fallback
+             poller is carrying the load and spending mFax API quota to do it. --}}
+        <p class="mt-1 text-xs text-muted">
+            @if(!empty($state['webhook_last_received_at']))
+                Delivery webhook last received
+                {{ Carbon::parse($state['webhook_last_received_at'])->timezone(Auth::user()->timezone ?? 'UTC')->format('m/d/Y g:i:s A T') }}
+            @else
+                <span class="text-warning">No delivery webhook has ever been received</span> &mdash;
+                delivery status is being polled instead.
+            @endif
+        </p>
     </div>
 
     <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -166,108 +176,37 @@
         </div>
     </dl>
 
-    <div class="bg-surface shadow overflow-hidden sm:rounded-lg my-3 ">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-surface-fg ">To Send Folder</h3>
-            <p class="mt-1 max-w-2xl text-sm text-muted">Files in this directory are waiting for Mission Control to process and submit to mFax API.</p>
-        </div>
-        <div class="border-t border-border px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-border-soft sm:">
-                @foreach($state['files_to_send'] as $file)
-                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-muted ">{{ $file }}</dt>
-                        <dd class="mt-1 text-xs text-surface-fg 0 sm:mt-0 sm:col-span-2 float-right w-fullt">
-                            @if(Str::endsWith($file, '.cap'))
-                                Fax Message
-                            @elseif(Str::endsWith($file,'.fs' ))
-                                Fax Metadata
-                            @else
-                                Unknown
-                            @endif
-                        </dd>
-                    </div>
-                @endforeach
+    @include('utilities.cloud-faxing.spool-folder', [
+        'title' => 'To Send Folder',
+        'description' => 'Files in this directory are waiting for Mission Control to process and submit to the mFax API.',
+        'folder' => 'tosend',
+        'files' => $state['files_to_send'],
+        'canManage' => $this->canManageFaxSpool(),
+    ])
 
-            </dl>
-        </div>
-    </div>
+    @include('utilities.cloud-faxing.spool-folder', [
+        'title' => 'Sent Fax Folder',
+        'description' => "Files in this directory are waiting for Amtelco's Intelligent Series Fax Service to process.",
+        'folder' => 'sent',
+        'files' => $state['files_in_sent'],
+        'canManage' => $this->canManageFaxSpool(),
+    ])
 
-    <div class="bg-surface shadow overflow-hidden sm:rounded-lg my-3 ">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-surface-fg ">Sent Fax Folder</h3>
-            <p class="mt-1 max-w-2xl text-sm text-muted">Files in this directory are waiting for Amtelco's Intelligent Series Fax Service to process.</p>
-        </div>
-        <div class="border-t border-border px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-border-soft sm:">
-                @foreach($state['files_in_sent'] as $file)
-                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-muted ">{{ $file }}</dt>
-                        <dd class="mt-1 text-xs text-surface-fg 0 sm:mt-0 sm:col-span-2 float-right w-fullt">
-                            @if(Str::endsWith($file, '.cap'))
-                                Fax Message
-                            @elseif(Str::endsWith($file,'.fs' ))
-                                Fax Metadata
-                            @else
-                                Unknown
-                            @endif
-                        </dd>
-                    </div>
-                @endforeach
+    @include('utilities.cloud-faxing.spool-folder', [
+        'title' => 'Fail Fax Folder',
+        'description' => "Files in this directory are waiting for Amtelco's Intelligent Series Fax Service to process.",
+        'folder' => 'fail',
+        'files' => $state['files_in_fail'],
+        'canManage' => $this->canManageFaxSpool(),
+    ])
 
-            </dl>
-        </div>
-    </div>
+    @include('utilities.cloud-faxing.spool-folder', [
+        'title' => 'Pre-Proc Fax Folder',
+        'description' => 'Files in this directory are not supported at this time.',
+        'folder' => 'preproc',
+        'files' => $state['files_in_pre'],
+        'canManage' => $this->canManageFaxSpool(),
+    ])
 
-    <div class="bg-surface shadow overflow-hidden sm:rounded-lg my-3 ">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-surface-fg ">Fail Fax Folder</h3>
-            <p class="mt-1 max-w-2xl text-sm text-muted">Files in this directory are waiting for Amtelco's Intelligent Series Fax Service to process.</p>
-        </div>
-        <div class="border-t border-border px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-border-soft sm:">
-                @foreach($state['files_in_fail'] as $file)
-                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-muted ">{{ $file }}</dt>
-                        <dd class="mt-1 text-xs text-surface-fg 0 sm:mt-0 sm:col-span-2 float-right w-fullt">
-                            @if(Str::endsWith($file, '.cap'))
-                                Fax Message
-                            @elseif(Str::endsWith($file,'.fs' ))
-                                Fax Metadata
-                            @else
-                                Unknown
-                            @endif
-                        </dd>
-                    </div>
-                @endforeach
-
-            </dl>
-        </div>
-    </div>
-
-    <div class="bg-surface shadow overflow-hidden sm:rounded-lg my-3 ">
-        <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-surface-fg ">Pre-Proc Fax Folder</h3>
-            <p class="mt-1 max-w-2xl text-sm text-muted">Files in this directory are not supported at this time.</p>
-        </div>
-        <div class="border-t border-border px-4 py-5 sm:p-0">
-            <dl class="sm:divide-y sm:divide-border-soft sm:">
-                @foreach($state['files_in_pre'] as $file)
-                    <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                        <dt class="text-sm font-medium text-muted ">{{ $file }}</dt>
-                        <dd class="mt-1 text-xs text-surface-fg 0 sm:mt-0 sm:col-span-2 float-right w-fullt">
-                            @if(Str::endsWith($file, '.cap'))
-                                Fax Message
-                            @elseif(Str::endsWith($file,'.fs' ))
-                                Fax Metadata
-                            @else
-                                Unknown
-                            @endif
-                        </dd>
-                    </div>
-                @endforeach
-
-            </dl>
-        </div>
-    </div>
     <x-filament-actions::modals />
 </div>

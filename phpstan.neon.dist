@@ -45,12 +45,15 @@ parameters:
             path: app/Extensions/SafeSaml2Provider.php
 
         # ---------------------------------------------------------------
-        # Livewire components — view-string, property.onlyWritten,
-        # assign.propertyType (Blade template bindings invisible to PHPStan)
+        # Livewire components — view-string and assign.propertyType
+        # (Blade template bindings invisible to PHPStan)
+        #
+        # property.onlyWritten used to be ignored here too, for the fax page's
+        # write-only RingCentral credential properties. Those are gone — the shared
+        # RingCentralClient reads the credentials from the data source instead of
+        # copying them onto the component — so the ignore is no longer needed, and a
+        # new write-only property should be reported rather than hidden.
         # ---------------------------------------------------------------
-        -
-            identifier: property.onlyWritten
-            path: app/Livewire/*
         -
             identifier: assign.propertyType
             path: app/Livewire/*
@@ -115,9 +118,6 @@ parameters:
         -
             identifier: nullCoalesce.offset
             path: app/Jobs/DatabaseAttachmentSaveJob.php
-        -
-            identifier: nullCoalesce.initializedProperty
-            path: app/Jobs/*
 
         # ---------------------------------------------------------------
         # Controller argument.type — mostly view-string and similar

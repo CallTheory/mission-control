@@ -6,6 +6,7 @@ use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
+use App\Services\Faxing\FaxAccountLookup;
 use App\Services\Observability\GuzzleTracing;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
@@ -17,9 +18,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -102,17 +100,18 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 $toNumber = "{$this->phone}";
             }
 
+            // Which Intelligent Series account this fax belongs to. Documo carries it as
+            // a tag; it is also persisted on the pending_faxes row so the dashboards, the
+            // spool file listings and the alert emails can identify the fax the same way
+            // regardless of provider.
             try {
-                $isClientInfo = $this->getClientInfo();
-
-                if ($isClientInfo === null) {
-                    $isClientInfo['ClientName'] = $toNumber;
-                    $isClientInfo['ClientNumber'] = 'Unknown';
-                }
+                $account = FaxAccountLookup::make($this->datasource)->forJobId($this->jobID);
             } catch (Exception $e) {
-                $isClientInfo['ClientName'] = $toNumber;
-                $isClientInfo['ClientNumber'] = 'Unknown';
+                $account = null;
             }
+
+            $clientName = $account['name'] ?? $toNumber;
+            $clientNumber = $account['number'] ?? 'Unknown';
 
             $guzzle = new Guzzle([
                 // null when tracing is off, so Guzzle uses its default handler.
@@ -138,7 +137,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             $useTag = null;
 
             foreach ($existingTagList['rows'] ?? [] as $existingTag) {
-                if ($existingTag['name'] === (string) $isClientInfo['ClientNumber']) {
+                if ($existingTag['name'] === $clientNumber) {
                     $useTag = $existingTag;
                 }
             }
@@ -147,7 +146,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 try {
                     $createTag = $guzzle->post('/v1/tags', [
                         'form_params' => [
-                            'name' => $isClientInfo['ClientNumber'],
+                            'name' => $clientNumber,
                             'color' => '#22d3ee',
                             'isPublic' => true,
                         ],
@@ -195,7 +194,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                         ['name' => 'subject', 'contents' => Str::substr($this->subject, 0, 55)],
                         ['name' => 'coverPage', 'contents' => $useCoverPage],
                         $coverPageDetails,
-                        ['name' => 'recipientName', 'contents' => Str::substr($isClientInfo['ClientName'], 0, 40)],
+                        ['name' => 'recipientName', 'contents' => Str::substr($clientName, 0, 40)],
                         ['name' => 'senderName', 'contents' => Str::substr($this->senderName, 0, 40)],
                         ['name' => 'tags', 'contents' => $useTag['uuid'] ?? ''],
                         $attachments,
@@ -208,7 +207,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                         ['name' => 'faxNumber', 'contents' => $toNumber],
                         ['name' => 'subject', 'contents' => Str::substr($this->subject, 0, 55)],
                         ['name' => 'coverPage', 'contents' => $useCoverPage],
-                        ['name' => 'recipientName', 'contents' => Str::substr($isClientInfo['ClientName'], 0, 40)],
+                        ['name' => 'recipientName', 'contents' => Str::substr($clientName, 0, 40)],
                         ['name' => 'senderName', 'contents' => Str::substr($this->senderName, 0, 40)],
                         ['name' => 'tags', 'contents' => $useTag['uuid'] ?? ''],
                         $attachments,
@@ -230,6 +229,8 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                     'cap_file' => $this->capfile,
                     'filename' => $this->filename,
                     'phone' => $this->phone,
+                    'client_number' => $account['number'] ?? null,
+                    'client_name' => $account['name'] ?? null,
                     'original_status' => $this->status,
                     'delivery_status' => 'pending',
                     'submitted_at' => now(),
@@ -251,11 +252,31 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             'phone' => $this->phone,
             'status' => $this->status,
             'fsFileName' => $this->fsFileName,
+            'account' => $this->accountLabel(),
         ];
 
         Log::error("SendFaxJob failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
         Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
         MoveFailedFaxFiles::dispatch($faxFsDetails);
+    }
+
+    /**
+     * Which account this fax belonged to, for the failure alert. The lookup is cached
+     * from the send attempt, so this costs nothing in the common case.
+     */
+    private function accountLabel(): string
+    {
+        try {
+            $account = FaxAccountLookup::make($this->datasource)->forJobId($this->jobID);
+        } catch (Exception $e) {
+            return 'Unknown';
+        }
+
+        if ($account === null) {
+            return 'Unknown';
+        }
+
+        return trim($account['number'].(blank($account['name']) ? '' : " — {$account['name']}"));
     }
 
     /**
@@ -268,43 +289,13 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     }
 
     /**
-     * @throws Exception
+     * Bound the unique lock so an interrupted worker cannot hold it forever. Without a
+     * window, a job killed mid-send (deploy, restart, OOM) left a lock nothing would
+     * release, and isfax:process silently declined to re-dispatch that .fs again — the
+     * file simply sat in tosend/ until somebody noticed.
      */
-    private function getClientInfo(): ?array
+    public function uniqueFor(): int
     {
-        $results = null;
-
-        Config::set('database.connections.intelligent', [
-            'driver' => 'sqlsrv',
-            'host' => $this->datasource->is_db_host,
-            'port' => $this->datasource->is_db_port,
-            'database' => $this->datasource->is_db_data,
-            'username' => $this->datasource->is_db_user,
-            'password' => $this->datasource->is_db_pass,
-            'encrypt' => true,
-            'trust_server_certificate' => true,
-        ]);
-
-        try {
-            $sql = 'select c.ClientNumber as ClientNumber, c.ClientName as ClientName from faxJobs f left join cltClients c on f.cltID = c.cltId where f.jobid = ?';
-            $params = [
-                $this->jobID,
-            ];
-            $results = DB::connection('intelligent')->select($sql, array_values($params));
-        } catch (Exception $e) {
-            if (App::environment('local')) {
-                throw $e;
-            }
-            throw new Exception('Unable to query call data.');
-        }
-
-        if (isset($results[0])) {
-            return [
-                'ClientName' => $results[0]->ClientName ?? null,
-                'ClientNumber' => $results[0]->ClientNumber ?? null,
-            ];
-        }
-
-        return null;
+        return 3600;
     }
 }

@@ -28,6 +28,14 @@ class CheckPendingFaxesTest extends TestCase
         $this->app->forgetInstance('cache');
         $this->app->forgetInstance('cache.store');
 
+        // Deterministic polling windows, independent of whatever the deployment is tuned to.
+        config([
+            'services.fax.poll_grace_seconds' => 120,
+            'services.fax.poll_interval_seconds' => 120,
+            'services.fax.pending_timeout_seconds' => 7200,
+            'services.fax.ringcentral.poll_batch_size' => 15,
+        ]);
+
         DataSource::create([
             'mfax_api_key' => encrypt('test-api-key'),
             'fax_buildup_notification_email' => 'test@example.com',
@@ -51,65 +59,156 @@ class CheckPendingFaxesTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function test_it_increments_poll_attempts(): void
+    /**
+     * A freshly submitted fax is left alone: a provider webhook normally resolves it
+     * inside the grace window, and polling it immediately would spend API quota the
+     * outbound faxes need.
+     */
+    public function test_it_leaves_a_freshly_submitted_fax_unpolled(): void
     {
         Bus::fake();
         Mail::fake();
 
-        // Create a pending fax that will timeout (> 120 attempts)
-        $pendingFax = PendingFax::create(array_merge($this->makePendingFaxAttrs(), [
-            'poll_attempts' => 120,
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subSeconds(5),
         ]));
 
-        $this->artisan('isfax:check-pending')
-            ->assertExitCode(0);
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
 
         $pendingFax->refresh();
-        $this->assertEquals(121, $pendingFax->poll_attempts);
+        $this->assertNull($pendingFax->last_polled_at);
+        $this->assertSame(0, $pendingFax->poll_attempts);
+        $this->assertSame('pending', $pendingFax->delivery_status);
     }
 
-    public function test_it_fails_fax_after_120_poll_attempts(): void
+    public function test_it_polls_a_fax_once_the_grace_window_has_passed(): void
     {
         Bus::fake();
         Mail::fake();
 
-        $pendingFax = PendingFax::create(array_merge($this->makePendingFaxAttrs(), [
-            'poll_attempts' => 120,
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subMinutes(10),
         ]));
 
-        $this->artisan('isfax:check-pending')
-            ->assertExitCode(0);
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
 
         $pendingFax->refresh();
-        $this->assertEquals('failed', $pendingFax->delivery_status);
+        $this->assertNotNull($pendingFax->last_polled_at);
+        $this->assertSame(1, $pendingFax->poll_attempts);
+        // There is no provider to answer, so the status is untouched.
+        $this->assertSame('pending', $pendingFax->delivery_status);
+    }
+
+    /**
+     * The old implementation re-checked every pending fax every minute. Spacing the
+     * checks is what stops the poller from starving the sender of API quota.
+     */
+    public function test_it_does_not_repoll_within_the_poll_interval(): void
+    {
+        Bus::fake();
+        Mail::fake();
+
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subMinutes(10),
+            'last_polled_at' => now()->subSeconds(30),
+            'poll_attempts' => 3,
+        ]));
+
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
+
+        $pendingFax->refresh();
+        $this->assertSame(3, $pendingFax->poll_attempts);
+    }
+
+    public function test_it_polls_again_once_the_interval_has_elapsed(): void
+    {
+        Bus::fake();
+        Mail::fake();
+
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subMinutes(10),
+            'last_polled_at' => now()->subMinutes(5),
+            'poll_attempts' => 3,
+        ]));
+
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
+
+        $pendingFax->refresh();
+        $this->assertSame(4, $pendingFax->poll_attempts);
+    }
+
+    public function test_it_polls_no_more_than_the_batch_size_per_run(): void
+    {
+        Bus::fake();
+        Mail::fake();
+
+        config(['services.fax.ringcentral.poll_batch_size' => 2]);
+
+        foreach (range(1, 5) as $i) {
+            PendingFax::create($this->makePendingFaxAttrs([
+                'submitted_at' => now()->subMinutes(10 + $i),
+            ]));
+        }
+
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
+
+        $this->assertSame(2, PendingFax::where('poll_attempts', '>', 0)->count());
+    }
+
+    /**
+     * The timeout is measured in time, not in poll attempts — now that polling is spaced
+     * and batched, an attempt count no longer corresponds to any particular duration.
+     */
+    public function test_it_fails_a_fax_pending_past_the_timeout(): void
+    {
+        Bus::fake();
+        Mail::fake();
+
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subSeconds(7300),
+        ]));
+
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
+
+        $pendingFax->refresh();
+        $this->assertSame('failed', $pendingFax->delivery_status);
         $this->assertNotNull($pendingFax->resolved_at);
 
         Bus::assertDispatched(MoveFailedFaxFiles::class);
         Mail::assertQueued(FaxFailAlert::class);
     }
 
-    public function test_it_does_not_fail_fax_before_121_attempts(): void
+    public function test_it_does_not_fail_a_fax_inside_the_timeout(): void
     {
         Bus::fake();
         Mail::fake();
 
-        // At exactly 119, it should still try to poll (not timeout)
-        // We can't actually test the API call without mocking HTTP,
-        // so we just verify it doesn't auto-fail at 119
-        $pendingFax = PendingFax::create(array_merge($this->makePendingFaxAttrs(), [
-            'poll_attempts' => 119,
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs([
+            'submitted_at' => now()->subSeconds(3600),
         ]));
 
-        // This will fail because there's no actual API to call,
-        // but the point is it doesn't mark as failed due to timeout
-        $this->artisan('isfax:check-pending')
-            ->assertExitCode(0);
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
 
         $pendingFax->refresh();
-        // It incremented to 120 but didn't timeout (threshold is > 120)
-        $this->assertEquals(120, $pendingFax->poll_attempts);
-        // Status unchanged because API call threw exception (no real API)
-        $this->assertEquals('pending', $pendingFax->delivery_status);
+        $this->assertSame('pending', $pendingFax->delivery_status);
+        $this->assertNull($pendingFax->resolved_at);
+    }
+
+    /**
+     * A fax whose submitted_at was never recorded still has to time out, or it would
+     * stay pending forever and keep the buildup monitor complaining.
+     */
+    public function test_it_fails_an_old_fax_with_no_submitted_at(): void
+    {
+        Bus::fake();
+        Mail::fake();
+
+        $pendingFax = PendingFax::create($this->makePendingFaxAttrs(['submitted_at' => null]));
+        $pendingFax->forceFill(['created_at' => now()->subSeconds(7300)])->save();
+
+        $this->artisan('isfax:check-pending')->assertExitCode(0);
+
+        $this->assertSame('failed', $pendingFax->refresh()->delivery_status);
     }
 
     private function makePendingFaxAttrs(array $overrides = []): array

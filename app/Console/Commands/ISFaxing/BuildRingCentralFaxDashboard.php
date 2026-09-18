@@ -3,13 +3,17 @@
 namespace App\Console\Commands\ISFaxing;
 
 use App\Models\DataSource;
+use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
-use Exception;
+use App\Services\Faxing\FaxDeliveryWebhooks;
+use App\Services\Faxing\FaxSpool;
+use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralThrottle;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-use RingCentral\SDK\SDK as RingCentralSDK;
 use Symfony\Component\Console\Command\Command as CommandStatus;
+use Throwable;
 
 /**
  * Builds the single shared snapshot the RingCentral fax status page renders from.
@@ -52,40 +56,14 @@ class BuildRingCentralFaxDashboard extends Command
             return CommandStatus::SUCCESS;
         }
 
-        $snapshot = $this->scanFolders();
+        $snapshot = (new FaxSpool)->snapshot('ringcentral');
         $snapshot['failed_faxes'] = $this->fetchFailedFaxes($datasource);
+        $snapshot['webhook_last_received_at'] = FaxDeliveryWebhooks::lastReceivedAt('ringcentral');
         $snapshot['generated_at'] = now()->toIso8601String();
 
         Redis::setEx(self::DASHBOARD_CACHE_KEY, self::CACHE_TTL_SECONDS, json_encode($snapshot, JSON_UNESCAPED_SLASHES));
 
         return CommandStatus::SUCCESS;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function scanFolders(): array
-    {
-        $folders = [
-            'files_to_send' => 'tosend',
-            'files_in_sent' => 'sent',
-            'files_in_fail' => 'fail',
-            'files_in_pre' => 'preproc',
-        ];
-
-        $snapshot = [];
-
-        foreach ($folders as $key => $dir) {
-            $path = storage_path("app/ringcentral/{$dir}/");
-            $files = is_dir($path)
-                ? array_values(array_diff(scandir($path), ['.', '..', '.gitignore']))
-                : [];
-
-            $snapshot[$key] = $files;
-            $snapshot["{$key}_count"] = count($files);
-        }
-
-        return $snapshot;
     }
 
     /**
@@ -97,31 +75,68 @@ class BuildRingCentralFaxDashboard extends Command
      */
     private function fetchFailedFaxes(DataSource $datasource): array|false
     {
-        if (empty($datasource->ringcentral_client_id)) {
+        $client = new RingCentralClient($datasource);
+
+        if (! $client->configured()) {
             return false;
         }
 
         try {
-            $rcsdk = new RingCentralSDK(
-                $datasource->ringcentral_client_id,
-                $datasource->ringcentral_client_secret,
-                $datasource->ringcentral_api_endpoint
-            );
-            $platform = $rcsdk->platform();
-            $platform->login(['jwt' => $datasource->ringcentral_jwt_token]);
-
-            $resp = $platform->get('/restapi/v1.0/account/~/extension/~/message-store', [
+            // Shares the cached access token with the send jobs rather than performing its
+            // own JWT login every minute.
+            $resp = $client->platform()->get('/restapi/v1.0/account/~/extension/~/message-store', [
                 'messageType' => ['Fax'],
                 'dateFrom' => now()->subDays(self::LOOKBACK_DAYS)->toIso8601String(),
                 'perPage' => 100,
             ]);
 
-            return $resp->jsonArray()['records'] ?? [];
-        } catch (Exception $e) {
+            return $this->withAccounts($resp->jsonArray()['records'] ?? []);
+        } catch (Throwable $e) {
+            if (RingCentralThrottle::isUnauthorized($e)) {
+                $client->forgetToken();
+            }
+
             Log::error('BuildRingCentralFaxDashboard: failed to fetch fax list: '.$e->getMessage());
 
             return $this->previousFailedFaxes();
         }
+    }
+
+    /**
+     * Attach the Intelligent Series account to each RingCentral record.
+     *
+     * RingCentral has no tag concept, so the account is recovered from the pending_faxes
+     * row written when the fax was submitted, matched on the provider's message id. A
+     * record with no match — an inbound fax, or one sent outside Mission Control — simply
+     * has no account.
+     *
+     * @param  array<int, mixed>  $records
+     * @return array<int, mixed>
+     */
+    private function withAccounts(array $records): array
+    {
+        $ids = array_values(array_filter(array_map(
+            fn ($record) => isset($record['id']) ? (string) $record['id'] : null,
+            $records
+        )));
+
+        if ($ids === []) {
+            return $records;
+        }
+
+        $accounts = PendingFax::query()
+            ->where('fax_provider', 'ringcentral')
+            ->whereIn('api_fax_id', $ids)
+            ->whereNotNull('client_number')
+            ->get(['api_fax_id', 'client_number', 'client_name'])
+            ->mapWithKeys(fn (PendingFax $fax) => [$fax->api_fax_id => $fax->accountLabel()])
+            ->all();
+
+        return array_map(function ($record) use ($accounts) {
+            $record['account'] = $accounts[(string) ($record['id'] ?? '')] ?? null;
+
+            return $record;
+        }, $records);
     }
 
     /**

@@ -62,11 +62,48 @@ return [
             'after_commit' => false,
         ],
 
+        /*
+         * `retry_after` is how long a worker's reservation of a job lasts before the queue
+         * assumes the worker died and hands the job to somebody else. It MUST exceed the
+         * worker's `timeout`, or a job that is merely slow gets picked up a second time
+         * while the first attempt is still running — which for a fax means sending it
+         * twice, and for a transcription means doing the work twice.
+         *
+         * Note that the `retry_after` keys in config/horizon.php's supervisor blocks are
+         * inert: Horizon stores them on SupervisorOptions and never uses them. The values
+         * that actually apply are the ones here, chosen per connection so each lane's
+         * timeout can differ.
+         */
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => 90,
+            // supervisor-1 times out at 90s.
+            'retry_after' => 150,
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        // Consumed by horizon's supervisor-faxing, which times out at 120s. Jobs are
+        // pushed onto the plain 'redis' connection; only the worker's reservation window
+        // comes from here, and both connections address the same Redis queue keys.
+        'redis-faxing' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'ringcentral',
+            'retry_after' => 300,
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
+        // Consumed by horizon's supervisor-transcriptions, which times out at 1830s. The
+        // shared 90s window meant any transcription running longer than a minute and a
+        // half was re-reserved and transcribed again.
+        'redis-transcriptions' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'transcriptions',
+            'retry_after' => 1920,
             'block_for' => null,
             'after_commit' => false,
         ],
