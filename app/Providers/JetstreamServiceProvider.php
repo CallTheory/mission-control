@@ -102,7 +102,7 @@ class JetstreamServiceProvider extends ServiceProvider
             'dashboard',
             'utilities',
             'system',
-        ])->description(__('Technical users are allowed access to the dashboard, system, and utilities sections. They cannot view individual users data (outside of aggregated analytics)'));
+        ])->description(__('Technical users are allowed access to the dashboard, system, and utilities sections. They cannot view individual user data.'));
 
         Jetstream::role('dispatcher', __('Dispatcher'), [
             'read',

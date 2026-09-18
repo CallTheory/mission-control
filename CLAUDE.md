@@ -136,18 +136,18 @@ php artisan db:seed
 - **Communication**: Twilio, Bandwidth, Com.io (thinQ), RingCentral, SendGrid, WCTP gateway
   (SMS carriers are pluggable and chosen per phone number; the gateway is an
   admin-only system area at `/system/wctp`, gated on `wctp.manage` / `wctp.messages`
-  rather than a per-team utility flag — see `docs/wctp-sms-carriers.md`)
+  rather than a per-team utility flag — see `docs/system/wctp-gateway.md`)
 - **Fax Services**: Documo mFax and RingCentral behind a shared spool pipeline
   (IS drops `.cap`/`.fs` files, Mission Control submits and reports back). Delivery
   webhooks are the primary status path and `isfax:check-pending` the fallback; faxes are
   attributed to an Intelligent Series account, and spool files can be deleted from the
-  utility page under `fax.manage_spool` — see `docs/cloud-faxing.md`
+  utility page under `fax.manage_spool` — see `docs/utilities/cloud-faxing.md`
 - **Payment**: Stripe integration for billing
 - **Authentication**: SAML2, OAuth (various providers)
 - **Audio**: WhisperCPP for transcription, sox/lame for processing
 - **Observability**: optional GlitchTip/Sentry exception reporting and OpenTelemetry
   tracing to Grafana Tempo — both opt-in, off by default, configured at
-  System → Observability (see `docs/observability.md`)
+  System → Observability (see `docs/system/observability.md`)
 
 ### Testing Approach
 

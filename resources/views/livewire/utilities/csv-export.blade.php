@@ -3,7 +3,7 @@
         <x-slot name="title">{{ __('Export Call Log to CSV') }}</x-slot>
 
         <x-slot name="description">
-            Narrow the call log with the same filters the Analytics screen uses, preview
+            Narrow the call log with the same filters the Call Lookup screen uses, preview
             how many calls match, then download them as a CSV.
         </x-slot>
 

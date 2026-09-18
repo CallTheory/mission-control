@@ -63,7 +63,7 @@ class EditUserProfile extends Component implements HasActions, HasSchemas
                     ->options(fn (): array => $this->agentOptions())
                     ->searchable()
                     ->placeholder('Not linked')
-                    ->helperText('Links this account to an Amtelco agent for analytics.'),
+                    ->helperText('Links this account to an Amtelco agent for dashboard statistics.'),
             ])
             ->action(function (array $data): void {
                 $user = User::findOrFail($this->user_id);

@@ -40,7 +40,7 @@
                 <div>
                     <h4 class="text-sm font-semibold text-surface-fg-soft">Export Details</h4>
                     <p class="text-sm text-muted mt-1">
-                        Exports include 29 columns of call data: call identifiers, client information, caller details, call type, agent information, duration, and attribute flags. Timestamps are formatted using the configured switch data timezone. All filters from the Analytics Call Log page are available.
+                        Exports include 29 columns of call data: call identifiers, client information, caller details, call type, agent information, duration, and attribute flags. Timestamps are formatted using the configured switch data timezone. The full call log filter set is available.
                     </p>
                 </div>
             </div>

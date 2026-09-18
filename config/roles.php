@@ -82,7 +82,6 @@ return [
             'capabilities' => array_merge($openUtilities, $boardSubPages, [
                 Capability::TeamManage->value,
                 Capability::TeamAddMember->value,
-                Capability::AnalyticsView->value,
                 Capability::UtilitiesAccess->value,
                 Capability::AccountsView->value,
                 Capability::ApiTokensManage->value,

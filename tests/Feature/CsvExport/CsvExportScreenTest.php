@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\CsvExport;
 
-use App\Livewire\Analytics\CallLog;
+use App\Livewire\Utilities\CallLog;
 use App\Livewire\Utilities\CsvExport;
 use App\Models\System\Settings;
 use App\Models\Team;
@@ -16,7 +16,7 @@ use Tests\Traits\InteractsWithFeatureFlags;
 
 /**
  * The CSV export screen after its filter form became a Filament schema shared with
- * Analytics\CallLog. The Amtelco database is unreachable in tests, so what is asserted
+ * Utilities\CallLog. The Amtelco database is unreachable in tests, so what is asserted
  * is the behaviour that survives that: the screen renders, the filters are the shared
  * set, and a failed query is reported rather than thrown at the user.
  */

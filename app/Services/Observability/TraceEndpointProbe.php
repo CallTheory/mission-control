@@ -84,7 +84,7 @@ class TraceEndpointProbe
                 'message' => "Nothing is listening at {$url} ({$e->getMessage()}). "
                     .'Tracing will stay inert until an OpenTelemetry collector — normally a '
                     .'Grafana Alloy agent with an otelcol.receiver.otlp block — is running and '
-                    .'reachable from this server. See docs/observability.md for the Alloy config.',
+                    .'reachable from this server. See docs/system/observability.md for the Alloy config.',
                 'ms' => $this->elapsed($start),
                 'httpStatus' => null,
             ];

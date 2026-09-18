@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Livewire;
 
 use App\Livewire\Accounts\Clients as AccountsClients;
-use App\Livewire\Analytics\Agents;
-use App\Livewire\Analytics\CallLog;
-use App\Livewire\Analytics\Clients as AnalyticsClients;
 use App\Livewire\Utilities\BoardActivity;
+use App\Livewire\Utilities\CallLog;
 use App\Livewire\Utilities\DirectorySearch;
 use App\Models\Stats\BoardCheck\Activity;
 use App\Models\System\Settings;
@@ -20,10 +18,10 @@ use Tests\TestCase;
 use Tests\Traits\CreatesTeamUsers;
 
 /**
- * The Analytics screens read the Amtelco SQL Server through App\Models\Stats\*, which
- * no test environment has. What is worth pinning down is the behaviour that survives
- * that: an unreachable stats database must render an empty table, not a 500. The
- * search/sort/paging logic those screens depend on is covered directly in
+ * These screens read the Amtelco SQL Server through App\Models\Stats\*, which no test
+ * environment has. What is worth pinning down is the behaviour that survives that: an
+ * unreachable stats database must render an empty table, not a 500. The search/sort/paging
+ * logic those screens depend on is covered directly in
  * Tests\Unit\Support\StatRecordsTest.
  */
 class StatsTablesTest extends TestCase
@@ -54,22 +52,6 @@ class StatsTablesTest extends TestCase
         $user->switchTeam($team);
 
         return $user->fresh();
-    }
-
-    public function test_agents_renders_an_empty_table_when_the_stats_database_is_unreachable(): void
-    {
-        Livewire::actingAs($this->actor())
-            ->test(Agents::class)
-            ->assertOk()
-            ->assertSee('No agent activity in the last 24 hours.');
-    }
-
-    public function test_analytics_clients_renders_an_empty_table_when_the_stats_database_is_unreachable(): void
-    {
-        Livewire::actingAs($this->actor())
-            ->test(AnalyticsClients::class)
-            ->assertOk()
-            ->assertSee('No records found.');
     }
 
     public function test_accounts_clients_renders_an_empty_table_when_the_stats_database_is_unreachable(): void

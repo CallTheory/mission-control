@@ -71,7 +71,7 @@
                                     {{ $recent->ClientNumber }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-surface-fg transform transition duration-700 ease-in-out">
-                                    <a class="hover:cursor-pointer hover:underline transform transition duration-700 ease-in-out" href="/analytics/client-accounts/{{ $recent->ClientNumber }}">
+                                    <a class="hover:cursor-pointer hover:underline transform transition duration-700 ease-in-out" href="{{ route('accounts.{client_number}', $recent->ClientNumber) }}">
                                         {{ $recent->ClientName }}
                                     </a>
                                 </td>

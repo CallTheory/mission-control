@@ -91,10 +91,9 @@ class CapabilityFoundationTest extends TestCase
         $this->assertTrue($supervisor->hasCapability(Capability::UtilitiesAccess, $team));
         $this->assertTrue($supervisor->hasCapability(Capability::TeamAddMember, $team));
 
-        // Supervisor could NOT card-process, manage the team, or see analytics.
+        // Supervisor could NOT card-process or manage the team.
         $this->assertFalse($supervisor->hasCapability(Capability::UtilityCardProcessing, $team));
         $this->assertFalse($supervisor->hasCapability(Capability::TeamManage, $team));
-        $this->assertFalse($supervisor->hasCapability(Capability::AnalyticsView, $team));
     }
 
     public function test_multiple_roles_union_capabilities(): void

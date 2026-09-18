@@ -27,7 +27,7 @@ class CsvExport extends Component implements HasActions, HasSchemas
     use InteractsWithSchemas;
 
     /**
-     * Filter state. Shares its shape with Analytics\CallLog's table filters, because
+     * Filter state. Shares its shape with Utilities\CallLog's table filters, because
      * both come from {@see FiltersCallLog}.
      *
      * @var array<string, mixed>|null

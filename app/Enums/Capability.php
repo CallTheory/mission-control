@@ -23,7 +23,6 @@ enum Capability: string
     case SystemObservability = 'system.observability';
 
     // General access areas
-    case AnalyticsView = 'analytics.view';
     case UtilitiesAccess = 'utilities.access';
     case AccountsView = 'accounts.view';
     case ApiTokensManage = 'api_tokens.manage';
@@ -77,7 +76,6 @@ enum Capability: string
             str_starts_with($this->value, 'fax.') => 'Cloud Faxing',
             str_starts_with($this->value, 'board.') => 'Board',
             $this === self::TeamManage, $this === self::TeamAddMember => 'Team',
-            $this === self::AnalyticsView,
             $this === self::UtilitiesAccess,
             $this === self::AccountsView,
             $this === self::ApiTokensManage => 'General',
@@ -100,7 +98,6 @@ enum Capability: string
             self::WctpManage => 'Manage WCTP Gateway',
             self::WctpMessages => 'View WCTP Messages',
             self::FaxManageSpool => 'Manage Fax Spool Files',
-            self::AnalyticsView => 'View Analytics',
             self::UtilitiesAccess => 'Access Utilities',
             self::AccountsView => 'View Accounts',
             self::ApiTokensManage => 'Manage API Tokens',

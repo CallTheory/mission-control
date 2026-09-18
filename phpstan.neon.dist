@@ -136,9 +136,6 @@ parameters:
             path: app/Http/Controllers/ScreenCaptureController.php
         -
             identifier: argument.type
-            path: app/Http/Controllers/Analytics/AnalyticsController.php
-        -
-            identifier: argument.type
             path: app/Livewire/Utilities/IdentityProvider.php
         -
             identifier: argument.type

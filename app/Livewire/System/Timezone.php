@@ -43,7 +43,7 @@ class Timezone extends Component implements HasActions, HasSchemas
                 ->searchable()
                 ->required()
                 ->default('UTC')
-                ->helperText('The timezone Amtelco records its timestamps in. Analytics converts from it.')
+                ->helperText('The timezone Amtelco records its timestamps in. Timestamps are converted from it for display and export.')
                 ->validationAttribute('switch data timezone'),
         ];
     }
