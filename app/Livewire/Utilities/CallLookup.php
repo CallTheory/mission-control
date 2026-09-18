@@ -29,7 +29,7 @@ class CallLookup extends Component
 
     public $details;
 
-    public $messages;
+    public $callMessages;
 
     public $history;
 
@@ -132,7 +132,7 @@ class CallLookup extends Component
 
         $this->details = $call->details();
 
-        $this->messages = $call->messages();
+        $this->callMessages = $call->messages();
         $this->history = $call->history();
         $this->statistics = $call->statistics();
         $this->recordings = $call->recordings();
@@ -159,7 +159,7 @@ class CallLookup extends Component
     protected function clear(): void
     {
         $this->details = null;
-        $this->messages = null;
+        $this->callMessages = null;
         $this->history = null;
         $this->statistics = null;
         $this->recordings = null;

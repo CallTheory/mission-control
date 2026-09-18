@@ -3,9 +3,9 @@ use App\Models\Stats\Helpers;
 use Illuminate\Support\Str;
 @endphp
 
-@if(count($messages) && is_object($messages[0]))
+@if(count($callMessages) && is_object($callMessages[0]))
 <div class="w-1/2 mb-2 min-h-full block border border-border rounded">
-    @foreach($messages as $message)
+    @foreach($callMessages as $message)
         <div>
         @if(!is_null($message->msgId))
 

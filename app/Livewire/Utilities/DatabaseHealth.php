@@ -12,13 +12,15 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
-use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class DatabaseHealth extends Component
 {
-    #[Url]
-    public int $page;
+    // The Intelligent database listing is rendered through a LengthAwarePaginator whose
+    // links() calls back into getPage()/setPage(), so this trait is load-bearing even
+    // though no query here calls paginate(). It also owns the ?page= URL binding.
+    use WithPagination;
 
     public $results = null;
 

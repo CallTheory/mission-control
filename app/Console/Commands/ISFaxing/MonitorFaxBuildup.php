@@ -37,8 +37,11 @@ class MonitorFaxBuildup extends Command
      */
     public function handle(): int
     {
+        // Cloud faxing being switched off is a configuration state, not a fault: every other
+        // isfax: command exits cleanly here, and failing instead makes the scheduler log an
+        // error twice an hour for a system nobody asked to run.
         if (! Helpers::isSystemFeatureEnabled('cloud-faxing')) {
-            return CommandStatus::FAILURE;
+            return CommandStatus::SUCCESS;
         }
 
         $provider = $this->argument('fax_provider');
