@@ -6,6 +6,9 @@
     <x-slot name="description">
         {{ __('The billing numbers that are available for this team. Leave blank to use the Allowed Accounts setting.') }}
 
+        <p class="text-sm py-4">Clearing this is only possible while the team either lists
+        accounts above or is marked as seeing every account.</p>
+
         <p class="text-sm py-4 ">If specified without <strong>Allowed Accounts</strong>, any account matching the billing numbers will be available for this team.</p>
 
     </x-slot>
@@ -22,7 +25,7 @@
                          wire:model.live="state.allowed_billing"
                          @if(!Gate::check('update', $team)) disabled  @endif></textarea>
             <small class="0">Enter billing numbers or ranges separated by a comma or new-line. (1,2,3-6,17)</small>
-            <x-input-error for="allowed_billing" class="mt-2" />
+            <x-input-error for="state.allowed_billing" class="mt-2" />
             <div class="rounded my-2 bg-primary-soft p-2 text-sm text-primary-soft-fg">
                 Restrictions apply to the <a class="hover:underline font-semibold" href="/utilities/call-lookup">Call Log/Lookup</a> and <a class="hover:underline font-semibold" href="/accounts">Account</a> list.
                 All other utilities are unrestricted by billing code.

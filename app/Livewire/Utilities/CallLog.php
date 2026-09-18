@@ -89,11 +89,16 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
             ->filters([
                 Filter::make('call')
                     ->schema($this->callLogFilterSchema())
-                    ->columns(3)
+                    ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                     // Every filter is applied inside the T-SQL rather than over the
                     // returned rows, so there is no query builder to modify here.
                     ->query(fn ($query) => $query),
             ], layout: FiltersLayout::AboveContent)
+            // One filter group, so it gets the whole width. Filament's default grid
+            // for AboveContent is 2-5 columns depending on breakpoint, which would
+            // squeeze this entire group -- and the grid of fields inside it -- into a
+            // single narrow column on a wide screen.
+            ->filtersFormColumns(1)
             // Replaces the hand-rolled Session::put wiring the old filter form did.
             ->persistFiltersInSession()
             ->persistSortInSession()

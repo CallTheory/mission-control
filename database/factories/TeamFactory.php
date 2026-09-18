@@ -24,6 +24,10 @@ class TeamFactory extends Factory
             'name' => $this->faker->unique()->company,
             'user_id' => User::factory(),
             'personal_team' => true,
+            // Mirrors the state every pre-existing team was backfilled to: no
+            // allow-lists, deliberately unrestricted. Tests that care about the
+            // unconfigured state set this to false explicitly.
+            'unrestricted_accounts' => true,
         ];
     }
 }

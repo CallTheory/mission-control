@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessCallRecording;
 use App\Models\Stats\Calls\Call;
-use App\Models\Stats\Helpers;
+use App\Support\CallAccess;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -17,16 +17,8 @@ class RecordingController extends Controller
      */
     public function __invoke(Request $request, int $isCallID): Response
     {
-        $allowedAccounts = $request->user()->currentTeam->allowed_accounts ?? '';
-        $allowedBilling = $request->user()->currentTeam->allowed_billing ?? '';
-
-        // Fail closed for "unrestricted" teams (no allow-lists configured): they would
-        // otherwise be able to fetch any call's recording by enumerating call ids.
-        // Checked before the (switch-DB) Call lookup so denied requests fail fast.
-        if (strlen(trim($allowedAccounts)) === 0 && strlen(trim($allowedBilling)) === 0
-            && ! config('recordings.allow_unrestricted_teams')) {
-            abort(403);
-        }
+        // Turned away before the switch-DB lookup when no call could be allowed.
+        CallAccess::authorizeTeam($request->user());
 
         try {
             $call = new Call(['ISCallId' => $isCallID]);
@@ -34,14 +26,7 @@ class RecordingController extends Controller
             abort(400);
         }
 
-        if (Helpers::allowedAccountAccess(
-            $call->ClientNumber,
-            $call->BillingCode ?? '',
-            $allowedAccounts,
-            $allowedBilling
-        ) !== true) {
-            abort(403);
-        }
+        CallAccess::authorizeCall($request->user(), $call);
 
         $recording = Redis::get("{$isCallID}.wav");
 

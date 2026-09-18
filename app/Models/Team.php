@@ -30,6 +30,7 @@ use Laravel\Jetstream\Team as JetstreamTeam;
  * @property string|null $recording_prefix
  * @property string|null $allowed_accounts
  * @property string|null $allowed_billing
+ * @property bool $unrestricted_accounts
  * @property string|null $board_check_config
  * @property string|null $voicemail_digest_config
  * @property string|null $wctp_config
@@ -50,6 +51,7 @@ class Team extends JetstreamTeam
      */
     protected $casts = [
         'personal_team' => 'boolean',
+        'unrestricted_accounts' => 'boolean',
     ];
 
     /**
@@ -72,6 +74,33 @@ class Team extends JetstreamTeam
         'updated' => TeamUpdated::class,
         'deleted' => TeamDeleted::class,
     ];
+
+    /**
+     * Whether this team is scoped to a subset of accounts.
+     *
+     * A list of whitespace counts as no list: it reads as configured but filters
+     * nothing, so the runtime checks would treat it as unrestricted anyway.
+     */
+    public function hasAccountAllowList(): bool
+    {
+        return trim((string) $this->allowed_accounts) !== ''
+            || trim((string) $this->allowed_billing) !== '';
+    }
+
+    /**
+     * Whether this team's account scope has been decided at all -- either it is
+     * restricted to a list, or someone has explicitly marked it unrestricted.
+     *
+     * A team that is neither is not configured, and account-scoped call data is
+     * withheld from it rather than shown in full. Personal teams are exempt: they are
+     * scoped by agent id, never by account, so there is nothing here to configure.
+     */
+    public function hasDecidedAccountScope(): bool
+    {
+        return $this->personal_team === true
+            || $this->hasAccountAllowList()
+            || $this->unrestricted_accounts === true;
+    }
 
     /**
      * The admin-editable roles defined for this team.

@@ -6,6 +6,7 @@ use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\Stats\Calls\Call;
 use App\Models\Stats\Helpers;
+use App\Support\CallAccess;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -30,20 +31,9 @@ class CallLookupController extends Controller
                 abort(404);
             }
 
-            if ($request->user()->currentTeam->personal_team === true) {
-                if ($request->user()->agtId != $call->agtId) {
-                    abort(403);
-                }
-            }
-
-            if (Helpers::allowedAccountAccess(
-                $call->ClientNumber ?? '',
-                $call->BillingCode ?? '',
-                $request->user()->currentTeam->allowed_accounts ?? '',
-                $request->user()->currentTeam->allowed_billing ?? ''
-            ) !== true) {
-                abort(403);
-            }
+            // Same rule the recording and screen capture endpoints apply, so a call you
+            // can open is a call you can also hear and watch.
+            CallAccess::authorizeCall($request->user(), $call);
         }
 
         Session::put('searchTerm', $isCallID);
