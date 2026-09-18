@@ -515,7 +515,7 @@ class WctpController extends Controller
      *
      * How the message is identified depends on the carrier: Twilio calls a URL that
      * carries our WCTP message id, Bandwidth echoes it back as the message tag, and
-     * Com.io only knows its own guid -- so the id from the route is preferred, then
+     * Commio only knows its own guid -- so the id from the route is preferred, then
      * the one in the payload, then the carrier's id.
      */
     protected function applyDeliveryUpdate(SmsGateway $gateway, DeliveryUpdate $update, ?string $messageIdFromRoute): void

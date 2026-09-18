@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Authenticates a carrier webhook against whatever that carrier can prove.
  *
  * The provider comes from the route, so one middleware covers every carrier: Twilio
- * verifies its request signature, Bandwidth and Com.io present HTTP Basic
+ * verifies its request signature, Bandwidth and Commio present HTTP Basic
  * credentials or a shared secret. Every gateway fails closed when it has no
  * credential to check against.
  *

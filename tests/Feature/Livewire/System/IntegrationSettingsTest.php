@@ -167,7 +167,7 @@ class IntegrationSettingsTest extends TestCase
     }
 
     // ------------------------------------------------------------------
-    // Bandwidth and Com.io: the two SMS carriers that joined Twilio on the WCTP
+    // Bandwidth and Commio: the two SMS carriers that joined Twilio on the WCTP
     // gateway. Both carry API credentials and, separately, the credentials a
     // carrier presents to US on an inbound webhook.
     // ------------------------------------------------------------------

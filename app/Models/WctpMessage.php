@@ -128,7 +128,7 @@ class WctpMessage extends Model
 
     /**
      * Mark message as accepted by its carrier, recording the carrier's own id for
-     * it -- a Twilio SID, a Bandwidth message id or a Com.io guid.
+     * it -- a Twilio SID, a Bandwidth message id or a Commio guid.
      *
      * `twilio_sid` is only written for Twilio messages: it is a Twilio SID by name
      * and by what the message viewer labels it, so another carrier's id does not

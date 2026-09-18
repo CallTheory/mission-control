@@ -24,7 +24,7 @@ enum SmsProvider: string
         return match ($this) {
             self::Twilio => 'Twilio',
             self::Bandwidth => 'Bandwidth',
-            self::Commio => 'Com.io',
+            self::Commio => 'Commio',
         };
     }
 

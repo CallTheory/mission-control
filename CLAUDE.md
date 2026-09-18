@@ -133,7 +133,7 @@ php artisan db:seed
 ### Key Integrations
 
 - **Amtelco**: Unofficial integration for call center data
-- **Communication**: Twilio, Bandwidth, Com.io (thinQ), RingCentral, SendGrid, WCTP gateway
+- **Communication**: Twilio, Bandwidth, Commio (thinQ), RingCentral, SendGrid, WCTP gateway
   (SMS carriers are pluggable and chosen per phone number; the gateway is an
   admin-only system area at `/system/wctp`, gated on `wctp.manage` / `wctp.messages`
   rather than a per-team utility flag — see `docs/system/wctp-gateway.md`)

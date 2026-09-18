@@ -74,7 +74,7 @@ Used to connect internal and external API integrations that augment or enhance t
 - RingCentral
 - Twilio
 - Bandwidth
-- Com.io
+- Commio
 - PeoplePraise
 
 See [Integrations](system/integrations.md) for what each one needs.

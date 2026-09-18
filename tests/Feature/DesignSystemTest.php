@@ -245,6 +245,51 @@ class DesignSystemTest extends TestCase
         ));
     }
 
+    #[Test]
+    public function inverting_a_background_on_hover_also_inverts_the_text(): void
+    {
+        // surface-inverse-* is a matched set: flipping a tile to surface-inverse-hover
+        // without flipping its text leaves surface-fg (near-black in light mode) on a
+        // near-black background, readable right up until the pointer lands on it.
+        //
+        // A tile whose resting background is already bg-surface-inverse is exempt: it is
+        // an intentionally inverted tile whose hover only deepens the same colour, and
+        // the integration logos that use it carry no text at all.
+        $offenders = [];
+
+        foreach ($this->bladeFiles() as $file) {
+            $lines = file($file->getPathname(), FILE_IGNORE_NEW_LINES);
+
+            foreach ($lines as $index => $line) {
+                if (! str_contains($line, 'surface-inverse-hover')) {
+                    continue;
+                }
+
+                if (str_contains($line, 'bg-surface-inverse ') || str_contains($line, 'bg-surface-inverse"')) {
+                    continue;
+                }
+
+                // The foreground flip may sit on a child element, so look at the element
+                // and the markup it opens.
+                $window = implode("\n", array_slice($lines, $index, 12));
+
+                if (str_contains($window, 'surface-inverse-fg')) {
+                    continue;
+                }
+
+                $relative = str_replace(resource_path('views').DIRECTORY_SEPARATOR, '', $file->getPathname());
+                $offenders[$relative][] = 'line '.($index + 1).': '.trim($line);
+            }
+        }
+
+        $this->assertSame([], $offenders, $this->explain(
+            'A tile inverts its background on hover but never inverts its text, so the '
+            .'text disappears into the hover background. Pair surface-inverse-hover with '
+            .'group-hover:text-surface-inverse-fg on the content.',
+            $offenders
+        ));
+    }
+
     /**
      * @param  array<mixed>  $offenders
      */

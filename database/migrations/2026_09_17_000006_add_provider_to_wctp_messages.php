@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * `twilio_sid` predates multi-carrier support and is kept: it is what the message
  * viewer searches and displays, and Twilio messages still write it. New code reads
- * `provider_message_id`, which holds the Bandwidth message id or the Com.io guid
+ * `provider_message_id`, which holds the Bandwidth message id or the Commio guid
  * for messages that went out those doors.
  */
 return new class extends Migration

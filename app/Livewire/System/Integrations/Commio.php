@@ -59,12 +59,12 @@ class Commio extends Component implements HasActions, HasSchemas
 
     protected function settingsHeading(): string
     {
-        return 'Com.io Configuration';
+        return 'Commio Configuration';
     }
 
     protected function settingsDescription(): string
     {
-        return 'SMS for the WCTP gateway via the Com.io (thinQ) origination API. Secrets left blank keep the stored value.';
+        return 'SMS for the WCTP gateway via the Commio (thinQ) origination API. Secrets left blank keep the stored value.';
     }
 
     protected function settingsSchema(): array
@@ -73,7 +73,7 @@ class Commio extends Component implements HasActions, HasSchemas
 
         return [
             Section::make('API Credentials')
-                ->description('From the Com.io portal: your account ID, portal username, and an API token generated under user settings.')
+                ->description('From the Commio portal: your account ID, portal username, and an API token generated under user settings.')
                 ->schema([
                     TextInput::make('commio_account_id')
                         ->label('Account ID')
@@ -101,7 +101,7 @@ class Commio extends Component implements HasActions, HasSchemas
                 ]),
 
             Section::make('Callback Authentication')
-                ->description('How an inbound message or delivery receipt is proved to be from Com.io. The portal takes a plain URL, so the usual choice is the token appended as ?token=... ; Basic credentials embedded in the URL work too. Until one of these is stored, inbound webhooks are rejected.')
+                ->description('How an inbound message or delivery receipt is proved to be from Commio. The portal takes a plain URL, so the usual choice is the token appended as ?token=... ; Basic credentials embedded in the URL work too. Until one of these is stored, inbound webhooks are rejected.')
                 ->schema([
                     TextInput::make('commio_callback_username')
                         ->label('Callback Username')
@@ -129,7 +129,7 @@ class Commio extends Component implements HasActions, HasSchemas
                 ]),
 
             Section::make('Webhook URLs')
-                ->description('Paste these into the Com.io portal as the inbound SMS URL and the delivery-receipt URL. Either accepts both kinds of post.')
+                ->description('Paste these into the Commio portal as the inbound SMS URL and the delivery-receipt URL. Either accepts both kinds of post.')
                 ->schema([
                     TextInput::make('inbound_url')
                         ->label('Inbound SMS URL')

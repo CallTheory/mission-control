@@ -178,7 +178,7 @@ if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
 
     // Per-carrier routes. Both paths accept both event kinds, because Bandwidth's
     // messaging application posts inbound messages and delivery receipts to a single
-    // configured URL and Com.io's portal is configured much the same way; which of
+    // configured URL and Commio's portal is configured much the same way; which of
     // the two URLs an operator pastes where should not matter.
     Route::middleware(ValidateSmsProviderWebhook::class)->group(function () use ($smsProviders) {
         Route::post('/wctp/sms/{provider}/incoming', [WctpController::class, 'handleProviderWebhook'])

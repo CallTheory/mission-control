@@ -56,7 +56,7 @@ class CarriersTest extends TestCase
 
         Livewire::test(Carriers::class)
             ->assertSee('Bandwidth')
-            ->assertSee('Com.io')
+            ->assertSee('Commio')
             ->assertSee('Ready to send')
             ->assertSee('Not configured')
             // The webhook URLs an operator has to paste into each portal.

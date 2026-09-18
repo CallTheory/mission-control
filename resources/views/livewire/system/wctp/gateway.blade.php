@@ -6,7 +6,7 @@
             <div class="mb-6">
                 <p class="text-surface-fg-soft mb-4">
                     This simplified WCTP gateway provides SMS relay functionality. It accepts basic WCTP SubmitRequest messages
-                    from Enterprise Hosts and forwards them as SMS through Twilio, Bandwidth or Com.io -- whichever carrier owns
+                    from Enterprise Hosts and forwards them as SMS through Twilio, Bandwidth or Commio -- whichever carrier owns
                     the sending number. Inbound SMS messages are routed back to the appropriate Enterprise Host based on phone
                     number mapping.
                 </p>
@@ -25,7 +25,7 @@
                             <div class="mt-2 text-sm text-warning">
                                 <p>No SMS carrier is configured yet. To enable SMS relay functionality:</p>
                                 <ol class="list-decimal list-inside mt-2 text-sm space-y-1">
-                                    <li><strong>Set up a carrier:</strong> configure Twilio, Bandwidth or Com.io in <a href="{{ route('system.integrations') }}" class="underline">Integrations</a></li>
+                                    <li><strong>Set up a carrier:</strong> configure Twilio, Bandwidth or Commio in <a href="{{ route('system.integrations') }}" class="underline">Integrations</a></li>
                                     <li><strong>Create Enterprise Hosts:</strong> go to <a href="{{ route('system.wctp.enterprise-hosts') }}" class="underline">Enterprise Hosts</a></li>
                                     <li><strong>Map phone numbers:</strong> list each host's numbers and pick the carrier that owns each one</li>
                                 </ol>

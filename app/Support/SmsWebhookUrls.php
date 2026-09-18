@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
  *
  * Twilio keeps the original unprefixed paths (`/wctp/sms/incoming`,
  * `/wctp/callback/{id}`) so consoles configured before the other carriers existed
- * keep working. Bandwidth and Com.io use provider-scoped paths, and for them both
+ * keep working. Bandwidth and Commio use provider-scoped paths, and for them both
  * URLs accept both event kinds -- Bandwidth's messaging application posts inbound
  * messages and delivery receipts to a single configured URL, so either path has to
  * handle whatever arrives.

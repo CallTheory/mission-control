@@ -69,7 +69,7 @@ class ProcessWctpMessage implements ShouldQueue
             ];
 
             // Only Twilio accepts a status callback URL per message. Bandwidth and
-            // Com.io post receipts to a single URL configured in their portal.
+            // Commio post receipts to a single URL configured in their portal.
             if ($provider === SmsProvider::Twilio) {
                 $options['statusCallback'] = SmsWebhookUrls::status($provider, $this->message->wctp_message_id);
             }

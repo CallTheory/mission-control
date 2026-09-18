@@ -2,7 +2,7 @@
 
 The WCTP Gateway provides enterprise SMS messaging through the Wireless Communications
 Transfer Protocol (WCTP) standard, letting Intelligent Series send and receive text
-messages through Twilio, Bandwidth, or Com.io (thinQ).
+messages through Twilio, Bandwidth, or Commio (thinQ).
 
 > **This moved.** The WCTP Gateway used to be a per-team utility under
 > `/utilities/wctp-gateway`. Carriers, phone numbers, enterprise hosts and message
@@ -84,10 +84,10 @@ blank keeps the value already stored.
 |---------|-------------|
 | Twilio | Account SID, Auth Token, From Number |
 | Bandwidth | Account ID, Application ID, API Token, API Secret, From Number |
-| Com.io | Account ID, API Username, API Token, From Number |
+| Commio | Account ID, API Username, API Token, From Number |
 
 For Bandwidth, the application ID is the messaging application that owns your numbers.
-For Com.io, the username is the portal user the token belongs to.
+For Commio, the username is the portal user the token belongs to.
 
 ## Webhook URLs
 
@@ -95,13 +95,13 @@ For Com.io, the username is the portal user the token belongs to.
 |---------|-------------|-------------------|
 | Twilio | `POST /wctp/sms/incoming` | `POST /wctp/callback/{wctpMessageId}` |
 | Bandwidth | `POST /wctp/sms/bandwidth/incoming` | `POST /wctp/bandwidth/callback` |
-| Com.io | `POST /wctp/sms/commio/incoming` | `POST /wctp/commio/callback` |
+| Commio | `POST /wctp/sms/commio/incoming` | `POST /wctp/commio/callback` |
 
 Twilio keeps its original unprefixed paths so consoles configured before the other
 carriers existed keep working. Every carrier also has provider-scoped paths
 (`/wctp/sms/twilio/incoming`, `/wctp/twilio/callback/{id}`).
 
-For Bandwidth and Com.io, **both** URLs accept **both** kinds of post. Bandwidth's
+For Bandwidth and Commio, **both** URLs accept **both** kinds of post. Bandwidth's
 messaging application has a single callback URL that receives inbound messages and
 delivery receipts together, so one entry in the portal is enough, and it does not matter
 which of the two URLs you paste where.
@@ -117,11 +117,11 @@ inject messages into an enterprise host's queue.
 
 - **Twilio** — the request signature (`X-Twilio-Signature`) is validated against your
   stored auth token. Nothing extra to configure.
-- **Bandwidth and Com.io** — either of:
+- **Bandwidth and Commio** — either of:
     - HTTP Basic credentials (**Callback Username** / **Callback Password**). Bandwidth
       can send these from the messaging application directly.
     - A shared secret (**Callback Token**), sent as `?token=...` on the URL or as an
-      `X-Callback-Token` header. This is the usual choice for Com.io, whose portal takes
+      `X-Callback-Token` header. This is the usual choice for Commio, whose portal takes
       a plain URL with no auth options.
 
 Both methods are accepted for either carrier, because which one a portal can send is a
@@ -147,5 +147,5 @@ gateway:
 
 Each carrier identifies a message differently, so the log records both our own message id
 and the carrier's. Twilio calls a per-message URL carrying the WCTP message id; Bandwidth
-echoes the id back in its `tag` field; Com.io receipts are matched on the thinQ `guid`
+echoes the id back in its `tag` field; Commio receipts are matched on the thinQ `guid`
 stored when the message was accepted.

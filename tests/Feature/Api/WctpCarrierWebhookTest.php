@@ -18,7 +18,7 @@ use Tests\TestCase;
 use Tests\Traits\InteractsWithFeatureFlags;
 
 /**
- * Inbound messages and delivery receipts arriving from Bandwidth and Com.io.
+ * Inbound messages and delivery receipts arriving from Bandwidth and Commio.
  */
 class WctpCarrierWebhookTest extends TestCase
 {
@@ -187,7 +187,7 @@ class WctpCarrierWebhookTest extends TestCase
             [
                 'from' => '5551234567',
                 'to' => '5559998888',
-                'message' => 'Inbound via Com.io',
+                'message' => 'Inbound via Commio',
                 'guid' => 'commio-inbound-1',
             ],
             ['Authorization' => 'Basic '.base64_encode('hook-user:hook-pass')],
@@ -198,7 +198,7 @@ class WctpCarrierWebhookTest extends TestCase
         $message = WctpMessage::where('provider_message_id', 'commio-inbound-1')->firstOrFail();
 
         $this->assertSame($host->id, $message->enterprise_host_id);
-        $this->assertSame('Inbound via Com.io', $message->message);
+        $this->assertSame('Inbound via Commio', $message->message);
         $this->assertSame(SmsProvider::Commio->value, $message->provider);
 
         Queue::assertPushed(ForwardToEnterpriseHost::class);

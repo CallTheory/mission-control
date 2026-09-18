@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
  * Webhook authentication for the carriers that have no request signing.
  *
  * Twilio signs its callbacks, so it verifies the signature instead. Bandwidth can
- * send HTTP Basic credentials configured on the messaging application; Com.io's
+ * send HTTP Basic credentials configured on the messaging application; Commio's
  * portal takes a bare URL, so it gets a shared secret in the query string. Both
  * are accepted for either carrier, because which one a portal can actually send
  * is a property of the portal, not of us.

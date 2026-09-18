@@ -90,18 +90,18 @@ Bandwidth's messaging application has a single callback URL that receives both i
 messages and delivery receipts. Authenticate it with either HTTP Basic credentials
 (**Callback Username** / **Callback Password**) or a shared secret (**Callback Token**).
 
-## Com.io
+## Commio
 
 > Used by the [WCTP Gateway](wctp-gateway.md).
 
-Formerly known as thinQ. Com.io provides SMS messaging for the WCTP Gateway.
+Formerly known as thinQ. Commio provides SMS messaging for the WCTP Gateway.
 
 - **Account ID**
 - **API Username** — the portal user the token belongs to
 - **API Token**
 - **From Number**
 
-The Com.io portal takes a plain URL with no auth options, so authenticate inbound
+The Commio portal takes a plain URL with no auth options, so authenticate inbound
 requests with a shared secret (**Callback Token**) presented as `?token=...` on the URL or
 as an `X-Callback-Token` header.
 

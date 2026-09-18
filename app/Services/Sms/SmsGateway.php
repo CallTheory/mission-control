@@ -11,7 +11,7 @@ use Illuminate\Http\Response;
 /**
  * What the WCTP gateway needs from an SMS carrier.
  *
- * Three carriers are implemented (Twilio, Bandwidth, Com.io/thinQ) and they differ
+ * Three carriers are implemented (Twilio, Bandwidth, Commio/thinQ) and they differ
  * in every direction: different REST endpoints and auth for sending, different
  * webhook payload shapes for receiving, different ways of authenticating their own
  * callbacks, and different acknowledgement bodies they expect back. This interface

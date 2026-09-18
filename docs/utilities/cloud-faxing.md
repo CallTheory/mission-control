@@ -11,7 +11,7 @@ Two providers are supported:
 You sign up for your own account with the provider and enter the API details in the
 System section.
 
-> Bandwidth and Com.io are **SMS carriers** for the [WCTP Gateway](../system/wctp-gateway.md).
+> Bandwidth and Commio are **SMS carriers** for the [WCTP Gateway](../system/wctp-gateway.md).
 > They are not fax providers and have no fax spool directories.
 
 ## How it works

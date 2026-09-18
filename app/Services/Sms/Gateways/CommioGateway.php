@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Com.io (thinQ), via the origination SMS product API.
+ * Commio (thinQ), via the origination SMS product API.
  *
  * Differences that shape this class:
  *
@@ -57,7 +57,7 @@ class CommioGateway extends Gateway
     {
         try {
             if (! $this->isConfigured()) {
-                throw new Exception('Com.io credentials are not configured. Configure them in System > Integrations.');
+                throw new Exception('Commio credentials are not configured. Configure them in System > Integrations.');
             }
 
             $accountId = (string) $this->setting('commio_account_id');
@@ -91,7 +91,7 @@ class CommioGateway extends Gateway
                 : '';
 
             if ($guid === '') {
-                throw new Exception('Com.io accepted the request but returned no message guid');
+                throw new Exception('Commio accepted the request but returned no message guid');
             }
 
             return [
@@ -105,7 +105,7 @@ class CommioGateway extends Gateway
                 'error_message' => null,
             ];
         } catch (Exception $e) {
-            Log::error('Com.io SMS send failed', [
+            Log::error('Commio SMS send failed', [
                 'to' => $to,
                 'error' => $e->getMessage(),
             ]);
@@ -224,8 +224,8 @@ class CommioGateway extends Gateway
         }
 
         return filled($raw)
-            ? "Com.io returned HTTP {$status}: ".mb_substr($raw, 0, 200)
-            : "Com.io returned HTTP {$status}";
+            ? "Commio returned HTTP {$status}: ".mb_substr($raw, 0, 200)
+            : "Commio returned HTTP {$status}";
     }
 
     protected function callbackBasicCredentials(): array

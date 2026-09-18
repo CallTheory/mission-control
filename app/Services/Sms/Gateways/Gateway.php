@@ -44,7 +44,7 @@ abstract class Gateway implements SmsGateway
     }
 
     /**
-     * Digits only -- the shape Com.io/thinQ wants, and the shape numbers are
+     * Digits only -- the shape Commio/thinQ wants, and the shape numbers are
      * compared in.
      */
     protected function digits(string $number): string

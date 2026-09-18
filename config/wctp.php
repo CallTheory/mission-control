@@ -32,7 +32,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Authenticate inbound webhooks on the per-carrier routes (Twilio signature,
-    | Bandwidth/Com.io callback credentials). Disable only in development: with
+    | Bandwidth/Commio callback credentials). Disable only in development: with
     | this off, anyone who can reach the endpoint can inject messages.
     |
     */

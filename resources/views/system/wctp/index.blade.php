@@ -10,7 +10,7 @@
             <div class="bg-surface shadow-xl sm:rounded-lg p-6">
                 <h2 class="text-2xl font-bold text-surface-fg">WCTP SMS Gateway</h2>
                 <p class="mt-2 max-w-3xl text-sm text-surface-fg-soft">
-                    Relays WCTP messages to and from SMS through Twilio, Bandwidth or Com.io. Enterprise hosts submit
+                    Relays WCTP messages to and from SMS through Twilio, Bandwidth or Commio. Enterprise hosts submit
                     WCTP XML to <code class="bg-surface-2 px-1 rounded">{{ url('/wctp') }}</code>; replies and delivery
                     receipts come back through each carrier's webhooks.
                 </p>
@@ -18,25 +18,25 @@
                 <div class="mt-6 grid gap-4 sm:grid-cols-2">
                     @can(\App\Enums\Capability::WctpManage->value)
                         <a href="{{ route('system.wctp.gateway') }}"
-                           class="block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
-                            <h3 class="font-semibold text-surface-fg">Gateway</h3>
-                            <p class="mt-1 text-sm text-muted">
+                           class="group block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
+                            <h3 class="font-semibold text-surface-fg group-hover:text-surface-inverse-fg transition">Gateway</h3>
+                            <p class="mt-1 text-sm text-muted group-hover:text-surface-inverse-fg group-hover:opacity-80 transition">
                                 The endpoint clients post to, what it supports, and a test send.
                             </p>
                         </a>
 
                         <a href="{{ route('system.wctp.carriers') }}"
-                           class="block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
-                            <h3 class="font-semibold text-surface-fg">Carriers</h3>
-                            <p class="mt-1 text-sm text-muted">
+                           class="group block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
+                            <h3 class="font-semibold text-surface-fg group-hover:text-surface-inverse-fg transition">Carriers</h3>
+                            <p class="mt-1 text-sm text-muted group-hover:text-surface-inverse-fg group-hover:opacity-80 transition">
                                 Which carriers can send, their webhook URLs, and the default carrier.
                             </p>
                         </a>
 
                         <a href="{{ route('system.wctp.enterprise-hosts') }}"
-                           class="block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
-                            <h3 class="font-semibold text-surface-fg">Enterprise Hosts</h3>
-                            <p class="mt-1 text-sm text-muted">
+                           class="group block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
+                            <h3 class="font-semibold text-surface-fg group-hover:text-surface-inverse-fg transition">Enterprise Hosts</h3>
+                            <p class="mt-1 text-sm text-muted group-hover:text-surface-inverse-fg group-hover:opacity-80 transition">
                                 Sender IDs, security codes, callback URLs, and each host's phone numbers and carriers.
                             </p>
                         </a>
@@ -44,9 +44,9 @@
 
                     @can(\App\Enums\Capability::WctpMessages->value)
                         <a href="{{ route('system.wctp.messages') }}"
-                           class="block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
-                            <h3 class="font-semibold text-surface-fg">Messages</h3>
-                            <p class="mt-1 text-sm text-muted">
+                           class="group block p-4 rounded-lg border border-border bg-surface-2 hover:bg-surface-inverse-hover transition">
+                            <h3 class="font-semibold text-surface-fg group-hover:text-surface-inverse-fg transition">Messages</h3>
+                            <p class="mt-1 text-sm text-muted group-hover:text-surface-inverse-fg group-hover:opacity-80 transition">
                                 Every message in and out, with delivery status and a retry for failures.
                             </p>
                         </a>
@@ -58,7 +58,7 @@
                 <div class="bg-surface shadow-xl sm:rounded-lg p-6">
                     <h3 class="text-lg font-semibold mb-3">Quick Start Guide</h3>
                     <ol class="list-decimal list-inside space-y-2 text-sm text-surface-fg-soft">
-                        <li><strong>Configure a carrier:</strong> Twilio, Bandwidth or Com.io credentials in <a href="{{ route('system.integrations') }}" class="text-info hover:underline">Integrations</a></li>
+                        <li><strong>Configure a carrier:</strong> Twilio, Bandwidth or Commio credentials in <a href="{{ route('system.integrations') }}" class="text-info hover:underline">Integrations</a></li>
                         <li><strong>Point the carrier at us:</strong> paste the webhook URLs from <a href="{{ route('system.wctp.carriers') }}" class="text-info hover:underline">Carriers</a> into the carrier's portal</li>
                         <li><strong>Create Enterprise Hosts:</strong> add them on <a href="{{ route('system.wctp.enterprise-hosts') }}" class="text-info hover:underline">Enterprise Hosts</a>, listing each host's numbers and the carrier that owns each one</li>
                         <li><strong>Send WCTP Messages:</strong> POST WCTP XML to <code class="bg-surface-2 px-1 rounded">{{ url('/wctp') }}</code></li>

@@ -70,7 +70,7 @@ class WctpRouteRegistrationTest extends TestCase
         $callback = $this->route('wctp.provider.callback');
 
         $this->assertSame('wctp/sms/{provider}/incoming', $inbound->uri());
-        // The message id is optional: Bandwidth and Com.io configure one URL and
+        // The message id is optional: Bandwidth and Commio configure one URL and
         // identify the message inside the payload.
         $this->assertSame('wctp/{provider}/callback/{messageId?}', $callback->uri());
 
