@@ -57,6 +57,7 @@ Capabilities are grouped in the role editor.
 | `system.data_sources` | Manage Data Sources |
 | `system.integrations` | Manage Integrations |
 | `system.observability` | Manage Observability |
+| `system.azure_tokens` | Manage Azure Token Watcher |
 
 ### General
 

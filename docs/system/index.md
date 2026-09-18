@@ -13,6 +13,7 @@ team.
 | [Integrations](integrations.md) | `/system/integrations` | Third-party API credentials |
 | [Permissions](permissions.md) | `/system/permissions` | Roles, capabilities and suffix rules |
 | [Observability](observability.md) | `/system/observability` | Error reporting and tracing |
+| [Azure Tokens](azure-tokens.md) | `/system/azure-tokens` | Entra credential expiry dashboard and alerts |
 | [WCTP Gateway](wctp-gateway.md) | `/system/wctp` | SMS carriers, enterprise hosts, message log |
 | [SAML SSO](../authentication/saml-sso.md) | `/system/saml-settings` | Single sign-on |
 | Users | `/system/users` | User administration |

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" role="img" aria-label="Microsoft Entra ID">
+  <defs>
+    <linearGradient id="entra-shield" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4fc3f7"/>
+      <stop offset="55%" stop-color="#2a7fd4"/>
+      <stop offset="100%" stop-color="#1b4fa8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#entra-shield)" d="M24 3 42 12v12c0 10-7.4 18.6-18 21C13.4 42.6 6 34 6 24V12L24 3z"/>
+  <path fill="#ffffff" opacity=".85" d="M24 12l10 20h-6.6L24 24.6 20.6 32H14l10-20z"/>
+  <text x="56" y="31" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="19" font-weight="600" fill="#1b4fa8">Entra ID</text>
+</svg>

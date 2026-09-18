@@ -21,6 +21,7 @@ enum Capability: string
     case SystemDataSources = 'system.data_sources';
     case SystemIntegrations = 'system.integrations';
     case SystemObservability = 'system.observability';
+    case SystemAzureTokens = 'system.azure_tokens';
 
     // General access areas
     case UtilitiesAccess = 'utilities.access';
@@ -91,6 +92,7 @@ enum Capability: string
         return match ($this) {
             self::SystemAccess => 'Access System Settings',
             self::SystemObservability => 'Manage Observability',
+            self::SystemAzureTokens => 'Manage Azure Token Watcher',
             self::AdminManageUsers => 'Manage Users',
             self::AdminManageRoles => 'Manage Roles & Permissions',
             self::SystemDataSources => 'Manage Data Sources',

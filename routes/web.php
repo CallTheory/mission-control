@@ -18,6 +18,7 @@ use App\Http\Controllers\SAML2\RedirectController as SAMLRedirectController;
 use App\Http\Controllers\ScreenCaptureController;
 use App\Http\Controllers\SendGrid\ParseController;
 use App\Http\Controllers\System\ApiGatewayController as ApiGatewaySettingsController;
+use App\Http\Controllers\System\AzureTokensController;
 use App\Http\Controllers\System\BetterEmailController as BetterEmailSettingsController;
 use App\Http\Controllers\System\BoardCheckController as BoardCheckSettingsController;
 use App\Http\Controllers\System\CloudFaxingController as CloudFaxingSettingsController;
@@ -114,6 +115,7 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/system/data-sources', Dat
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/integrations', IntegrationsController::class)->name('system.integrations');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/observability', ObservabilityController::class)->name('system.observability');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/permissions', PermissionsController::class)->name('system.permissions');
+Route::middleware(['auth:sanctum', 'verified'])->get('/system/azure-tokens', AzureTokensController::class)->name('system.azure-tokens');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/board-check', BoardCheckSettingsController::class)->name('system.board-check');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/cloud-faxing', CloudFaxingSettingsController::class)->name('system.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/script-search', ScriptSearchSettingsController::class)->name('system.script-search');

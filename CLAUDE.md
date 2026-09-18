@@ -145,6 +145,10 @@ php artisan db:seed
 - **Payment**: Stripe integration for billing
 - **Authentication**: SAML2, OAuth (various providers)
 - **Audio**: WhisperCPP for transcription, sox/lame for processing
+- **Microsoft Entra ID**: read-only Graph sweep of app registration credential expiry
+  (client secrets and certificates), surfaced at System → Azure Tokens under
+  `system.azure_tokens` with threshold-based email alerts — see
+  `docs/system/azure-tokens.md`
 - **Observability**: optional GlitchTip/Sentry exception reporting and OpenTelemetry
   tracing to Grafana Tempo — both opt-in, off by default, configured at
   System → Observability (see `docs/system/observability.md`)

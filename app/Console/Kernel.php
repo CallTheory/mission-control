@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\Azure\SweepCredentials;
 use App\Console\Commands\BetterEmails\ProcessFilesToEmail;
 use App\Console\Commands\CheckInboundEmails;
 use App\Console\Commands\ClearOldInboundEmails;
@@ -47,6 +48,7 @@ class Kernel extends ConsoleKernel
         PurgeCsvExportLogs::class,
         ProcessScheduledMessageExports::class,
         PurgeMessageExportLogs::class,
+        SweepCredentials::class,
     ];
 
     /**
@@ -73,6 +75,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('csv-export:purge-logs')->daily();
         $schedule->command('message-export:process')->everyMinute()->withoutOverlapping();
         $schedule->command('message-export:purge-logs')->daily();
+
+        // The Azure token watcher. Daily is enough: the shortest threshold it alerts
+        // on is three days, and Graph credential metadata does not change hourly.
+        $schedule->command('azure:sweep-credentials')->dailyAt('06:15')->withoutOverlapping();
     }
 
     /**

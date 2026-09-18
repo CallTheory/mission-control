@@ -33,6 +33,7 @@
                                 <livewire:system.integrations.twilio lazy></livewire:system.integrations.twilio>
                                 <livewire:system.integrations.commio lazy></livewire:system.integrations.commio>
                                 <livewire:system.integrations.people-praise lazy></livewire:system.integrations.people-praise>
+                                <livewire:system.integrations.entra-id lazy></livewire:system.integrations.entra-id>
                             </div>
                         </div>
                     </div>

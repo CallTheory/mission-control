@@ -44,6 +44,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $commio_callback_username
  * @property string|null $commio_callback_password
  * @property string|null $commio_callback_token
+ * @property string|null $azure_tenant_id
+ * @property string|null $azure_client_id
+ * @property string|null $azure_client_secret
+ * @property bool $azure_enabled
  */
 class DataSource extends Model
 {
@@ -79,6 +83,7 @@ class DataSource extends Model
         'commio_api_token',
         'commio_callback_password',
         'commio_callback_token',
+        'azure_client_secret',
     ];
 
     protected function casts(): array
@@ -86,6 +91,7 @@ class DataSource extends Model
         return [
             'ringcentral_enabled' => 'boolean',
             'mfax_enabled' => 'boolean',
+            'azure_enabled' => 'boolean',
 
             // Credentials: encrypted at rest, transparent to callers. Callers must
             // read/write PLAINTEXT — do NOT wrap these in encrypt()/decrypt().
@@ -110,6 +116,7 @@ class DataSource extends Model
             'commio_api_token' => EncryptedSerialized::class,
             'commio_callback_password' => EncryptedSerialized::class,
             'commio_callback_token' => EncryptedSerialized::class,
+            'azure_client_secret' => EncryptedSerialized::class,
         ];
     }
 }

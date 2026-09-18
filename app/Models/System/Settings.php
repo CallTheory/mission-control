@@ -56,6 +56,8 @@ use Illuminate\Support\Carbon;
  * @property bool $observability_tracing_db_spans_enabled
  * @property int|null $observability_tracing_db_slow_query_ms
  * @property int|null $observability_tracing_export_timeout_ms
+ * @property bool $azure_tokens_alert_enabled
+ * @property string|null $azure_tokens_alert_recipients
  */
 class Settings extends Model
 {
@@ -87,6 +89,8 @@ class Settings extends Model
         'observability_tracing_db_spans_enabled',
         'observability_tracing_db_slow_query_ms',
         'observability_tracing_export_timeout_ms',
+        'azure_tokens_alert_enabled',
+        'azure_tokens_alert_recipients',
     ];
 
     /**
@@ -120,5 +124,6 @@ class Settings extends Model
         'observability_tracing_enabled' => 'boolean',
         'observability_tracing_db_spans_enabled' => 'boolean',
         'observability_tracing_sample_rate' => 'float',
+        'azure_tokens_alert_enabled' => 'boolean',
     ];
 }

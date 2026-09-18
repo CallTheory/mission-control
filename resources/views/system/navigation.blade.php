@@ -32,6 +32,14 @@
     </span>
     </a>
 
+    @can('system.azure_tokens')
+        <a href="{{ route('system.azure-tokens') }}" class="@if(request()->routeIs('system.azure-tokens')) {{ $active }} @else {{ $inactive }} @endif">
+        <span class="truncate">
+          Azure Tokens
+        </span>
+        </a>
+    @endcan
+
     @can('system.observability')
         <a href="{{ route('system.observability') }}" class="@if(request()->routeIs('system.observability')) {{ $active }} @else {{ $inactive }} @endif">
         <span class="truncate">

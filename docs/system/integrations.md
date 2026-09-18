@@ -113,3 +113,22 @@ The Board Check utility can upload precision reports via API to PeoplePraise.
 
 - **People Praise Basic Auth User**
 - **People Praise Basic Auth Pass**
+
+## Microsoft Entra ID
+
+> Used by the [Azure Token Expiry](azure-tokens.md) dashboard.
+
+Client credentials for the app registration that reads credential expiry dates out of
+Microsoft Graph. Read-only: the registration needs the Graph **application** permission
+`Application.Read.All` with admin consent and nothing else, and Mission Control never
+writes to Azure.
+
+- **Tenant ID** — the directory (tenant) ID of the tenant to watch
+- **Client ID** — application (client) ID of the watcher app registration
+- **Client Secret** — use the longest expiry Azure allows; the watcher monitors its own
+  secret too
+- **Run the daily sweep** — when off, credentials stay stored but nothing is read
+
+The tile's **test** link authenticates and reports the tenant's app registration count,
+which distinguishes a wrong secret from missing admin consent before the first scheduled
+sweep runs. Full setup steps are in [Azure Token Expiry](azure-tokens.md).

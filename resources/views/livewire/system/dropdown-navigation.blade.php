@@ -53,6 +53,10 @@
 
             <a href="/system/permissions" class="hover:text-surface-fg hover:bg-surface-2 text-surface-fg-soft block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-5">Permissions</a>
 
+            @can('system.azure_tokens')
+                <a href="/system/azure-tokens" class="hover:text-surface-fg hover:bg-surface-2 text-surface-fg-soft block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-azure-tokens">Azure Tokens</a>
+            @endcan
+
             @can('system.observability')
                 <a href="/system/observability" class="hover:text-surface-fg hover:bg-surface-2 text-surface-fg-soft block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-6">Observability</a>
             @endcan
