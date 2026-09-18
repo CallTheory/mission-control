@@ -10,6 +10,8 @@ use App\Livewire\System\DataSources\IsUser;
 use App\Livewire\System\DataSources\IsWebApi;
 use App\Livewire\System\DataSources\MarketingSite;
 use App\Livewire\System\DataSources\MiteamWeb;
+use App\Livewire\System\Integrations\Bandwidth;
+use App\Livewire\System\Integrations\Commio;
 use App\Livewire\System\Integrations\Mfax;
 use App\Livewire\System\Integrations\PeoplePraise;
 use App\Livewire\System\Integrations\Ringcentral;
@@ -45,6 +47,8 @@ class SettingsRenderTest extends TestCase
     {
         return [
             'integrations/Stripe' => [Stripe::class],
+            'integrations/Bandwidth' => [Bandwidth::class],
+            'integrations/Commio' => [Commio::class],
             'integrations/Mfax' => [Mfax::class],
             'integrations/Ringcentral' => [Ringcentral::class],
             'integrations/PeoplePraise' => [PeoplePraise::class],

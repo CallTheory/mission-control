@@ -10,11 +10,13 @@ use App\Actions\Jetstream\DeleteUser;
 use App\Actions\Jetstream\InviteTeamMember;
 use App\Actions\Jetstream\RemoveTeamMember;
 use App\Actions\Jetstream\UpdateTeamName;
+use App\Livewire\Profile\UpdateProfileInformationForm;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
 use Laravel\Jetstream\Jetstream;
+use Livewire\Livewire;
 
 class JetstreamServiceProvider extends ServiceProvider
 {
@@ -34,6 +36,14 @@ class JetstreamServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configurePermissions();
+
+        // Swap in our subclass so the profile form's timezone field can be a
+        // searchable Filament Select. Jetstream registers this alias itself, and
+        // the last registration wins.
+        Livewire::component(
+            'profile.update-profile-information-form',
+            UpdateProfileInformationForm::class
+        );
 
         Jetstream::createTeamsUsing(CreateTeam::class);
         Jetstream::updateTeamNamesUsing(UpdateTeamName::class);

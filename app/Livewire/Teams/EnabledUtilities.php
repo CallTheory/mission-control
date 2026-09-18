@@ -2,11 +2,12 @@
 
 namespace App\Livewire\Teams;
 
+use App\Enums\Utility;
 use App\Models\Stats\Helpers;
 use App\Models\Team;
 use Illuminate\View\View;
 use Livewire\Component;
-use Mockery\Exception;
+use Throwable;
 
 class EnabledUtilities extends Component
 {
@@ -40,10 +41,16 @@ class EnabledUtilities extends Component
 
     public bool $message_export = false;
 
-    public bool $wctp_gateway = false;
-
     public function toggleSetting(string $setting): void
     {
+        // Validate before touching the property. Assigning first meant an
+        // unrecognised name blew up on an undefined property -- a 500 -- and
+        // left the abort(400) at the foot of the switch unreachable. The enum's
+        // values are exactly these property names.
+        if (Utility::tryFrom($setting) === null) {
+            abort(400);
+        }
+
         $this->$setting = ! $this->$setting;
 
         $team = request()->user()->currentTeam;
@@ -94,9 +101,6 @@ class EnabledUtilities extends Component
             case 'script_search':
                 $team->utility_script_search = $this->script_search;
                 break;
-            case 'wctp_gateway':
-                $team->utility_wctp_gateway = $this->wctp_gateway;
-                break;
             default:
                 abort(400);
                 break;
@@ -105,7 +109,7 @@ class EnabledUtilities extends Component
         try {
             $team->save();
             $this->dispatch('saved');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->addError('error', 'There was an error saving the setting');
         }
     }
@@ -202,12 +206,26 @@ class EnabledUtilities extends Component
         } else {
             $this->script_search = false;
         }
+    }
 
-        if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
-            $this->wctp_gateway = $team->utility_wctp_gateway ?? false;
-        } else {
-            $this->wctp_gateway = false;
+    /**
+     * Whether any utility is switched on at the system level.
+     *
+     * Every toggle in this section is individually gated on its own system flag,
+     * so with none enabled the section renders as an empty form with no
+     * explanation. The view shows a notice instead. Derived from the Utility
+     * enum rather than a second hand-written list, so a new utility is covered
+     * the moment it is added there.
+     */
+    public function hasSystemEnabledUtilities(): bool
+    {
+        foreach (Utility::cases() as $utility) {
+            if (Helpers::isSystemFeatureEnabled($utility->systemFlag())) {
+                return true;
+            }
         }
+
+        return false;
     }
 
     public function render(): View

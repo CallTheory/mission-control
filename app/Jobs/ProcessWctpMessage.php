@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\SmsProvider;
 use App\Models\WctpMessage;
-use App\Services\TwilioService;
+use App\Services\Sms\SmsGatewayManager;
+use App\Support\SmsWebhookUrls;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -44,9 +46,10 @@ class ProcessWctpMessage implements ShouldQueue
     }
 
     /**
-     * Execute the job to send SMS via Twilio
+     * Execute the job, sending the message through the carrier that owns the number
+     * it is being sent from.
      */
-    public function handle(TwilioService $twilioService): void
+    public function handle(SmsGatewayManager $gateways): void
     {
         try {
             // Only process outbound messages
@@ -54,23 +57,37 @@ class ProcessWctpMessage implements ShouldQueue
                 return;
             }
 
-            // Send SMS via Twilio with status callback
-            $result = $twilioService->sendSms(
+            // Messages queued before the gateway supported more than one carrier have
+            // no provider recorded; they go out the system default door.
+            $provider = SmsProvider::tryFromKey($this->message->provider) ?? $gateways->defaultProvider();
+
+            $options = [
+                'from' => $this->message->from,
+                // Carried through as a carrier tag where the carrier has one, so a
+                // delivery receipt can be matched back to this message.
+                'messageId' => $this->message->wctp_message_id,
+            ];
+
+            // Only Twilio accepts a status callback URL per message. Bandwidth and
+            // Com.io post receipts to a single URL configured in their portal.
+            if ($provider === SmsProvider::Twilio) {
+                $options['statusCallback'] = SmsWebhookUrls::status($provider, $this->message->wctp_message_id);
+            }
+
+            $result = $gateways->gateway($provider)->sendSms(
                 $this->message->to,
                 $this->message->message,
-                [
-                    'from' => $this->message->from,
-                    'statusCallback' => route('wctp.callback', ['messageId' => $this->message->wctp_message_id]),
-                ]
+                $options,
             );
 
             if ($result['success']) {
-                $this->message->markAsSent($result['message_sid']);
+                $this->message->markAsSent($result['message_sid'], $provider);
                 $this->message->update(['processed_at' => now()]);
 
-                Log::info('WCTP message sent via Twilio', [
+                Log::info('WCTP message sent', [
                     'wctp_message_id' => $this->message->wctp_message_id,
-                    'twilio_sid' => $result['message_sid'],
+                    'provider' => $provider->value,
+                    'provider_message_id' => $result['message_sid'],
                     'to' => $this->message->to,
                     'from' => $this->message->from,
                 ]);

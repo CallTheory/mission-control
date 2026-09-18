@@ -69,6 +69,11 @@ RUN curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc
 RUN apt-get update
 RUN ACCEPT_EULA=Y apt-get install -y unixodbc unixodbc-dev msodbcsql18 mssql-tools18 cmake
 
+# mssql-tools18 installs sqlcmd under /opt, off PATH, so there was no way to
+# test SQL Server connectivity from inside the container without typing the
+# full path. This is the first thing you want when a connection fails.
+ENV PATH="/opt/mssql-tools18/bin:${PATH}"
+
 RUN pecl install sqlsrv
 RUN pecl install pdo_sqlsrv
 

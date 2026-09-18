@@ -48,7 +48,12 @@ enum Capability: string
     case UtilityMessageExport = 'utility.message_export';
     case UtilityVoicemailDigest = 'utility.voicemail_digest';
     case UtilityScriptSearch = 'utility.script_search';
-    case UtilityWctpGateway = 'utility.wctp_gateway';
+
+    // WCTP gateway (a system area, not a per-team utility: setup and traffic for
+    // the carrier gateway is administrative regardless of which team the admin is
+    // acting on, so these are plain capabilities with no team feature-flag layer).
+    case WctpManage = 'wctp.manage';
+    case WctpMessages = 'wctp.messages';
 
     // Board sub-pages (gated under the Board Check utility's flags)
     case BoardReview = 'board.review';
@@ -62,6 +67,7 @@ enum Capability: string
     {
         return match (true) {
             str_starts_with($this->value, 'utility.') => 'Utilities',
+            str_starts_with($this->value, 'wctp.') => 'WCTP Gateway',
             str_starts_with($this->value, 'board.') => 'Board',
             $this === self::TeamManage, $this === self::TeamAddMember => 'Team',
             $this === self::AnalyticsView,
@@ -84,6 +90,8 @@ enum Capability: string
             self::AdminManageRoles => 'Manage Roles & Permissions',
             self::SystemDataSources => 'Manage Data Sources',
             self::SystemIntegrations => 'Manage Integrations',
+            self::WctpManage => 'Manage WCTP Gateway',
+            self::WctpMessages => 'View WCTP Messages',
             self::AnalyticsView => 'View Analytics',
             self::UtilitiesAccess => 'Access Utilities',
             self::AccountsView => 'View Accounts',

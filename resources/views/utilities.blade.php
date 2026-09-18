@@ -25,6 +25,9 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-muted group-hover:text-surface-inve
                         Utilities are augmented and/or additional features for the Amtelco ecosystem.
                     </h3>
 
+                    @if($emptyReason !== null)
+                        @include('utilities.empty-state')
+                    @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5  gap-x-4 gap-y-4">
 
                         @can('utility.api_gateway')
@@ -188,18 +191,8 @@ $svgClasses = 'class="w-16 h-16 mx-auto text-muted group-hover:text-surface-inve
                             </a>
                         @endcan
 
-                        @can('utility.wctp_gateway')
-                            <a class="group" title="WCTP Gateway" href="/utilities/wctp-gateway">
-                                <div class="bg-surface px-4 py-8 transition transform duration-700 ease-in-out group-hover:bg-surface-inverse-hover rounded-sm shadow border border-border text-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {!! $svgClasses !!}>
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-                                    </svg>
-
-                                    <small class="mx-auto text-sm group-hover:text-surface-inverse-fg transform transition duration-700 ease-in-out">WCTP Gateway</small>
-                                </div>
-                            </a>
-                        @endcan
                     </div>
+                    @endif
                 </div>
                 </div>
             </div>

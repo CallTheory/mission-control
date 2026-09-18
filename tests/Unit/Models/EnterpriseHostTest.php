@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
 use App\Models\EnterpriseHost;
 use App\Models\Team;
 use App\Models\WctpMessage;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
+use Tests\TestCase;
 
 class EnterpriseHostTest extends TestCase
 {
@@ -18,7 +18,7 @@ class EnterpriseHostTest extends TestCase
     public function test_security_code_encryption(): void
     {
         $plainSecurityCode = 'secret123456';
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test123',
@@ -44,7 +44,7 @@ class EnterpriseHostTest extends TestCase
     public function test_security_code_decryption_via_attribute(): void
     {
         $plainSecurityCode = 'secret123456';
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test123',
@@ -54,7 +54,7 @@ class EnterpriseHostTest extends TestCase
 
         // Verify the attribute accessor returns decrypted value
         $this->assertEquals($plainSecurityCode, $host->securityCode);
-        
+
         // Refresh from database to ensure it's not just in memory
         $host->refresh();
         $this->assertEquals($plainSecurityCode, $host->securityCode);
@@ -64,7 +64,7 @@ class EnterpriseHostTest extends TestCase
     {
         // Since the database doesn't allow NULL, test the accessor behavior
         $host = EnterpriseHost::factory()->make(['securityCode' => null]);
-        
+
         // The accessor should return null for null values
         $this->assertNull($host->securityCode);
     }
@@ -80,7 +80,7 @@ class EnterpriseHostTest extends TestCase
 
         // Test the mutator behavior with empty string
         $host->securityCode = '';
-        
+
         // The mutator should convert empty string to null
         $this->assertNull($host->securityCode);
     }
@@ -88,7 +88,7 @@ class EnterpriseHostTest extends TestCase
     public function test_validate_security_code_success(): void
     {
         $plainSecurityCode = 'secret123456';
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test123',
@@ -102,7 +102,7 @@ class EnterpriseHostTest extends TestCase
     public function test_validate_security_code_failure(): void
     {
         $plainSecurityCode = 'secret123456';
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test123',
@@ -148,7 +148,7 @@ class EnterpriseHostTest extends TestCase
     public function test_team_relationship(): void
     {
         $team = Team::factory()->create(['name' => 'Test Team']);
-        
+
         $host = EnterpriseHost::create([
             'name' => 'Test Host',
             'senderID' => 'test123',
@@ -164,7 +164,7 @@ class EnterpriseHostTest extends TestCase
     public function test_messages_relationship(): void
     {
         $host = EnterpriseHost::factory()->create();
-        
+
         WctpMessage::factory()->count(3)->create([
             'enterprise_host_id' => $host->id,
         ]);
@@ -179,7 +179,7 @@ class EnterpriseHostTest extends TestCase
         EnterpriseHost::factory()->create(['name' => 'Disabled Host', 'enabled' => false]);
 
         $enabledHosts = EnterpriseHost::enabled()->get();
-        
+
         $this->assertCount(1, $enabledHosts);
         $this->assertEquals('Enabled Host', $enabledHosts->first()->name);
     }
@@ -190,7 +190,7 @@ class EnterpriseHostTest extends TestCase
         EnterpriseHost::factory()->create(['senderID' => 'host2']);
 
         $host = EnterpriseHost::bySenderID('host1')->first();
-        
+
         $this->assertNotNull($host);
         $this->assertEquals('host1', $host->senderID);
     }
@@ -236,12 +236,13 @@ class EnterpriseHostTest extends TestCase
             'enabled',
             'callback_url',
             'phone_numbers',
+            'number_providers',
             'team_id',
             'message_count',
             'last_message_at',
         ];
 
-        $host = new EnterpriseHost();
+        $host = new EnterpriseHost;
         $this->assertEquals($expectedFillable, $host->getFillable());
     }
 
@@ -257,7 +258,7 @@ class EnterpriseHostTest extends TestCase
         $this->assertTrue($host->enabled);
         $this->assertIsInt($host->message_count);
         $this->assertEquals(42, $host->message_count);
-        $this->assertInstanceOf(\Carbon\Carbon::class, $host->last_message_at);
+        $this->assertInstanceOf(Carbon::class, $host->last_message_at);
     }
 
     public function test_factory_creates_valid_host(): void
@@ -275,14 +276,14 @@ class EnterpriseHostTest extends TestCase
     public function test_factory_disabled_state(): void
     {
         $host = EnterpriseHost::factory()->disabled()->create();
-        
+
         $this->assertFalse($host->enabled);
     }
 
     public function test_factory_with_team(): void
     {
         $host = EnterpriseHost::factory()->withTeam()->create();
-        
+
         $this->assertNotNull($host->team_id);
         $this->assertInstanceOf(Team::class, $host->team);
     }
@@ -290,7 +291,7 @@ class EnterpriseHostTest extends TestCase
     public function test_factory_with_messages(): void
     {
         $host = EnterpriseHost::factory()->withMessages(5)->create();
-        
+
         $this->assertEquals(5, $host->message_count);
         $this->assertNotNull($host->last_message_at);
     }
@@ -313,7 +314,7 @@ class EnterpriseHostTest extends TestCase
 
         // Encrypted values should be different
         $this->assertNotEquals($originalEncrypted, $newEncrypted);
-        
+
         // But the decrypted value should be correct
         $host->refresh();
         $this->assertEquals('new_code', $host->securityCode);

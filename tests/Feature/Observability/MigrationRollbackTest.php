@@ -27,7 +27,14 @@ class MigrationRollbackTest extends TestCase
 
     public function test_migrations_roll_back_cleanly(): void
     {
-        $this->artisan('migrate:rollback', ['--step' => 3])->assertSuccessful();
+        // Target the observability migrations by path rather than by --step,
+        // so appending an unrelated migration later cannot silently change
+        // which ones this rolls back.
+        $this->artisan('migrate:rollback', ['--path' => [
+            'database/migrations/2026_09_03_000001_add_observability_errors_to_settings.php',
+            'database/migrations/2026_09_03_000002_grant_observability_capability_to_admin_roles.php',
+            'database/migrations/2026_09_03_000003_add_observability_tracing_to_settings.php',
+        ]])->assertSuccessful();
         $this->assertFalse(Schema::hasColumn('settings', 'observability_errors_dsn'));
         $this->assertFalse(Schema::hasColumn('settings', 'observability_tracing_auth_token'));
         $this->artisan('migrate')->assertSuccessful();

@@ -10,11 +10,10 @@ use Illuminate\Contracts\View\View;
 /**
  * The integration tiles that only explain something -- no fields to edit.
  *
- * SendGrid documents the inbound-parse webhook URLs; Bandwidth and Com.io are
- * placeholders for providers that are not built yet. They share the tile and dialog
- * with the configurable integrations ({@see ConfiguresDataSource}) so the row reads
- * as one set, but their dialog has content instead of a schema and closes rather than
- * saving.
+ * SendGrid is the one left: its tile documents the inbound-parse webhook URLs. It
+ * shares the tile and dialog with the configurable integrations
+ * ({@see ConfiguresDataSource}) so the row reads as one set, but its dialog has
+ * content instead of a schema and closes rather than saving.
  */
 trait ShowsIntegrationInfo
 {

@@ -5,7 +5,7 @@ namespace App\Livewire\System;
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
 use App\Models\Stats\Helpers;
-use Illuminate\Support\Facades\Storage;
+use App\Services\FeatureFlags;
 use Illuminate\View\View;
 use Livewire\Component;
 
@@ -48,182 +48,98 @@ class EnabledUtilities extends Component
 
     public function toggleConfigEditorUtility(): void
     {
-        if (Storage::fileExists('feature-flags/config-editor.flag')) {
-            Storage::delete('feature-flags/config-editor.flag');
-            $this->config_editor = false;
-        } else {
-            Storage::put('feature-flags/config-editor.flag', encrypt('config-editor'));
-            $this->config_editor = true;
-        }
+        $this->config_editor = app(FeatureFlags::class)->toggle('config-editor');
 
         $this->dispatch('saved');
     }
 
     public function toggleVoicemailDigestUtility(): void
     {
-        if (Storage::fileExists('feature-flags/voicemail-digest.flag')) {
-            Storage::delete('feature-flags/voicemail-digest.flag');
-            $this->voicemail_digest = false;
-        } else {
-            Storage::put('feature-flags/voicemail-digest.flag', encrypt('voicemail-digest'));
-            $this->voicemail_digest = true;
-        }
+        $this->voicemail_digest = app(FeatureFlags::class)->toggle('voicemail-digest');
 
         $this->dispatch('saved');
     }
 
     public function toggleCsvExportUtility(): void
     {
-        if (Storage::fileExists('feature-flags/csv-export.flag')) {
-            Storage::delete('feature-flags/csv-export.flag');
-            $this->csv_export = false;
-        } else {
-            Storage::put('feature-flags/csv-export.flag', encrypt('csv-export'));
-            $this->csv_export = true;
-        }
+        $this->csv_export = app(FeatureFlags::class)->toggle('csv-export');
 
         $this->dispatch('saved');
     }
 
     public function toggleApiGatewayUtility(): void
     {
-        if (Storage::fileExists('feature-flags/api-gateway.flag')) {
-            Storage::delete('feature-flags/api-gateway.flag');
-            $this->api_gateway = false;
-        } else {
-            Storage::put('feature-flags/api-gateway.flag', encrypt('api-gateway'));
-            $this->api_gateway = true;
-        }
+        $this->api_gateway = app(FeatureFlags::class)->toggle('api-gateway');
 
         $this->dispatch('saved');
     }
 
     public function toggleBoardCheckUtility(): void
     {
-        if (Storage::fileExists('feature-flags/board-check.flag')) {
-            Storage::delete('feature-flags/board-check.flag');
-            $this->board_check = false;
-        } else {
-            Storage::put('feature-flags/board-check.flag', encrypt('board-check'));
-            $this->board_check = true;
-        }
+        $this->board_check = app(FeatureFlags::class)->toggle('board-check');
 
         $this->dispatch('saved');
     }
 
     public function toggleCardProcessingUtility(): void
     {
-        if (Storage::fileExists('feature-flags/card-processing.flag')) {
-            Storage::delete('feature-flags/card-processing.flag');
-            $this->card_processing = false;
-        } else {
-            Storage::put('feature-flags/card-processing.flag', encrypt('card-processing'));
-            $this->card_processing = true;
-        }
+        $this->card_processing = app(FeatureFlags::class)->toggle('card-processing');
 
         $this->dispatch('saved');
     }
 
     public function toggleCloudFaxingUtility(): void
     {
-        if (Storage::fileExists('feature-flags/cloud-faxing.flag')) {
-            Storage::delete('feature-flags/cloud-faxing.flag');
-            $this->cloud_faxing = false;
-        } else {
-            Storage::put('feature-flags/cloud-faxing.flag', encrypt('cloud-faxing'));
-            $this->cloud_faxing = true;
-        }
+        $this->cloud_faxing = app(FeatureFlags::class)->toggle('cloud-faxing');
 
         $this->dispatch('saved');
     }
 
     public function toggleInboundEmailUtility(): void
     {
-        if (Storage::fileExists('feature-flags/inbound-email.flag')) {
-            Storage::delete('feature-flags/inbound-email.flag');
-            $this->inbound_email = false;
-        } else {
-            Storage::put('feature-flags/inbound-email.flag', encrypt('inbound-email'));
-            $this->inbound_email = true;
-        }
+        $this->inbound_email = app(FeatureFlags::class)->toggle('inbound-email');
 
         $this->dispatch('saved');
     }
 
     public function toggleScriptSearchUtility(): void
     {
-        if (Storage::fileExists('feature-flags/script-search.flag')) {
-            Storage::delete('feature-flags/script-search.flag');
-            $this->script_search = false;
-        } else {
-            Storage::put('feature-flags/script-search.flag', encrypt('script-search'));
-            $this->script_search = true;
-        }
+        $this->script_search = app(FeatureFlags::class)->toggle('script-search');
 
         $this->dispatch('saved');
     }
 
     public function toggleBetterEmailsUtility(): void
     {
-        if (Storage::fileExists('feature-flags/better-emails.flag')) {
-            Storage::delete('feature-flags/better-emails.flag');
-            $this->better_emails = false;
-        } else {
-            Storage::put('feature-flags/better-emails.flag', encrypt('better-emails'));
-            $this->better_emails = true;
-        }
+        $this->better_emails = app(FeatureFlags::class)->toggle('better-emails');
 
         $this->dispatch('saved');
     }
 
     public function toggleCallLookupUtility(): void
     {
-        if (Storage::fileExists('feature-flags/call-lookup.flag')) {
-            Storage::delete('feature-flags/call-lookup.flag');
-            $this->call_lookup = false;
-        } else {
-            Storage::put('feature-flags/call-lookup.flag', encrypt('call-lookup'));
-            $this->call_lookup = true;
-        }
+        $this->call_lookup = app(FeatureFlags::class)->toggle('call-lookup');
 
         $this->dispatch('saved');
     }
 
     public function toggleDatabaseHealthUtility(): void
     {
-        if (Storage::fileExists('feature-flags/database-health.flag')) {
-            Storage::delete('feature-flags/database-health.flag');
-            $this->database_health = false;
-        } else {
-            Storage::put('feature-flags/database-health.flag', encrypt('database-health'));
-            $this->database_health = true;
-        }
+        $this->database_health = app(FeatureFlags::class)->toggle('database-health');
 
         $this->dispatch('saved');
     }
 
     public function toggleDirectorySearchUtility(): void
     {
-        if (Storage::fileExists('feature-flags/directory-search.flag')) {
-            Storage::delete('feature-flags/directory-search.flag');
-            $this->directory_search = false;
-        } else {
-            Storage::put('feature-flags/directory-search.flag', encrypt('directory-search'));
-            $this->directory_search = true;
-        }
+        $this->directory_search = app(FeatureFlags::class)->toggle('directory-search');
 
         $this->dispatch('saved');
     }
 
     public function toggleMessageExportUtility(): void
     {
-        if (Storage::fileExists('feature-flags/message-export.flag')) {
-            Storage::delete('feature-flags/message-export.flag');
-            $this->message_export = false;
-        } else {
-            Storage::put('feature-flags/message-export.flag', encrypt('message-export'));
-            $this->message_export = true;
-        }
+        $this->message_export = app(FeatureFlags::class)->toggle('message-export');
 
         $this->dispatch('saved');
     }

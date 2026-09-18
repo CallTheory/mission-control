@@ -26,7 +26,6 @@ use Laravel\Jetstream\Team as JetstreamTeam;
  * @property bool|null $utility_mcp_server
  * @property bool|null $utility_voicemail_digest
  * @property bool|null $utility_script_search
- * @property bool|null $utility_wctp_gateway
  * @property string|null $better_emails_config
  * @property string|null $recording_prefix
  * @property string|null $allowed_accounts

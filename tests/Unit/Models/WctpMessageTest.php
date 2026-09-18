@@ -115,6 +115,8 @@ class WctpMessageTest extends TestCase
             'message',
             'wctp_message_id',
             'twilio_sid',
+            'provider',
+            'provider_message_id',
             'direction',
             'status',
             'error_message',

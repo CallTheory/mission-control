@@ -18,6 +18,17 @@
 sail text eol=lf
 vendor/bin/sail text eol=lf
 
+# Container build files. These are consumed by Linux shells inside the image,
+# so a CRLF checkout breaks them -- the "bash\r: No such file or directory"
+# failure in CLAUDE.md. Dockerfile has no extension, so none of the rules
+# above covered it and it silently went CRLF.
+Dockerfile text eol=lf
+Dockerfile.* text eol=lf
+*.dockerfile text eol=lf
+docker/** text eol=lf
+.dockerignore text eol=lf
+docker-compose.yml text eol=lf
+
 # Binary files - don't modify line endings
 *.png binary
 *.jpg binary

@@ -90,7 +90,7 @@
             @endif
 
             @if(Helpers::isSystemFeatureEnabled('wctp-gateway'))
-                <a href="/system/wctp-gateway" class="hover:text-surface-fg hover:bg-surface-2 text-surface-fg-soft block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-13">WCTP Gateway</a>
+                <a href="/system/wctp" class="hover:text-surface-fg hover:bg-surface-2 text-surface-fg-soft block px-4 py-2 text-sm" role="menuitem" tabindex="-1" id="menu-item-13">WCTP Gateway</a>
             @endif
 
         </div>

@@ -6,6 +6,7 @@ namespace Tests\Feature\Livewire\System;
 
 use App\Enums\Capability;
 use App\Livewire\Concerns\AuthorizesSystemComponent;
+use App\Livewire\Concerns\AuthorizesWctpSection;
 use App\Livewire\System\Integrations\Twilio;
 use App\Models\DataSource;
 use App\Models\Team;
@@ -33,9 +34,18 @@ class SystemComponentAuthorizationTest extends TestCase
     /**
      * The regression guard that matters most: a System component added later
      * without a capability declaration fails here rather than shipping ungated.
+     *
+     * Two traits count. Most System screens are gated on `system.access` via
+     * AuthorizesSystemComponent; the WCTP gateway section is gated on its own
+     * wctp.manage / wctp.messages capabilities via AuthorizesWctpSection, because
+     * it is meant to be reachable by a technical operator who does not hold
+     * system.access. What this guards is that a component declares SOME capability,
+     * not which one.
      */
     public function test_every_system_livewire_component_declares_a_capability(): void
     {
+        $authorizing = [AuthorizesSystemComponent::class, AuthorizesWctpSection::class];
+
         $missing = [];
 
         foreach (Finder::create()->files()->in(app_path('Livewire/System'))->name('*.php') as $file) {
@@ -48,12 +58,12 @@ class SystemComponentAuthorizationTest extends TestCase
                 continue;
             }
 
-            if (! in_array(AuthorizesSystemComponent::class, class_uses_recursive($class), true)) {
+            if (array_intersect($authorizing, class_uses_recursive($class)) === []) {
                 $missing[] = $class;
             }
         }
 
-        $this->assertSame([], $missing, 'System Livewire components missing AuthorizesSystemComponent: '
+        $this->assertSame([], $missing, 'System Livewire components declaring no capability: '
             .implode(', ', $missing));
     }
 

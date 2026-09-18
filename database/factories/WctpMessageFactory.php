@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\SmsProvider;
 use App\Models\EnterpriseHost;
 use App\Models\WctpMessage;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,6 +18,7 @@ class WctpMessageFactory extends Factory
     {
         $statuses = ['pending', 'queued', 'sent', 'delivered', 'failed'];
         $status = $this->faker->randomElement($statuses);
+        $sid = in_array($status, ['pending', 'queued']) ? null : 'SM'.Str::random(32);
 
         return [
             'enterprise_host_id' => EnterpriseHost::factory(),
@@ -24,7 +26,9 @@ class WctpMessageFactory extends Factory
             'from' => '+15551234567',
             'message' => $this->faker->sentence(),
             'wctp_message_id' => 'wctp_'.Str::random(10),
-            'twilio_sid' => ! in_array($status, ['pending', 'queued']) ? 'SM'.Str::random(32) : null,
+            'twilio_sid' => $sid,
+            'provider' => SmsProvider::Twilio->value,
+            'provider_message_id' => $sid,
             'direction' => 'outbound',
             'status' => $status,
             'error_message' => $status === 'failed' ? $this->faker->sentence() : null,
@@ -40,6 +44,7 @@ class WctpMessageFactory extends Factory
         return $this->state(fn () => [
             'status' => 'pending',
             'twilio_sid' => null,
+            'provider_message_id' => null,
             'error_message' => null,
             'delivered_at' => null,
             'failed_at' => null,
@@ -53,6 +58,7 @@ class WctpMessageFactory extends Factory
         return $this->state(fn () => [
             'status' => 'queued',
             'twilio_sid' => null,
+            'provider_message_id' => null,
             'error_message' => null,
             'delivered_at' => null,
             'failed_at' => null,
@@ -65,7 +71,7 @@ class WctpMessageFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => 'sent',
-            'twilio_sid' => 'SM'.Str::random(32),
+            ...$this->carrierIds(),
             'error_message' => null,
             'delivered_at' => null,
             'failed_at' => null,
@@ -78,7 +84,7 @@ class WctpMessageFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => 'delivered',
-            'twilio_sid' => 'SM'.Str::random(32),
+            ...$this->carrierIds(),
             'error_message' => null,
             'delivered_at' => now(),
             'failed_at' => null,
@@ -91,7 +97,7 @@ class WctpMessageFactory extends Factory
     {
         return $this->state(fn () => [
             'status' => 'failed',
-            'twilio_sid' => 'SM'.Str::random(32),
+            ...$this->carrierIds(),
             'error_message' => 'Delivery failed: Error 30003',
             'delivered_at' => null,
             'failed_at' => now(),
@@ -107,5 +113,38 @@ class WctpMessageFactory extends Factory
             'to' => '+15551234567',
             'from' => $this->faker->phoneNumber(),
         ]);
+    }
+
+    /**
+     * A message that went out through a carrier other than Twilio, which is what
+     * `twilio_sid` being null while `provider_message_id` is set looks like.
+     */
+    public function provider(SmsProvider $provider): static
+    {
+        return $this->state(fn () => [
+            'provider' => $provider->value,
+            'twilio_sid' => $provider === SmsProvider::Twilio ? 'SM'.Str::random(32) : null,
+            'provider_message_id' => match ($provider) {
+                SmsProvider::Twilio => 'SM'.Str::random(32),
+                SmsProvider::Bandwidth => Str::random(28),
+                SmsProvider::Commio => (string) Str::uuid(),
+            },
+        ]);
+    }
+
+    /**
+     * The carrier's id for a message that has actually been accepted. Twilio's SID
+     * is written to both columns; see WctpMessage::markAsSent().
+     *
+     * @return array<string, string>
+     */
+    private function carrierIds(): array
+    {
+        $sid = 'SM'.Str::random(32);
+
+        return [
+            'twilio_sid' => $sid,
+            'provider_message_id' => $sid,
+        ];
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Feature\Livewire\System;
 
 use App\Enums\Capability;
+use App\Livewire\System\Integrations\Bandwidth;
+use App\Livewire\System\Integrations\Commio;
 use App\Livewire\System\Integrations\Mfax;
 use App\Livewire\System\Integrations\PeoplePraise;
 use App\Livewire\System\Integrations\Ringcentral;
@@ -162,6 +164,131 @@ class IntegrationSettingsTest extends TestCase
 
         $this->assertSame('exporter', $datasource->people_praise_basic_auth_user);
         $this->assertSame('hunter2', $datasource->people_praise_basic_auth_pass);
+    }
+
+    // ------------------------------------------------------------------
+    // Bandwidth and Com.io: the two SMS carriers that joined Twilio on the WCTP
+    // gateway. Both carry API credentials and, separately, the credentials a
+    // carrier presents to US on an inbound webhook.
+    // ------------------------------------------------------------------
+
+    public function test_bandwidth_saves_its_api_and_callback_credentials(): void
+    {
+        Livewire::actingAs($this->admin())
+            ->test(Bandwidth::class)
+            ->callAction('configure', [
+                'bandwidth_account_id' => '5000000',
+                'bandwidth_application_id' => 'app-123',
+                'bandwidth_from_number' => '+15552220000',
+                'bandwidth_api_token' => 'api-token',
+                'bandwidth_api_secret' => 'api-secret',
+                'bandwidth_callback_username' => 'hook-user',
+                'bandwidth_callback_password' => 'hook-pass',
+                'bandwidth_callback_token' => 'hook-token',
+            ])
+            ->assertHasNoErrors()
+            ->assertNotified('Settings saved');
+
+        $datasource = DataSource::first();
+
+        $this->assertSame('5000000', $datasource->bandwidth_account_id);
+        $this->assertSame('app-123', $datasource->bandwidth_application_id);
+        $this->assertSame('api-secret', $datasource->bandwidth_api_secret);
+        $this->assertSame('hook-pass', $datasource->bandwidth_callback_password);
+
+        foreach (['bandwidth_api_token', 'bandwidth_api_secret', 'bandwidth_callback_password', 'bandwidth_callback_token'] as $column) {
+            $this->assertNotSame(
+                $datasource->{$column},
+                $datasource->getRawOriginal($column),
+                "{$column} was stored in plaintext."
+            );
+        }
+    }
+
+    public function test_bandwidth_reports_whether_it_can_send(): void
+    {
+        $this->assertFalse(
+            Livewire::actingAs($this->admin())->test(Bandwidth::class)->instance()->isConfigured()
+        );
+
+        Livewire::actingAs($this->admin())
+            ->test(Bandwidth::class)
+            ->callAction('configure', [
+                'bandwidth_account_id' => '5000000',
+                'bandwidth_application_id' => 'app-123',
+                'bandwidth_from_number' => '+15552220000',
+                'bandwidth_api_token' => 'api-token',
+                'bandwidth_api_secret' => 'api-secret',
+            ]);
+
+        $this->assertTrue(
+            Livewire::actingAs($this->admin())->test(Bandwidth::class)->instance()->isConfigured()
+        );
+    }
+
+    public function test_a_blank_secret_keeps_the_stored_one(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)->test(Bandwidth::class)->callAction('configure', [
+            'bandwidth_account_id' => '5000000',
+            'bandwidth_api_secret' => 'original-secret',
+        ]);
+
+        // Secrets are never rendered back into the page, so a blank submission has to
+        // mean "leave it alone" rather than "clear it".
+        Livewire::actingAs($admin)->test(Bandwidth::class)->callAction('configure', [
+            'bandwidth_account_id' => '5000001',
+            'bandwidth_api_secret' => '',
+        ]);
+
+        $datasource = DataSource::first();
+
+        $this->assertSame('5000001', $datasource->bandwidth_account_id);
+        $this->assertSame('original-secret', $datasource->bandwidth_api_secret);
+    }
+
+    public function test_a_stored_secret_is_never_prefilled_into_the_form(): void
+    {
+        $admin = $this->admin();
+
+        Livewire::actingAs($admin)->test(Bandwidth::class)->callAction('configure', [
+            'bandwidth_account_id' => '5000000',
+            'bandwidth_api_secret' => 'original-secret',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(Bandwidth::class)
+            ->mountAction('configure')
+            ->assertActionDataSet([
+                'bandwidth_account_id' => '5000000',
+                'bandwidth_api_secret' => '',
+            ]);
+    }
+
+    public function test_commio_saves_its_credentials(): void
+    {
+        Livewire::actingAs($this->admin())
+            ->test(Commio::class)
+            ->callAction('configure', [
+                'commio_account_id' => '4321',
+                'commio_username' => 'portal-user',
+                'commio_api_token' => 'portal-token',
+                'commio_from_number' => '+15553330000',
+                'commio_callback_token' => 'hook-token',
+            ])
+            ->assertHasNoErrors();
+
+        $datasource = DataSource::first();
+
+        $this->assertSame('4321', $datasource->commio_account_id);
+        $this->assertSame('portal-user', $datasource->commio_username);
+        $this->assertSame('portal-token', $datasource->commio_api_token);
+        $this->assertNotSame('portal-token', $datasource->getRawOriginal('commio_api_token'));
+
+        $this->assertTrue(
+            Livewire::actingAs($this->admin())->test(Commio::class)->instance()->isConfigured()
+        );
     }
 
     // ------------------------------------------------------------------

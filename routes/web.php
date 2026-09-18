@@ -1,13 +1,14 @@
 <?php
 
+use App\Enums\SmsProvider;
 use App\Http\Controllers\Accounts\ClientAccountsController;
 use App\Http\Controllers\Accounts\ClientDetailController;
 use App\Http\Controllers\Accounts\ClientGreetingController;
-// use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
 use App\Http\Controllers\Api\WctpController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailUnsubscribeController;
 use App\Http\Controllers\PrivacyPolicyController;
+// use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
 use App\Http\Controllers\RecordingController;
 use App\Http\Controllers\RedirectHomeController;
 use App\Http\Controllers\SAML2\CallbackController as SAMLCallbackController;
@@ -32,7 +33,11 @@ use App\Http\Controllers\System\ScriptSearchController as ScriptSearchSettingsCo
 use App\Http\Controllers\System\SystemController;
 use App\Http\Controllers\System\UserController as UserDetailController;
 use App\Http\Controllers\System\UsersController as UsersAndGroupsController;
-use App\Http\Controllers\System\WctpGatewayController as WctpGatewaySettingsController;
+use App\Http\Controllers\System\Wctp\CarriersController as WctpCarriersController;
+use App\Http\Controllers\System\Wctp\EnterpriseHostsController as WctpEnterpriseHostsController;
+use App\Http\Controllers\System\Wctp\GatewayController as WctpGatewayPageController;
+use App\Http\Controllers\System\Wctp\IndexController as WctpIndexController;
+use App\Http\Controllers\System\Wctp\MessagesController as WctpMessagesController;
 use App\Http\Controllers\TermsOfServiceController;
 use App\Http\Controllers\Utilities\ApiGatewayController;
 use App\Http\Controllers\Utilities\BetterEmailController;
@@ -48,15 +53,13 @@ use App\Http\Controllers\Utilities\CsvExportController;
 use App\Http\Controllers\Utilities\DatabaseHealthController;
 use App\Http\Controllers\Utilities\DirectorySearchController;
 use App\Http\Controllers\Utilities\DownloadTBSReport;
-use App\Http\Controllers\Utilities\EnterpriseHostsController;
 use App\Http\Controllers\Utilities\InboundEmailController;
 use App\Http\Controllers\Utilities\McpServerController;
 use App\Http\Controllers\Utilities\MessageExportController;
 use App\Http\Controllers\Utilities\ScriptSearchController;
 use App\Http\Controllers\Utilities\VoicemailDigestController;
-use App\Http\Controllers\Utilities\WctpGatewayController;
-use App\Http\Controllers\Utilities\WctpMessageLogController;
 use App\Http\Controllers\UtilitiesController;
+use App\Http\Middleware\ValidateSmsProviderWebhook;
 use App\Http\Middleware\ValidateTwilioRequest;
 use App\Models\Stats\Helpers;
 use Illuminate\Support\Facades\Route;
@@ -85,9 +88,6 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-review', 
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/script-search', ScriptSearchController::class)->name('utilities.script-search');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-report', BoardReportController::class)->name('utilities.board-report');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/board-activity', BoardActivityController::class)->name('utilities.board-activity');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-gateway', WctpGatewayController::class)->name('utilities.wctp-gateway');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/enterprise-hosts', EnterpriseHostsController::class)->name('utilities.enterprise-hosts');
-Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/wctp-messages', WctpMessageLogController::class)->name('utilities.wctp-messages');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/cloud-faxing/{provider?}', CloudFaxingController::class)->name('utilities.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing', CardProcessingController::class)->name('utilities.card-processing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/card-processing/download-tbs-import', DownloadTBSReport::class)->name('utilities.card-processing.download-tbs-import');
@@ -117,7 +117,24 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/system/permissions', Perm
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/board-check', BoardCheckSettingsController::class)->name('system.board-check');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/cloud-faxing', CloudFaxingSettingsController::class)->name('system.cloud-faxing');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/script-search', ScriptSearchSettingsController::class)->name('system.script-search');
-Route::middleware(['auth:sanctum', 'verified'])->get('/system/wctp-gateway', WctpGatewaySettingsController::class)->name('system.wctp-gateway');
+
+// The WCTP gateway section. Administrative throughout -- carriers, numbers, hosts
+// and traffic are one installation-wide configuration, not a per-team utility -- so
+// it lives under /system and is gated on wctp.manage / wctp.messages rather than on
+// any team's utility flag. What used to be tabs on one screen are these pages.
+Route::middleware(['auth:sanctum', 'verified'])->group(function () {
+    Route::get('/system/wctp', WctpIndexController::class)->name('system.wctp');
+    Route::get('/system/wctp/gateway', WctpGatewayPageController::class)->name('system.wctp.gateway');
+    Route::get('/system/wctp/carriers', WctpCarriersController::class)->name('system.wctp.carriers');
+    Route::get('/system/wctp/enterprise-hosts', WctpEnterpriseHostsController::class)->name('system.wctp.enterprise-hosts');
+    Route::get('/system/wctp/messages', WctpMessagesController::class)->name('system.wctp.messages');
+
+    // Where these pages used to live, kept so bookmarks and older links resolve.
+    Route::redirect('/system/wctp-gateway', '/system/wctp')->name('system.wctp-gateway');
+    Route::redirect('/utilities/wctp-gateway', '/system/wctp/gateway')->name('utilities.wctp-gateway');
+    Route::redirect('/utilities/enterprise-hosts', '/system/wctp/enterprise-hosts')->name('utilities.enterprise-hosts');
+    Route::redirect('/utilities/wctp-messages', '/system/wctp/messages')->name('utilities.wctp-messages');
+});
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/api-gateway', ApiGatewaySettingsController::class)->name('system.api-gateway');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/better-emails', BetterEmailSettingsController::class)->name('system.better-emails');
 Route::middleware(['auth:sanctum', 'verified'])->get('/system/better-emails/preview/{theme}', PreviewBetterEmailsThemeController::class);
@@ -143,17 +160,34 @@ Route::get('/email-unsubscribe', EmailUnsubscribeController::class)->middleware(
 // WCTP Enterprise Host endpoint (public; authenticated per-request by senderID +
 // securityCode). Throttled to blunt security-code brute-forcing.
 if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
+    $smsProviders = array_column(SmsProvider::cases(), 'value');
+
     Route::post('/wctp', [WctpController::class, 'handle'])
         ->middleware('throttle:60,1')
         ->name('wctp');
 
-    // Twilio-facing routes with signature validation
+    // Twilio's original unprefixed routes, kept so consoles configured before the
+    // gateway supported other carriers keep working.
     Route::middleware(ValidateTwilioRequest::class)->group(function () {
         Route::post('/wctp/callback/{messageId}', [WctpController::class, 'twilioCallback'])
             ->name('wctp.callback');
 
         Route::post('/wctp/sms/incoming', [WctpController::class, 'handleIncomingSms'])
             ->name('wctp.sms.incoming');
+    });
+
+    // Per-carrier routes. Both paths accept both event kinds, because Bandwidth's
+    // messaging application posts inbound messages and delivery receipts to a single
+    // configured URL and Com.io's portal is configured much the same way; which of
+    // the two URLs an operator pastes where should not matter.
+    Route::middleware(ValidateSmsProviderWebhook::class)->group(function () use ($smsProviders) {
+        Route::post('/wctp/sms/{provider}/incoming', [WctpController::class, 'handleProviderWebhook'])
+            ->whereIn('provider', $smsProviders)
+            ->name('wctp.sms.provider.incoming');
+
+        Route::post('/wctp/{provider}/callback/{messageId?}', [WctpController::class, 'handleProviderWebhook'])
+            ->whereIn('provider', $smsProviders)
+            ->name('wctp.provider.callback');
     });
 }
 

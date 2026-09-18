@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Extensions\SafeSaml2Provider;
+use App\Services\FeatureFlags;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -17,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // A singleton so its per-request memo actually spans the request: the
+        // flag map is read many times per page.
+        $this->app->singleton(FeatureFlags::class);
     }
 
     /**

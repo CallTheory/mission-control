@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\SmsProvider;
+use App\Services\Sms\SmsGatewayManager;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,9 +21,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $enabled
  * @property string|null $callback_url
  * @property array|null $phone_numbers
+ * @property array|null $number_providers
  * @property int|null $team_id
  * @property int $message_count
- * @property \Carbon\Carbon|null $last_message_at
+ * @property Carbon|null $last_message_at
  */
 class EnterpriseHost extends Model
 {
@@ -33,6 +37,7 @@ class EnterpriseHost extends Model
         'enabled',
         'callback_url',
         'phone_numbers',  // Array of phone numbers mapped to this host
+        'number_providers',  // Map of digits-only number => SMS provider key
         'team_id',
         'message_count',
         'last_message_at',
@@ -41,6 +46,7 @@ class EnterpriseHost extends Model
     protected $casts = [
         'enabled' => 'boolean',
         'phone_numbers' => 'array',
+        'number_providers' => 'array',
         'message_count' => 'integer',
         'last_message_at' => 'datetime',
     ];
@@ -55,7 +61,6 @@ class EnterpriseHost extends Model
             set: fn ($value) => $value ? encrypt($value) : null,
         );
     }
-
 
     /**
      * Get the team that owns the enterprise host.
@@ -122,22 +127,14 @@ class EnterpriseHost extends Model
      */
     public function hasPhoneNumber(string $phoneNumber): bool
     {
-        if (! $this->phone_numbers || empty($this->phone_numbers)) {
+        if (empty($this->phone_numbers)) {
             return false;
         }
 
-        // Normalize the phone number for comparison (keep only digits)
-        $normalized = preg_replace('/\D+/', '', $phoneNumber);
-        
-        // Also try with +1 prefix
-        $withCountryCode = '1' . $normalized;
-        $withoutCountryCode = ltrim($normalized, '1');
+        $normalized = static::normalizeNumber($phoneNumber);
 
         foreach ($this->phone_numbers as $number) {
-            $cleanNumber = preg_replace('/\D+/', '', $number);
-            if ($cleanNumber === $normalized || 
-                $cleanNumber === $withCountryCode || 
-                $cleanNumber === $withoutCountryCode) {
+            if (static::normalizeNumber((string) $number) === $normalized) {
                 return true;
             }
         }
@@ -155,12 +152,49 @@ class EnterpriseHost extends Model
             return $this->phone_numbers[0];
         }
 
-        // Fall back to the global Twilio number from DataSource if no numbers assigned
-        $dataSource = \App\Models\DataSource::where('type', 'twilio')
-            ->where('enabled', true)
-            ->first();
+        // No number of its own: fall back to the system default carrier's number.
+        return app(SmsGatewayManager::class)->default()->fromNumber();
+    }
 
-        return $dataSource ? $dataSource->twilio_from_number : null;
+    /**
+     * The carrier that owns one of this host's numbers, or null when the number has
+     * not been assigned one and should use the system default.
+     *
+     * A DID belongs to exactly one carrier, so this -- not a per-host setting -- is
+     * what decides which gateway an outbound message goes out through, and a host
+     * may legitimately hold numbers from several carriers at once.
+     */
+    public function providerForNumber(?string $phoneNumber): ?SmsProvider
+    {
+        if (blank($phoneNumber) || empty($this->number_providers)) {
+            return null;
+        }
+
+        return SmsProvider::tryFromKey($this->number_providers[static::normalizeNumber($phoneNumber)] ?? null);
+    }
+
+    /**
+     * The carrier for the number this host sends from.
+     */
+    public function outboundProvider(): ?SmsProvider
+    {
+        return $this->providerForNumber($this->getOutboundPhoneNumber());
+    }
+
+    /**
+     * Digits only, with the North American country code filled in, so numbers
+     * written `+1 (555) 123-4567` and `5551234567` compare equal and key the same
+     * entry in `number_providers`.
+     */
+    public static function normalizeNumber(string $phoneNumber): string
+    {
+        $digits = preg_replace('/\D+/', '', $phoneNumber) ?? '';
+
+        if (strlen($digits) === 10) {
+            $digits = '1'.$digits;
+        }
+
+        return $digits;
     }
 
     /**

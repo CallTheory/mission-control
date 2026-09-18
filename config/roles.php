@@ -43,6 +43,16 @@ $boardSubPages = [
     Capability::BoardActivity->value,
 ];
 
+// The WCTP gateway section: carrier credentials, phone numbers, enterprise hosts
+// and the message log. Administrative work, so it goes to the admin and technical
+// roles only -- never to the roles a standard user holds. wctp.messages is separate
+// from wctp.manage so read access to the log can be handed to another role later
+// without also handing over the setup screens.
+$wctpSection = [
+    Capability::WctpManage->value,
+    Capability::WctpMessages->value,
+];
+
 return [
 
     'defaults' => [
@@ -91,7 +101,7 @@ return [
             'label' => 'Technical',
             'description' => 'Technical users can access utilities and manage API tokens, but not individual user data.',
             'sort_order' => 40,
-            'capabilities' => array_merge($openUtilities, [
+            'capabilities' => array_merge($openUtilities, $wctpSection, [
                 Capability::ApiTokensManage->value,
             ]),
         ],

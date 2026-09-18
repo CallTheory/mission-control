@@ -28,6 +28,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Carrier Webhook Validation
+    |--------------------------------------------------------------------------
+    |
+    | Authenticate inbound webhooks on the per-carrier routes (Twilio signature,
+    | Bandwidth/Com.io callback credentials). Disable only in development: with
+    | this off, anyone who can reach the endpoint can inject messages.
+    |
+    */
+
+    'validate_provider_webhooks' => env('WCTP_VALIDATE_PROVIDER_WEBHOOKS', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Forwarding Settings
     |--------------------------------------------------------------------------
     |

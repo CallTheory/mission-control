@@ -1,0 +1,5 @@
+# pnpm 10 no longer reads settings from the "pnpm" field in package.json.
+# onlyBuiltDependencies lives here instead: puppeteer needs its install script
+# to run so chrome-headless-shell is available for board check screenshots.
+onlyBuiltDependencies:
+  - puppeteer

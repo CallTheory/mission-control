@@ -28,6 +28,22 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $people_praise_basic_auth_user
  * @property string|null $people_praise_basic_auth_pass
  * @property string|null $twilio_from_number
+ * @property string|null $sms_default_provider
+ * @property string|null $bandwidth_account_id
+ * @property string|null $bandwidth_api_token
+ * @property string|null $bandwidth_api_secret
+ * @property string|null $bandwidth_application_id
+ * @property string|null $bandwidth_from_number
+ * @property string|null $bandwidth_callback_username
+ * @property string|null $bandwidth_callback_password
+ * @property string|null $bandwidth_callback_token
+ * @property string|null $commio_account_id
+ * @property string|null $commio_username
+ * @property string|null $commio_api_token
+ * @property string|null $commio_from_number
+ * @property string|null $commio_callback_username
+ * @property string|null $commio_callback_password
+ * @property string|null $commio_callback_token
  */
 class DataSource extends Model
 {
@@ -56,6 +72,13 @@ class DataSource extends Model
         'stripe_prod_secret_key',
         'twilio_account_sid',
         'twilio_auth_token',
+        'bandwidth_api_token',
+        'bandwidth_api_secret',
+        'bandwidth_callback_password',
+        'bandwidth_callback_token',
+        'commio_api_token',
+        'commio_callback_password',
+        'commio_callback_token',
     ];
 
     protected function casts(): array
@@ -80,6 +103,13 @@ class DataSource extends Model
             'stripe_prod_secret_key' => EncryptedSerialized::class,
             'twilio_account_sid' => EncryptedSerialized::class,
             'twilio_auth_token' => EncryptedSerialized::class,
+            'bandwidth_api_token' => EncryptedSerialized::class,
+            'bandwidth_api_secret' => EncryptedSerialized::class,
+            'bandwidth_callback_password' => EncryptedSerialized::class,
+            'bandwidth_callback_token' => EncryptedSerialized::class,
+            'commio_api_token' => EncryptedSerialized::class,
+            'commio_callback_password' => EncryptedSerialized::class,
+            'commio_callback_token' => EncryptedSerialized::class,
         ];
     }
 }

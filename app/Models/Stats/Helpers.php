@@ -3,7 +3,7 @@
 namespace App\Models\Stats;
 
 use App\Models\DataSource;
-use Exception;
+use App\Services\FeatureFlags;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -148,24 +148,17 @@ class Helpers
         });
     }
 
+    /**
+     * Whether a system feature is switched on.
+     *
+     * Flags live in the `system_features` table and are served from the cache by
+     * {@see FeatureFlags}; they used to be one encrypted file per flag on the
+     * default disk. This stays the single seam every read site in the
+     * application goes through, so none of them had to change.
+     */
     public static function isSystemFeatureEnabled(string $feature): bool
     {
-        $featureFlagLocation = "feature-flags/{$feature}.flag";
-
-        // our feature flag file must exist
-        if (Storage::fileExists($featureFlagLocation)) {
-            // the file contents must be encrypted using our key
-            try {
-                $contents = Storage::get($featureFlagLocation);
-                $decrypted = decrypt($contents);
-
-                return $decrypted === $feature;
-            } catch (Exception $e) {
-                return false;
-            }
-        }
-
-        return false;
+        return app(FeatureFlags::class)->enabled($feature);
     }
 
     public static function voiceFormats(): array

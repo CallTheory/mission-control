@@ -66,62 +66,9 @@
             <x-input-error for="email" class="mt-2" />
         </div>
 
-        <!-- Email -->
+        <!-- Timezone -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="timezone" value="{{ __('Timezone') }}" />
-            <x-input list="timezone_list" value="" id="timezone" type="timezone" class=" p-2 mt-1 block w-full border border-border" wire:model.live="state.timezone" />
-            <datalist id="timezone_list" class="min-w-full">
-                <option value="UTC">Coordinated Universal Time </option>
-                @php
-                    // United states association notes
-                    $notations['America/New_York'] = 'Eastern Time Zone (EST/EDT)';
-                    $notations['America/Chicago'] = 'Central';
-                    $notations['America/Denver'] = 'Mountain ';
-                    $notations['America/Phoenix'] = 'Mountain no DST';
-                    $notations['America/Los_Angeles'] = 'Pacific';
-                    $notations['America/Anchorage'] = 'Alaska';
-                    $notations['America/Adak'] = 'Hawaii';
-                    $notations['Pacific/Honolulu'] = 'Hawaii no DST';
-
-                    //Canada association notes
-                    $notations['America/St_Johns'] = 'Newfoundland ';
-                    $notations['America/Halifax'] = 'Atlantic ';
-                    $notations['America/Blanc-Sablon'] = 'Atlantic no DST ';
-                    $notations['America/Toronto'] = 'Eastern ';
-                    $notations['America/Atikokan'] = 'Eastern no DST';
-                    $notations['America/Winnipeg'] = 'Central ';
-                    $notations['America/Regina'] = 'Central no DST';
-                    $notations['Pacific/Edmonton'] = 'Mountain ';
-                    $notations['Pacific/Creston'] = 'Mountain no DST';
-                    $notations['Pacific/Vancouver'] = 'Pacific';
-
-                    //General association notes
-                    $notations['UTC'] = 'GMT'
-                @endphp
-                @foreach(DateTimeZone::listIdentifiers(DateTimeZone::PER_COUNTRY, 'US') as $tz )
-                    @php
-                        $parts = explode('/', $tz);
-                    @endphp
-                    @if( count($parts) > 2)
-                        <option value="{{ $tz }}">{{ str_replace('_', ' ', implode(', ',array_reverse(array_slice( $parts, 1, 2)))) }} (USA) {!!   isset($notations[$tz]) ? "&middot; {$notations[$tz]}" : ''  !!}</option>
-                    @else
-                        <option value="{{ $tz }}">{{ str_replace('_', ' ', implode(' ',array_reverse(array_slice( $parts, 1, 1) ))) }} (USA) {!!   isset($notations[$tz]) ? "&middot; {$notations[$tz]}" : ''  !!}</option>
-                    @endif
-
-                @endforeach
-                @foreach(DateTimeZone::listIdentifiers(DateTimeZone::PER_COUNTRY, 'CA') as $tz )
-                    @php
-                        $parts = explode('/', $tz);
-                    @endphp
-                    @if( count($parts) > 2)
-                        <option value="{{ $tz }}">{{ str_replace('_', ' ', implode(', ',array_reverse(array_slice( $parts, 1, 2) ))) }} (Canada) {!!   isset($notations[$tz]) ? "&middot; {$notations[$tz]}" : ''  !!}</option>
-                    @else
-                        <option value="{{ $tz }}">{{ str_replace('_', ' ', implode(' ',array_reverse(array_slice( $parts, 1, 1) ))) }} (Canada) {!!   isset($notations[$tz]) ? "&middot; {$notations[$tz]}" : ''  !!}</option>
-                    @endif
-                @endforeach
-
-            </datalist>
-            <x-input-error for="timezone" class="mt-2" />
+            {{ $this->form }}
         </div>
 
     </x-slot>

@@ -12,6 +12,28 @@ use App\Models\Stats\Helpers;
 
     <x-slot name="form">
 
+        @if(! $this->hasSystemEnabledUtilities())
+        <div class="col-span-6">
+            <div class="rounded-md border border-border bg-surface-2 p-4">
+                <p class="text-sm font-semibold text-surface-fg">
+                    {{ __('No utilities are enabled at the system level.') }}
+                </p>
+                <p class="mt-1 text-sm text-muted">
+                    {{ __('A utility has to be turned on for the whole system before any team can enable it here.') }}
+                </p>
+                @can('system.access')
+                    <a href="{{ route('system') }}" class="mt-3 inline-block text-sm font-medium text-primary hover:underline">
+                        {{ __('Enable utilities in System settings') }}
+                    </a>
+                @else
+                    <p class="mt-3 text-sm text-muted">
+                        {{ __('Ask an administrator to enable one in System settings.') }}
+                    </p>
+                @endcan
+            </div>
+        </div>
+        @else
+
         @if(Helpers::isSystemFeatureEnabled('api-gateway'))
         <!-- api-gateway -->
         <div class="col-span-6 sm:col-span-4">
@@ -480,35 +502,7 @@ use App\Models\Stats\Helpers;
         <!-- End script-search -->
         @endif
 
-        @if(Helpers::isSystemFeatureEnabled('wctp-gateway'))
-        <!-- wctp-gateway -->
-        <div class="col-span-6 sm:col-span-4">
-            <div x-data="{ isEnabled: $wire.wctp_gateway }" class="flex items-center justify-between">
-                <span class="flex flex-grow flex-col">
-                    <span class="text-md font-semibold leading-6 text-surface-fg" id="wctp-gateway-enabled-label">WCTP Gateway <span class="text-primary-fg text-xs font-normal bg-primary rounded-lg px-2 py-0.5">beta</span></span>
-                    <span class="text-sm text-muted pr-2" id="wctp-gateway-description">
-                        Send and receive SMS through our <strong>WCTP Gateway</strong> and 3rd-party telecom APIs
-                    </span>
-                </span>
-                <button
-                    type="button"
-                    :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
-                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                    role="switch"
-                    :aria-checked="isEnabled.toString()"
-                    aria-labelledby="wctp-gateway-enabled-label"
-                    aria-describedby="wctp-gateway-description"
-                    @click="$wire.toggleSetting('wctp_gateway'); isEnabled = !isEnabled"
-                >
-                    <span
-                        aria-hidden="true"
-                        :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
-                    ></span>
-                </button>
-            </div>
-        </div>
-        <!-- End wctp-gateway -->
+
         @endif
 
     </x-slot>

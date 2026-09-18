@@ -21,9 +21,9 @@ This document compares the WCTP implementation in Mission Control with the `call
 - **Feature flag system**: ✅ For enabling/disabling WCTP gateway
 
 ### Management UI
-- **WCTP Gateway configuration page**: ✅ Available at `/utilities/wctp-gateway`
+- **WCTP Gateway configuration page**: ✅ Available at `/system/wctp` (admin-only)
 - **Test message panel**: ✅ For sending test WCTP messages
-- **Twilio configuration in DataSource**: ✅ System Settings → Data Sources → Twilio
+- **Carrier configuration in DataSource**: ✅ System Settings → Integrations (Twilio, Bandwidth, Com.io)
 
 ## ❌ Features NOT Yet Implemented (from wctp-gateway)
 
@@ -43,7 +43,10 @@ This document compares the WCTP implementation in Mission Control with the `call
   - Automatic failover between carriers
   - Carrier verification system
 
-**Current Mission Control**: Only Twilio support via DataSource
+**Current Mission Control**: Twilio, Bandwidth and Com.io (thinQ) are all supported,
+inbound and outbound, selected per phone number with a system-wide default -- see
+[docs/wctp-sms-carriers.md](wctp-sms-carriers.md). Not implemented: priority ordering,
+automatic failover between carriers, and Sunwire.
 
 ### 3. **Phone Number Management**
 - wctp-gateway has comprehensive number management:
@@ -52,7 +55,10 @@ This document compares the WCTP implementation in Mission Control with the `call
   - Number assignment to specific Enterprise Hosts
   - Enable/disable individual numbers
 
-**Current Mission Control**: Uses single Twilio from_number in DataSource
+**Current Mission Control**: Numbers are assigned to an Enterprise Host and tagged
+with the carrier that owns them, with a per-carrier default from-number in
+Integrations. Not implemented: number lookup/provisioning from the carrier, and
+enabling/disabling an individual number.
 
 ### 4. **Message Queue & Status Tracking**
 - wctp-gateway uses Laravel Jobs for:

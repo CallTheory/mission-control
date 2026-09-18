@@ -23,11 +23,25 @@ return [
         'fillout_success_url' => env('STRIPE_FILLOUT_SUCCESS_URL', 'https://example.com/thanks'),
         'fillout_error_url' => env('STRIPE_FILLOUT_ERROR_URL', 'https://example.com/thanks'),
     ],
-    
+
     'twilio' => [
         'sid' => env('TWILIO_ACCOUNT_SID'),
         'token' => env('TWILIO_AUTH_TOKEN'),
         'from' => env('TWILIO_FROM_NUMBER'),
+    ],
+
+    // The other two SMS carriers on the WCTP gateway. Credentials live on the
+    // DataSource row (System > Integrations), not here -- only the API host is
+    // configuration, so a sandbox or a regional endpoint can be pointed at without
+    // a code change.
+    'bandwidth' => [
+        'endpoint' => env('BANDWIDTH_ENDPOINT', 'https://messaging.bandwidth.com'),
+        'timeout' => env('BANDWIDTH_TIMEOUT', 30),
+    ],
+
+    'commio' => [
+        'endpoint' => env('COMMIO_ENDPOINT', 'https://api.thinq.com'),
+        'timeout' => env('COMMIO_TIMEOUT', 30),
     ],
 
     // Shared secrets for unauthenticated inbound webhooks. These MUST be set to

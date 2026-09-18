@@ -30,7 +30,6 @@ enum Utility: string
     case MessageExport = 'message_export';
     case VoicemailDigest = 'voicemail_digest';
     case ScriptSearch = 'script_search';
-    case WctpGateway = 'wctp_gateway';
 
     /**
      * The system-level feature-flag name (dash form) used by
@@ -78,7 +77,6 @@ enum Utility: string
             self::MessageExport => 'Message Export',
             self::VoicemailDigest => 'Voicemail Digest',
             self::ScriptSearch => 'Script Search',
-            self::WctpGateway => 'WCTP Gateway',
         };
     }
 }

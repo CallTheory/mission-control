@@ -1,5 +1,13 @@
 # WCTP Gateway - DataSource Migration
 
+> **Historical.** This records a change made when Twilio was the only carrier and the
+> gateway was a per-team utility. Both have since changed: the gateway supports
+> Twilio, Bandwidth and Com.io (see [wctp-sms-carriers.md](wctp-sms-carriers.md)), and
+> it moved from `/utilities/*` to the admin-only `/system/wctp` section, so the file
+> paths named below no longer exist. The conclusion that still holds is the one this
+> documents: carrier credentials live on the `DataSource` row, never in `.env`.
+
+
 ## Overview
 The WCTP gateway has been updated to exclusively use the DataSource model for Twilio configuration, removing all dependencies on environment variables (.env file).
 

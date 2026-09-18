@@ -37,6 +37,20 @@ use App\Models\Team;
                             {{ __('System') }}
                         </x-nav-link>
                     @endcan
+
+                    {{--
+                        The WCTP gateway is a system area but has its own capabilities, so a
+                        technical operator can hold it WITHOUT system.access -- and would then
+                        see no System tab and no way in. This is their entry point; for anyone
+                        who does have system.access the System Settings dropdown also lists it.
+                    --}}
+                    @cannot('system.access')
+                        @if(\App\Support\WctpSectionAccess::allowsAny())
+                            <x-nav-link href="{{ route('system.wctp') }}" :active="request()->routeIs('system.wctp') || request()->routeIs('system.wctp.*')">
+                                {{ __('WCTP Gateway') }}
+                            </x-nav-link>
+                        @endif
+                    @endcannot
                 </div>
             </div>
 

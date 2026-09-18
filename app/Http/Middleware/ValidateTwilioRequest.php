@@ -4,13 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Models\DataSource;
+use App\Enums\SmsProvider;
+use App\Services\Sms\SmsGatewayManager;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
-use Twilio\Security\RequestValidator;
 
+/**
+ * Signature validation for the original, unprefixed Twilio webhook routes.
+ *
+ * The check itself lives on TwilioGateway now, so the provider-scoped routes and
+ * these legacy ones cannot drift apart; this class remains because those routes and
+ * their tests name it, and because the Twilio-specific opt-out config is its own.
+ *
+ * @see ValidateSmsProviderWebhook for the other carriers
+ */
 class ValidateTwilioRequest
 {
     /**
@@ -22,42 +30,9 @@ class ValidateTwilioRequest
             return $next($request);
         }
 
-        // DataSource is a single-row singleton; providers are column prefixes on
-        // that row, not typed rows. The auth token is decrypted by the
-        // EncryptedSerialized cast — read it as plaintext.
-        $dataSource = DataSource::first();
-
-        if (! $dataSource) {
-            // Fail closed: without a Twilio data source we cannot verify the
-            // signature, so the request cannot be trusted.
-            Log::warning('Twilio request rejected: no active Twilio data source to validate signature');
-
-            return response('Forbidden', 403);
-        }
-
-        $authToken = $dataSource->twilio_auth_token ?: null;
-        if (! $authToken) {
-            Log::warning('Twilio request rejected: no auth token configured to validate signature');
-
-            return response('Forbidden', 403);
-        }
-
-        $signature = $request->header('X-Twilio-Signature', '');
-        if (empty($signature)) {
-            Log::warning('Twilio request rejected: missing X-Twilio-Signature header');
-
-            return response('Forbidden', 403);
-        }
-
-        $validator = new RequestValidator($authToken);
-        $url = $request->fullUrl();
-        $params = $request->all();
-
-        if (! $validator->validate($signature, $url, $params)) {
-            Log::warning('Twilio request rejected: invalid signature', [
-                'url' => $url,
-            ]);
-
+        // Fails closed: with no data source, or no auth token on it, the signature
+        // cannot be verified and the request cannot be trusted.
+        if (! app(SmsGatewayManager::class)->gateway(SmsProvider::Twilio)->verifyWebhook($request)) {
             return response('Forbidden', 403);
         }
 

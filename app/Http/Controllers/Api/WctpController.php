@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\SmsProvider;
 use App\Http\Controllers\Controller;
 use App\Jobs\ForwardToEnterpriseHost;
 use App\Jobs\ProcessWctpMessage;
 use App\Models\EnterpriseHost;
 use App\Models\WctpMessage;
+use App\Services\Sms\DeliveryUpdate;
+use App\Services\Sms\InboundMessage;
+use App\Services\Sms\SmsGateway;
+use App\Services\Sms\SmsGatewayManager;
 use App\Services\WctpService;
 use Exception;
 use Illuminate\Http\Request;
@@ -39,9 +44,12 @@ class WctpController extends Controller
 
     protected WctpService $wctpService;
 
-    public function __construct(WctpService $wctpService)
+    protected SmsGatewayManager $gateways;
+
+    public function __construct(WctpService $wctpService, SmsGatewayManager $gateways)
     {
         $this->wctpService = $wctpService;
+        $this->gateways = $gateways;
     }
 
     /**
@@ -131,6 +139,13 @@ class WctpController extends Controller
             return $this->errorResponse('503', 'Service unavailable');
         }
 
+        // Which carrier owns the sending number decides which gateway carries the
+        // message; a number with no carrier assigned uses the system default.
+        $provider = $this->providerForOutbound($host, $fromNumber);
+        if ($provider === null) {
+            return $this->errorResponse('503', 'Service unavailable');
+        }
+
         // Extract reply code if present
         $replyWith = null;
         if (preg_match('/reply with (\d+)/i', $message, $matches)) {
@@ -144,6 +159,7 @@ class WctpController extends Controller
             'from' => $fromNumber,
             'message' => $message,
             'wctp_message_id' => $messageId,
+            'provider' => $provider->value,
             'direction' => 'outbound',
             'status' => 'queued',
             'submitted_at' => now(),
@@ -160,6 +176,7 @@ class WctpController extends Controller
             'wctp_message_id' => $messageId,
             'host' => $host->name,
             'to' => $recipientPhone,
+            'provider' => $provider->value,
         ]);
 
         // Return success confirmation
@@ -209,12 +226,18 @@ class WctpController extends Controller
             return $this->errorResponse('503', 'Service unavailable');
         }
 
+        $provider = $this->providerForOutbound($host, $fromNumber);
+        if ($provider === null) {
+            return $this->errorResponse('503', 'Service unavailable');
+        }
+
         $wctpMessage = WctpMessage::create([
             'enterprise_host_id' => $host->id,
             'to' => $recipientPhone,
             'from' => $fromNumber,
             'message' => $message,
             'wctp_message_id' => $messageId,
+            'provider' => $provider->value,
             'direction' => 'outbound',
             'status' => 'queued',
             'submitted_at' => now(),
@@ -228,6 +251,7 @@ class WctpController extends Controller
             'wctp_message_id' => $messageId,
             'host' => $host->name,
             'to' => $recipientPhone,
+            'provider' => $provider->value,
         ]);
 
         return response($this->wctpService->createConfirmation($messageId), 200)
@@ -278,7 +302,7 @@ class WctpController extends Controller
                 ->header('Content-Type', 'text/xml; charset=UTF-8');
         }
 
-        // Check for cached status from Twilio callback
+        // Check for a status cached by a carrier delivery receipt
         $cachedStatus = cache()->get('wctp_status_'.$trackingNumber);
         if ($cachedStatus) {
             $message->status = $cachedStatus;
@@ -356,115 +380,234 @@ class WctpController extends Controller
     }
 
     /**
-     * Handle incoming SMS from Twilio (inbound SMS from phone to Enterprise Host)
+     * Handle incoming SMS on Twilio's original webhook path.
+     *
+     * Kept as its own entry point because that path is configured in Twilio
+     * consoles that predate the other carriers; the work is identical.
      */
     public function handleIncomingSms(Request $request): Response
     {
+        return $this->handleProviderWebhook($request, SmsProvider::Twilio->value);
+    }
+
+    /**
+     * Handle Twilio status callbacks for outbound messages, on the original
+     * per-message callback path. Answers 204, as it always has.
+     */
+    public function twilioCallback(Request $request, string $messageId): Response
+    {
+        return $this->processCarrierWebhook(
+            $this->gateways->gateway(SmsProvider::Twilio),
+            $request,
+            $messageId,
+        )
+            ? response('', 204)
+            : response('Webhook processing failed', 500);
+    }
+
+    /**
+     * Handle a webhook from any carrier: inbound messages, delivery receipts, or
+     * both in one request.
+     *
+     * Both kinds are processed on every carrier path because Bandwidth posts both to
+     * the single callback URL configured on its messaging application. A carrier
+     * that sent only one kind simply yields nothing for the other.
+     */
+    public function handleProviderWebhook(Request $request, string $provider, ?string $messageId = null): Response
+    {
+        $gateway = $this->gateways->gateway($provider);
+
+        // A 5xx is what makes a carrier retry, so it is reserved for failures that a
+        // retry could actually fix. An SMS to a number no enterprise host claims is
+        // acknowledged: replaying it would not find a host either.
+        return $this->processCarrierWebhook($gateway, $request, $messageId)
+            ? $gateway->acknowledge()
+            : response('Webhook processing failed', 500);
+    }
+
+    /**
+     * @return bool false when the request could not be processed and the carrier
+     *              should be asked to retry
+     */
+    protected function processCarrierWebhook(SmsGateway $gateway, Request $request, ?string $messageId): bool
+    {
         try {
-            $from = $request->input('From');
-            $to = $request->input('To');
-            $body = $request->input('Body');
-            $messageSid = $request->input('MessageSid');
-
-            Log::info('Incoming SMS from Twilio', [
-                'from' => $from,
-                'to' => $to,
-                'sid' => $messageSid,
-            ]);
-
-            // Find which Enterprise Host this message is for based on the receiving number
-            $enterpriseHost = EnterpriseHost::findByPhoneNumber($to);
-
-            if (! $enterpriseHost) {
-                Log::warning('Incoming SMS to unassigned number', ['to' => $to]);
-
-                // Return empty TwiML response to acknowledge receipt
-                return response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 200)
-                    ->header('Content-Type', 'text/xml');
+            foreach ($gateway->inboundMessages($request) as $inbound) {
+                $this->receiveInboundMessage($gateway, $inbound);
             }
 
-            // Create inbound message record
-            $wctpMessage = WctpMessage::create([
-                'enterprise_host_id' => $enterpriseHost->id,
-                'to' => $to,
-                'from' => $from,
-                'message' => $body,
-                'wctp_message_id' => $messageSid,
-                'twilio_sid' => $messageSid,
-                'direction' => 'inbound',
-                'status' => 'delivered',
-                'delivered_at' => now(),
-                'submitted_at' => now(),
-            ]);
-
-            // Update host statistics
-            $enterpriseHost->recordMessage();
-
-            // If there's a callback URL, forward the message asynchronously
-            if ($enterpriseHost->callback_url) {
-                $wctpXml = $this->wctpService->createInboundMessage($from, $to, $body, $messageSid);
-                ForwardToEnterpriseHost::dispatch($enterpriseHost, $wctpMessage, $wctpXml);
+            foreach ($gateway->deliveryUpdates($request) as $update) {
+                $this->applyDeliveryUpdate($gateway, $update, $messageId);
             }
 
-            // Return empty TwiML response
-            return response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 200)
-                ->header('Content-Type', 'text/xml');
-
+            return true;
         } catch (Exception $e) {
-            Log::error('Error handling incoming SMS', ['error' => $e->getMessage()]);
+            Log::error('Error handling carrier webhook', [
+                'provider' => $gateway->provider()->value,
+                'error' => $e->getMessage(),
+            ]);
 
-            return response('<?xml version="1.0" encoding="UTF-8"?><Response></Response>', 500)
-                ->header('Content-Type', 'text/xml');
+            return false;
         }
     }
 
     /**
-     * Handle Twilio status callbacks for outbound messages
+     * Route one inbound SMS to the enterprise host that owns the receiving number,
+     * and forward it as WCTP if that host has a callback URL.
      */
-    public function twilioCallback(Request $request, string $messageId): Response
+    protected function receiveInboundMessage(SmsGateway $gateway, InboundMessage $inbound): void
     {
-        $messageStatus = $request->input('MessageStatus');
-        $messageSid = $request->input('MessageSid');
-        $errorCode = $request->input('ErrorCode');
+        $provider = $gateway->provider();
 
-        Log::info('Twilio status callback', [
-            'wctp_message_id' => $messageId,
-            'status' => $messageStatus,
-            'sid' => $messageSid,
+        Log::info('Incoming SMS received', [
+            'provider' => $provider->value,
+            'from' => $inbound->from,
+            'to' => $inbound->to,
+            'sid' => $inbound->providerMessageId,
         ]);
 
-        // Cache the status for ClientQuery requests
-        cache()->put('wctp_status_'.$messageId, $messageStatus, now()->addMinutes(60));
+        $enterpriseHost = EnterpriseHost::findByPhoneNumber($inbound->to);
 
-        // Find and update the message
-        $wctpMessage = WctpMessage::where('wctp_message_id', $messageId)
-            ->orWhere('twilio_sid', $messageSid)
-            ->first();
+        if (! $enterpriseHost) {
+            Log::warning('Incoming SMS to unassigned number', [
+                'to' => $inbound->to,
+                'provider' => $provider->value,
+            ]);
 
-        if ($wctpMessage) {
-            switch ($messageStatus) {
-                case 'delivered':
-                    $wctpMessage->markAsDelivered();
-                    break;
-                case 'failed':
-                case 'undelivered':
-                    $errorMessage = $errorCode ? "Error {$errorCode}" : 'Delivery failed';
-                    $wctpMessage->markAsFailed($errorMessage);
-                    break;
-                case 'queued':
-                    if ($wctpMessage->status === 'pending') {
-                        $wctpMessage->markAsQueued();
-                    }
-                    break;
-                case 'sent':
-                    if ($wctpMessage->status !== 'delivered') {
-                        $wctpMessage->update(['status' => 'sent']);
-                    }
-                    break;
-            }
+            return;
         }
 
-        return response('', 204);
+        $wctpMessage = WctpMessage::create([
+            'enterprise_host_id' => $enterpriseHost->id,
+            'to' => $inbound->to,
+            'from' => $inbound->from,
+            'message' => $inbound->body,
+            'wctp_message_id' => $inbound->providerMessageId,
+            // twilio_sid stays a Twilio SID; every carrier's id goes in
+            // provider_message_id. See WctpMessage::markAsSent().
+            'twilio_sid' => $provider === SmsProvider::Twilio ? $inbound->providerMessageId : null,
+            'provider' => $provider->value,
+            'provider_message_id' => $inbound->providerMessageId,
+            'direction' => 'inbound',
+            'status' => 'delivered',
+            'delivered_at' => now(),
+            'submitted_at' => now(),
+        ]);
+
+        // Update host statistics
+        $enterpriseHost->recordMessage();
+
+        // If there's a callback URL, forward the message asynchronously
+        if ($enterpriseHost->callback_url) {
+            $wctpXml = $this->wctpService->createInboundMessage(
+                $inbound->from,
+                $inbound->to,
+                $inbound->body,
+                $inbound->providerMessageId,
+            );
+
+            ForwardToEnterpriseHost::dispatch($enterpriseHost, $wctpMessage, $wctpXml);
+        }
+    }
+
+    /**
+     * Apply one delivery receipt to the message it belongs to.
+     *
+     * How the message is identified depends on the carrier: Twilio calls a URL that
+     * carries our WCTP message id, Bandwidth echoes it back as the message tag, and
+     * Com.io only knows its own guid -- so the id from the route is preferred, then
+     * the one in the payload, then the carrier's id.
+     */
+    protected function applyDeliveryUpdate(SmsGateway $gateway, DeliveryUpdate $update, ?string $messageIdFromRoute): void
+    {
+        $wctpMessageId = $messageIdFromRoute ?? $update->wctpMessageId;
+
+        Log::info('Carrier status callback', [
+            'provider' => $gateway->provider()->value,
+            'wctp_message_id' => $wctpMessageId,
+            'status' => $update->status,
+            'sid' => $update->providerMessageId,
+        ]);
+
+        $wctpMessage = $this->findMessageForUpdate($wctpMessageId, $update->providerMessageId);
+
+        // Cached for wctp-ClientQuery, which can ask for a status at any time. The
+        // cached value is a status this application uses, not the carrier's own
+        // wording, because ClientQuery writes it straight onto the message.
+        foreach (array_unique(array_filter([$wctpMessageId, $wctpMessage?->wctp_message_id])) as $key) {
+            cache()->put('wctp_status_'.$key, $update->status, now()->addMinutes(60));
+        }
+
+        if (! $wctpMessage) {
+            Log::warning('Carrier status callback for an unknown message', [
+                'provider' => $gateway->provider()->value,
+                'wctp_message_id' => $wctpMessageId,
+                'sid' => $update->providerMessageId,
+            ]);
+
+            return;
+        }
+
+        match ($update->status) {
+            'delivered' => $wctpMessage->markAsDelivered(),
+            'failed' => $wctpMessage->markAsFailed($update->error ?? 'Delivery failed'),
+            // Never walk a status backwards: a receipt can arrive out of order.
+            'queued' => $wctpMessage->status === 'pending' ? $wctpMessage->markAsQueued() : null,
+            'sent' => $wctpMessage->status !== 'delivered' ? $wctpMessage->update(['status' => 'sent']) : null,
+            default => null,
+        };
+    }
+
+    /**
+     * The message a delivery receipt refers to, by our id or the carrier's.
+     */
+    protected function findMessageForUpdate(?string $wctpMessageId, ?string $providerMessageId): ?WctpMessage
+    {
+        $candidates = [];
+
+        if (filled($wctpMessageId)) {
+            $candidates[] = ['wctp_message_id', $wctpMessageId];
+        }
+
+        if (filled($providerMessageId)) {
+            $candidates[] = ['provider_message_id', $providerMessageId];
+            // Twilio messages sent before provider_message_id existed only have this.
+            $candidates[] = ['twilio_sid', $providerMessageId];
+        }
+
+        if ($candidates === []) {
+            return null;
+        }
+
+        return WctpMessage::where(function ($query) use ($candidates) {
+            foreach ($candidates as [$column, $value]) {
+                $query->orWhere($column, $value);
+            }
+        })->first();
+    }
+
+    /**
+     * The carrier that will carry an outbound message, or null when it cannot be
+     * sent at all.
+     *
+     * The carrier owning the sending number wins, because a DID belongs to exactly
+     * one carrier; numbers with none assigned use the system default.
+     */
+    protected function providerForOutbound(EnterpriseHost $host, string $fromNumber): ?SmsProvider
+    {
+        $provider = $host->providerForNumber($fromNumber) ?? $this->gateways->defaultProvider();
+
+        if (! $this->gateways->gateway($provider)->isConfigured()) {
+            Log::warning('WCTP submit rejected: carrier is not configured', [
+                'host' => $host->name,
+                'from' => $fromNumber,
+                'provider' => $provider->value,
+            ]);
+
+            return null;
+        }
+
+        return $provider;
     }
 
     /**
