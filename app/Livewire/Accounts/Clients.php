@@ -12,6 +12,7 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Tables\Columns\TextColumn;
@@ -169,32 +170,47 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                         Select::make('account_setting_value')
                             ->label('Setting Value')
                             ->options(['0' => 'Off', '1' => 'On']),
-                        Select::make('did_limit_operator')
-                            ->label('DID Limit')
-                            ->options(self::DID_LIMIT_OPERATORS)
-                            ->placeholder('Any')
-                            ->live(),
-                        TextInput::make('did_limit')
-                            ->label('Simultaneous Calls')
-                            ->helperText('0 is unlimited.')
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0)
-                            ->visible(fn ($get): bool => filled($get('did_limit_operator'))),
+                        // Each operator reads as a sentence with the number beside
+                        // it, so the two have to stay together. Left loose in the
+                        // three-column grid they wrapped against whatever followed
+                        // -- and the number is conditionally visible, so the row
+                        // reflowed as soon as an operator was picked. A full-width
+                        // two-column row per pair keeps each on its own line.
+                        Grid::make(['default' => 1, 'sm' => 2])
+                            ->columnSpanFull()
+                            ->schema([
+                                Select::make('did_limit_operator')
+                                    ->label('DID Limit')
+                                    ->options(self::DID_LIMIT_OPERATORS)
+                                    ->placeholder('Any')
+                                    ->live(),
+                                TextInput::make('did_limit')
+                                    ->label('Simultaneous Calls')
+                                    ->helperText('0 is unlimited.')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->visible(fn ($get): bool => filled($get('did_limit_operator'))),
+                            ]),
 
-                        Select::make('source_count_operator')
-                            ->label('Source Count')
-                            ->options(self::SOURCE_COUNT_OPERATORS)
-                            ->placeholder('Any')
-                            // The count defaults to 0 so picking "Exactly" alone
-                            // answers the common question: which accounts have none?
-                            ->live(),
-                        TextInput::make('source_count')
-                            ->label('Sources')
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0)
-                            ->visible(fn ($get): bool => filled($get('source_count_operator'))),
+                        Grid::make(['default' => 1, 'sm' => 2])
+                            ->columnSpanFull()
+                            ->schema([
+                                Select::make('source_count_operator')
+                                    ->label('Source Count')
+                                    ->options(self::SOURCE_COUNT_OPERATORS)
+                                    ->placeholder('Any')
+                                    // The count defaults to 0 so picking "Exactly"
+                                    // alone answers the common question: which
+                                    // accounts have none?
+                                    ->live(),
+                                TextInput::make('source_count')
+                                    ->label('Sources')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->visible(fn ($get): bool => filled($get('source_count_operator'))),
+                            ]),
                     ])
                     ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
                     // Every filter but the source count is applied inside the T-SQL,
