@@ -224,14 +224,18 @@
                 
                 <div>
                     <h4 class="text-sm font-semibold text-surface-fg-soft">Authentication</h4>
-                    <p class="text-xs text-surface-fg-soft mt-1">Use Bearer token authentication with API keys from user profiles:</p>
+                    <p class="text-xs text-surface-fg-soft mt-1">
+                        Bearer token authentication, using a token from
+                        <a href="{{ route('api-tokens.index') }}" class="font-semibold text-primary hover:underline">API Tokens</a>.
+                        Access is decided by the caller's team and role, not by the token's permissions:
+                    </p>
                     <code class="block mt-1 text-xs bg-surface-2 p-2 rounded">Authorization: Bearer YOUR_API_TOKEN</code>
                 </div>
 
                 <div>
                     <h4 class="text-sm font-semibold text-surface-fg-soft">Testing Interface</h4>
                     <p class="text-xs text-surface-fg-soft mt-1">
-                        Test the MCP server at: <a href="{{ url('/utilities/mcp-protocol-test') }}" class="text-primary hover:text-primary">{{ url('/utilities/mcp-protocol-test') }}</a>
+                        Test the MCP server at: <a href="{{ route('utilities.mcp-server') }}" class="text-primary hover:underline">{{ url('/utilities/mcp-server') }}</a>
                     </p>
                 </div>
             </div>

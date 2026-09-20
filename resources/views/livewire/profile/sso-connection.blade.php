@@ -24,7 +24,7 @@
                 </div>
 
                 <div class="mt-3 max-w-xl text-sm text-muted">
-                    {{ __('Sign-in still matches on your email address, so unlinking records that the connection is gone -- it does not block a future single sign-on.') }}
+                    {{ __('Unlinking signs you out everywhere else and emails you a password reset link, because single sign-on leaves no password you would know.') }}
                 </div>
 
                 <div class="mt-5 flex items-center gap-3">

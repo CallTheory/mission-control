@@ -91,6 +91,11 @@
     --color-surface-inverse: var(--mc-gray-800);
     --color-surface-inverse-fg: var(--mc-gray-100);
     --color-surface-inverse-hover: var(--mc-gray-900);
+    /* Accent for icons on an inverted tile. Fixed at indigo-500 in both themes,
+       exactly like -fg above stays gray-100: the inverted surface is dark in
+       light mode *and* dark mode, so a foreground on it must not flip with the
+       theme. Using primary here would give indigo-700 on a near-black card. */
+    --color-surface-inverse-accent: var(--color-indigo-500);
 
     /* Text ---------------------------------------------------------------- */
     --color-surface-fg: var(--mc-gray-900);
@@ -162,6 +167,7 @@
     --color-surface-inverse: var(--mc-gray-950);
     --color-surface-inverse-fg: var(--mc-gray-100);
     --color-surface-inverse-hover: var(--color-black);
+    --color-surface-inverse-accent: var(--color-indigo-500);
 
     --color-surface-fg: var(--mc-gray-100);
     --color-surface-fg-soft: var(--mc-gray-300);

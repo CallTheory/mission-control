@@ -99,8 +99,12 @@ Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/screencapture/{
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/better-emails', BetterEmailController::class)->name('utilities.better-emails');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/directory-search', DirectorySearchController::class)->name('utilities.directory-search');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-server', McpServerController::class)->name('utilities.mcp-server');
+// Kept as a redirect for older links. It used to render the Livewire view
+// directly -- no app layout, and skipping the MCP utility capability check that
+// McpServerController enforces -- and its JSON-RPC tester now lives on the
+// utility page itself.
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/mcp-protocol-test', function () {
-    return view('livewire.utilities.mcp-protocol-test');
+    return redirect()->route('utilities.mcp-server');
 })->name('utilities.mcp-protocol-test');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export', [CsvExportController::class, 'index'])->name('utilities.csv-export');
 Route::middleware(['auth:sanctum', 'verified'])->get('/utilities/csv-export/history', [CsvExportController::class, 'history'])->name('utilities.csv-export.history');

@@ -126,6 +126,65 @@
             </div>
             <!-- End SAML Stateless Redirect -->
 
+            <!-- Force Linked Accounts Through SSO -->
+            <div class="col-span-6 sm:col-span-4">
+                <div x-data="{ isEnabled: $wire.enforce_linked_sso }" class="flex items-center justify-between">
+                <span class="flex flex-grow flex-col">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="enforce_linked_sso-enabled-label">Force Linked Accounts Through SSO</span>
+                    <span class="text-sm text-muted mt-1" id="enforce_linked_sso-description">
+                        Accounts with a linked identity may not sign in with a password or an ISWeb agent password. Inactive while SAML is off. Recover with <code>php artisan sso:enforcement --disable</code>.
+                    </span>
+                </span>
+                    <button
+                        type="button"
+                        :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        role="switch"
+                        :aria-checked="isEnabled.toString()"
+                        aria-labelledby="enforce_linked_sso-enabled-label"
+                        aria-describedby="enforce_linked_sso-description"
+                        wire:click="toggleEnforceLinkedSso(); isEnabled = !isEnabled"
+                    >
+                    <span
+                        aria-hidden="true"
+                        :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
+                    ></span>
+                    </button>
+                </div>
+            </div>
+            <!-- End Force Linked Accounts Through SSO -->
+
+            <!-- Require SSO or Two-Factor -->
+            <div class="col-span-6 sm:col-span-4">
+                <div x-data="{ isEnabled: $wire.require_sso_or_2fa }" class="flex items-center justify-between">
+                <span class="flex flex-grow flex-col">
+                    <span class="text-md font-semibold leading-6 text-surface-fg" id="require_sso_or_2fa-enabled-label">Require SSO or Two-Factor</span>
+                    <span class="text-sm text-muted mt-1" id="require_sso_or_2fa-description">
+                        Every user must have a linked identity or two-factor authentication. Users with neither are sent to set up 2FA after signing in. Teams marked SSO-exempt still need 2FA.
+                    </span>
+                </span>
+                    <button
+                        type="button"
+                        :class="{ 'bg-primary': isEnabled, 'bg-surface-3': !isEnabled }"
+                        class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        role="switch"
+                        :aria-checked="isEnabled.toString()"
+                        aria-labelledby="require_sso_or_2fa-enabled-label"
+                        aria-describedby="require_sso_or_2fa-description"
+                        wire:click="toggleRequireSsoOrTwoFactor(); isEnabled = !isEnabled"
+                    >
+                    <span
+                        aria-hidden="true"
+                        :class="{ 'translate-x-5': isEnabled, 'translate-x-0': !isEnabled }"
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out"
+                    ></span>
+                    </button>
+                </div>
+            </div>
+            <!-- End Require SSO or Two-Factor -->
+
+
             <!-- SAML Stateless Callback -->
             <div class="col-span-6 sm:col-span-4">
                 <div x-data="{ isEnabled: $wire.stateless_callback }" class="flex items-center justify-between">

@@ -31,7 +31,10 @@ class McpSseControllerTest extends TestCase
     {
         parent::setUp();
 
-        // Register MCP routes directly (bypasses api-gateway feature flag check at boot time)
+        // Register MCP routes directly. Routes are registered at boot, before a test
+        // can flip the mcp-server flag, so this stands in for them. (It used to say
+        // "api-gateway" -- that was the bug: the endpoint was gated on a different
+        // flag than the whole MCP interface. See routes/api.php.)
         Route::middleware(['api', 'auth:sanctum'])->prefix('api/mcp')->group(function () {
             Route::match(['get', 'post'], '/protocol', [McpSseController::class, 'protocol'])
                 ->name('api.mcp.protocol');

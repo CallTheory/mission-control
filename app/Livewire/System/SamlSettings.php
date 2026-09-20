@@ -27,6 +27,12 @@ class SamlSettings extends Component
 
     public bool $sign_assertions = false;
 
+    /** Linked accounts may only sign in through the IdP. */
+    public bool $enforce_linked_sso = false;
+
+    /** Every user must have SSO linked or 2FA enabled. */
+    public bool $require_sso_or_2fa = false;
+
     public ?string $metadata_url = null;
 
     public ?string $cert_fingerprint = null;
@@ -114,6 +120,41 @@ class SamlSettings extends Component
         return ['private_key' => $private_key, 'certificate' => $certificate];
     }
 
+    /**
+     * Switching this on refuses password *and* ISWeb agent login for any
+     * account carrying a saml_linked_id. AuthPolicy ignores it while SAML is
+     * off, and `php artisan sso:enforcement --disable` turns it off from the
+     * shell if the IdP goes down and nobody can reach this page.
+     */
+    public function toggleEnforceLinkedSso(): void
+    {
+        $this->authorize($this->requiredCapability()->value);
+
+        $settings = Settings::firstOrFail();
+        $this->enforce_linked_sso = ! $this->enforce_linked_sso;
+        $settings->auth_enforce_linked_sso = $this->enforce_linked_sso;
+        $settings->save();
+
+        $this->dispatch('saved');
+    }
+
+    /**
+     * Users with neither a link nor 2FA can still sign in; they are redirected
+     * to set 2FA up before going anywhere else. Enforcing at login instead
+     * would make the policy unsatisfiable for anyone not already compliant.
+     */
+    public function toggleRequireSsoOrTwoFactor(): void
+    {
+        $this->authorize($this->requiredCapability()->value);
+
+        $settings = Settings::firstOrFail();
+        $this->require_sso_or_2fa = ! $this->require_sso_or_2fa;
+        $settings->auth_require_sso_or_2fa = $this->require_sso_or_2fa;
+        $settings->save();
+
+        $this->dispatch('saved');
+    }
+
     public function toggleSignAssertions(): void
     {
 
@@ -180,6 +221,8 @@ class SamlSettings extends Component
             $this->metadata_xml = $settings->saml2_metadata_xml;
         }
         $this->sign_assertions = $settings->saml2_sp_sign_assertions ?? false;
+        $this->enforce_linked_sso = (bool) ($settings->auth_enforce_linked_sso ?? false);
+        $this->require_sso_or_2fa = (bool) ($settings->auth_require_sso_or_2fa ?? false);
 
         $this->getCertificateDetails($settings);
     }

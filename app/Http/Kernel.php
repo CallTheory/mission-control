@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Middleware\ApiWhitelistMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\EnsureAuthPolicy;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TraceRequests;
@@ -64,6 +65,7 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
+            EnsureAuthPolicy::class,
         ],
 
         'api' => [
@@ -92,5 +94,6 @@ class Kernel extends HttpKernel
         'throttle' => ThrottleRequests::class,
         'verified' => EnsureEmailIsVerified::class,
         'api_whitelist' => ApiWhitelistMiddleware::class,
+        'auth.policy' => EnsureAuthPolicy::class,
     ];
 }

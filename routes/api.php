@@ -91,6 +91,20 @@ if (Helpers::isSystemFeatureEnabled('api-gateway')) {
         ->name('api.agents.recent-caller')
         ->middleware('auth:sanctum');
 
+}
+
+/*
+ * MCP is gated on its own feature flag, not on api-gateway.
+ *
+ * These routes used to live inside the api-gateway block, while every piece of
+ * MCP interface -- System > MCP Server, the team utility, the protocol test page
+ * -- is gated on 'mcp-server'. Turning MCP on without also turning the API
+ * gateway on therefore produced a fully working UI in front of an endpoint that
+ * did not exist, and the 404 said nothing about why. The switch that reveals the
+ * feature is now the switch that serves it.
+ */
+if (Helpers::isSystemFeatureEnabled('mcp-server')) {
+
     // MCP Streamable HTTP Transport (protocol version 2025-03-26)
     // POST: JSON-RPC requests, GET: 405 (server-initiated messages not supported)
     Route::prefix('mcp')->middleware('auth:sanctum')->group(function () {

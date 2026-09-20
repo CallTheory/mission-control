@@ -79,4 +79,32 @@ enum Utility: string
             self::ScriptSearch => 'Script Search',
         };
     }
+
+    /**
+     * One-line summary, shown as the hover title on the utilities grid.
+     *
+     * These were the label repeated back verbatim, which told a hovering user
+     * nothing. Each line is drawn from that utility's page in docs/utilities/,
+     * so the two say the same thing.
+     */
+    public function description(): string
+    {
+        return match ($this) {
+            self::ApiGateway => 'First-party endpoints and bring-your-own-key third-party workflows, callable from Intelligent Series scripting.',
+            self::BetterEmails => 'Turns Amtelco SendMessage output into themed, branded message emails.',
+            self::BoardCheck => 'Quality-assurance review of the messages your agents take, with scoring and reporting.',
+            self::CallLookup => 'Look up one call by its Intelligent Series call ID, with its recording and screen capture.',
+            self::CardProcessing => 'Charge customer cards through Stripe from a TBS export.',
+            self::CloudFaxing => 'Sends Intelligent Series faxes through mFax or RingCentral and reports delivery back.',
+            self::ConfigEditor => 'Read and edit Intelligent Series sysConfig and schSchedule records, including their encrypted payloads.',
+            self::CsvExport => 'Export filtered call log data to CSV for spreadsheets and external reporting.',
+            self::DatabaseHealth => 'Server, edition and database metrics for the SQL Server behind Intelligent Series.',
+            self::DirectorySearch => 'Search the Intelligent Series subject directory across phone, email and other contact types.',
+            self::InboundEmail => 'Receives customer email and runs it through matching rules, including CSV imports into client tables.',
+            self::McpServer => 'Exposes Mission Control data to AI assistants over the Model Context Protocol.',
+            self::MessageExport => 'Emails a client account\'s message fields to recipients, on a schedule or on demand.',
+            self::VoicemailDigest => 'Emails scheduled digests of voicemail recordings to their recipients.',
+            self::ScriptSearch => 'Search Intelligent Series script elements for keywords, phrases or embedded data.',
+        };
+    }
 }

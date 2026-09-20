@@ -29,6 +29,12 @@
                 <x-section-border />
 
                 <livewire:teams.enabled-utilities lazy="lazy" :team="$team" />
+            </div>
+
+            <x-section-border />
+
+            <div class="mt-10 sm:mt-0">
+                <livewire:teams.sso-exemption lazy="lazy" :team="$team" />
 
 
                 @if (Gate::check('delete', $team) && ! $team->personal_team)

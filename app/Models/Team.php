@@ -12,6 +12,7 @@ use Laravel\Jetstream\Team as JetstreamTeam;
 
 /**
  * @property bool $personal_team
+ * @property bool $sso_exempt
  * @property bool|null $utility_api_gateway
  * @property bool|null $utility_better_emails
  * @property bool|null $utility_board_check
@@ -51,6 +52,7 @@ class Team extends JetstreamTeam
      */
     protected $casts = [
         'personal_team' => 'boolean',
+        'sso_exempt' => 'boolean',
         'unrestricted_accounts' => 'boolean',
     ];
 

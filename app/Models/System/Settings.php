@@ -91,6 +91,8 @@ class Settings extends Model
         'observability_tracing_export_timeout_ms',
         'azure_tokens_alert_enabled',
         'azure_tokens_alert_recipients',
+        'auth_enforce_linked_sso',
+        'auth_require_sso_or_2fa',
     ];
 
     /**
@@ -111,6 +113,8 @@ class Settings extends Model
         'saml2_metadata_xml' => EncryptedSerialized::class,
         'saml2_sp_certificate' => EncryptedSerialized::class,
         'saml2_sp_private_key' => EncryptedSerialized::class,
+        'auth_enforce_linked_sso' => 'boolean',
+        'auth_require_sso_or_2fa' => 'boolean',
         'mcp_enabled' => 'boolean',
         'mcp_logging_enabled' => 'boolean',
         'mcp_require_team_context' => 'boolean',

@@ -5,9 +5,11 @@ namespace App\Actions;
 use App\Models\DataSource;
 use App\Models\Stats\Agents\Agent;
 use App\Models\User;
+use App\Support\AuthPolicy;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticateLoginAttempt
 {
@@ -17,6 +19,17 @@ class AuthenticateLoginAttempt
 
         if (is_null($user)) {
             return null;
+        }
+
+        // Checked before either credential path on purpose. There are two ways
+        // into this app -- the local password hash below, and the ISWeb agent
+        // password further down, which does not consult the local hash at all.
+        // Rejecting only the first would leave a linked account reachable with
+        // its Amtelco agent password.
+        if (app(AuthPolicy::class)->mustUseSso($user)) {
+            throw ValidationException::withMessages([
+                'email' => __('This account signs in with single sign-on. Use the SSO link on the login page.'),
+            ]);
         }
 
         // Normal login
