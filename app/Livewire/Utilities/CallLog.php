@@ -54,7 +54,7 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
 
                 TextColumn::make('CallStart')
                     ->label('Call Start')
-                    ->formatStateUsing(fn ($state): string => Carbon::parse($state, $this->timezone)
+                    ->formatStateUsing(fn ($state): string => Carbon::parse($state, $this->switchTimezone())
                         ->timezone(Auth::user()->timezone ?? 'UTC')
                         ->format('m/d/Y g:i:s A'))
                     ->sortable(),

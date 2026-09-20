@@ -85,19 +85,38 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
     /**
      * Comparisons offered against the number of sources attached to an account.
      *
+     * Four, not six. A source count is a whole number, so "greater than 2" and
+     * "at least 3" select the same accounts -- offering both reads as two
+     * different settings that behave identically. Only the exclusive pair is
+     * kept, and the symbol in each label says which side of the boundary it
+     * falls on so nobody has to guess.
+     *
      * The count comes from cltSources, which the listing already loads in full to
      * render the Sources badges, so this filters the fetched rows rather than
      * pushing another condition into the Overview T-SQL.
      *
      * @var array<string, string>
      */
+    /**
+     * Comparisons offered against an account's DID limit.
+     *
+     * Only equality, because the number is a cap rather than a magnitude: a limit
+     * of 0 means *unlimited*, so "greater than 3" would rank unlimited accounts
+     * below a 4-line account and read as nonsense. The keys match
+     * Overview::DID_LIMIT_OPERATORS, which maps them to SQL at the sink.
+     *
+     * @var array<string, string>
+     */
+    public const DID_LIMIT_OPERATORS = [
+        'eq' => 'Equals (=)',
+        'ne' => 'Not equal (!=)',
+    ];
+
     public const SOURCE_COUNT_OPERATORS = [
-        'eq' => 'Exactly',
-        'ne' => 'Not',
-        'gte' => 'At least',
-        'lte' => 'At most',
-        'gt' => 'More than',
-        'lt' => 'Fewer than',
+        'eq' => 'Exactly (=)',
+        'ne' => 'Not (!=)',
+        'gt' => 'Greater than (>)',
+        'lt' => 'Less than (<)',
     ];
 
     public function table(Table $table): Table
@@ -122,6 +141,14 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                     ->sortable()
                     ->url(fn (array $record): string => '/accounts/client/'.$record['ClientNumber']),
 
+                TextColumn::make('DIDLimit')
+                    ->label('DID Limit')
+                    ->sortable()
+                    // 0 is not "no lines", it is no cap at all.
+                    ->formatStateUsing(fn ($state): string => (int) $state === 0
+                        ? 'Unlimited'
+                        : (string) (int) $state),
+
                 TextColumn::make('Sources')
                     ->label('Sources')
                     ->badge()
@@ -142,6 +169,19 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                         Select::make('account_setting_value')
                             ->label('Setting Value')
                             ->options(['0' => 'Off', '1' => 'On']),
+                        Select::make('did_limit_operator')
+                            ->label('DID Limit')
+                            ->options(self::DID_LIMIT_OPERATORS)
+                            ->placeholder('Any')
+                            ->live(),
+                        TextInput::make('did_limit')
+                            ->label('Simultaneous Calls')
+                            ->helperText('0 is unlimited.')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->visible(fn ($get): bool => filled($get('did_limit_operator'))),
+
                         Select::make('source_count_operator')
                             ->label('Source Count')
                             ->options(self::SOURCE_COUNT_OPERATORS)
@@ -199,6 +239,9 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                 'client_source' => (string) ($account['client_source'] ?? ''),
                 'account_setting' => (string) ($account['account_setting'] ?? ''),
                 'account_setting_value' => (string) ($account['account_setting_value'] ?? ''),
+                // The operator decides whether this applies; 0 is a real value.
+                'did_limit_operator' => (string) ($account['did_limit_operator'] ?? ''),
+                'did_limit' => (string) ($account['did_limit'] ?? ''),
                 'allowed_accounts' => $team->allowed_accounts,
                 'allowed_billing' => $team->allowed_billing,
             ]))->results;
@@ -237,8 +280,6 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
             return match ($operator) {
                 'eq' => $actual === $target,
                 'ne' => $actual !== $target,
-                'gte' => $actual >= $target,
-                'lte' => $actual <= $target,
                 'gt' => $actual > $target,
                 'lt' => $actual < $target,
             };

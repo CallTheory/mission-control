@@ -115,7 +115,7 @@ class CsvExport extends Component implements HasActions, HasSchemas
             $callLog = new CallLogStats(
                 Carbon::parse(($this->data['start_date'] ?? null))->format('Y-m-d H:i:s'),
                 Carbon::parse(($this->data['end_date'] ?? null))->format('Y-m-d H:i:s'),
-                $this->timezone,
+                $this->switchTimezone(),
                 ($this->data['client_number'] ?? null),
                 ($this->data['ani'] ?? null),
                 ($this->data['call_type'] ?? null),
@@ -138,7 +138,7 @@ class CsvExport extends Component implements HasActions, HasSchemas
             $ck = Helpers::callTypes();
             $st = Helpers::stationTypes();
 
-            $filename = 'call-log-export-'.now($this->timezone)->format('Y-m-d_His').'.csv';
+            $filename = 'call-log-export-'.now($this->switchTimezone())->format('Y-m-d_His').'.csv';
 
             $log->markAsCompleted(count($results), $filename);
         } catch (Exception $e) {
@@ -184,10 +184,10 @@ class CsvExport extends Component implements HasActions, HasSchemas
 
             foreach ($results as $row) {
                 $callStart = $row->CallStart
-                    ? Carbon::parse($row->CallStart, $this->timezone)->format('m/d/Y g:i:s A')
+                    ? Carbon::parse($row->CallStart, $this->switchTimezone())->format('m/d/Y g:i:s A')
                     : '';
                 $callEnd = $row->CallEnd
-                    ? Carbon::parse($row->CallEnd, $this->timezone)->format('m/d/Y g:i:s A')
+                    ? Carbon::parse($row->CallEnd, $this->switchTimezone())->format('m/d/Y g:i:s A')
                     : '';
 
                 $durationSeconds = (int) ($row->CallDuration ?? 0);

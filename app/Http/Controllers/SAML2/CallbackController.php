@@ -143,18 +143,18 @@ class CallbackController extends Controller
             }
 
             try {
-                // rotate secure passwords every time a user syncs?
-                $bytes = openssl_random_pseudo_bytes(64);
-                $password = bin2hex($bytes);
+                $user = $this->resolveUser(
+                    (string) $samlUser->getId(),
+                    $emailAttribute,
+                    $nameAttribute,
+                    $settings->switch_data_timezone ?? 'UTC',
+                );
 
-                $user = User::updateOrCreate([
-                    'email' => $emailAttribute,
-                ], [
-                    'name' => $nameAttribute,
-                    'timezone' => $settings->switch_data_timezone ?? 'UTC',
-                    'password' => Hash::make($password),
-                    'saml_linked_id' => $samlUser->getId(),
-                ]);
+                if (! $user) {
+                    return redirect('/login')->withErrors([
+                        'That email address belongs to an account linked to a different identity.',
+                    ]);
+                }
 
                 if ($user->personalTeam() === null) {
                     $user->ownedTeams()->save(Team::forceCreate([
@@ -177,6 +177,60 @@ class CallbackController extends Controller
         }
 
         return redirect('/login')->withErrors(['SAML2 is not enabled']);
+    }
+
+    /**
+     * Resolve the assertion to a local account, binding on the subject id.
+     *
+     * The subject id is checked first so an IdP identity stays attached to the
+     * account it was linked to: someone whose email changes at the IdP keeps their
+     * account (and their teams) instead of silently getting a fresh empty one, and
+     * unlinking on the profile page genuinely revokes the connection rather than
+     * being decorative.
+     *
+     * Email is still the fallback, because that is how every account linked before
+     * this existed has to be found the first time. It is only trusted when the
+     * account is *unlinked*: a match on an account already bound to a different
+     * subject id returns null rather than reassigning it, so an IdP that can be
+     * made to assert someone else's address cannot take over their account.
+     *
+     * Escape hatch, for an IdP rebuild that reissues every subject id:
+     * `php artisan sso:unlink --all` clears the column and puts everyone back on
+     * email matching for their next sign-in.
+     */
+    protected function resolveUser(string $subjectId, string $email, string $name, string $timezone): ?User
+    {
+        $user = User::where('saml_linked_id', $subjectId)->first();
+
+        if (! $user) {
+            $user = User::where('email', $email)->first();
+
+            // Bound to someone else's IdP identity -- do not re-point it.
+            if ($user && filled($user->saml_linked_id) && $user->saml_linked_id !== $subjectId) {
+                Log::warning('SAML2 sign-in blocked: account is linked to a different subject id', [
+                    'user_id' => $user->id,
+                ]);
+
+                return null;
+            }
+        }
+
+        $attributes = [
+            'name' => $name,
+            'email' => $email,
+            'saml_linked_id' => $subjectId,
+            // Rotated on every sync so a password captured earlier cannot be reused
+            // to bypass the IdP. Predates this change; kept deliberately.
+            'password' => Hash::make(bin2hex(openssl_random_pseudo_bytes(64))),
+        ];
+
+        if ($user) {
+            $user->forceFill($attributes)->save();
+
+            return $user;
+        }
+
+        return User::create($attributes + ['timezone' => $timezone]);
     }
 
     /**

@@ -37,8 +37,13 @@ trait FiltersCallLog
     /** Message keywords for the filter select. */
     public array $keywords = [];
 
-    /** Switch data timezone; the Amtelco timestamps are recorded in it. */
-    public string $timezone = 'UTC';
+    /**
+     * Switch data timezone; the Amtelco timestamps are recorded in it.
+     *
+     * Null until first read. Resolve it through switchTimezone(), never by
+     * touching this property directly -- see that method for why.
+     */
+    public ?string $timezone = null;
 
     /**
      * Load the option lists the filter selects need. Each source is optional: an
@@ -63,7 +68,26 @@ trait FiltersCallLog
         asort($ck);
         $this->ck = $ck;
 
-        $this->timezone = Settings::first()?->switch_data_timezone ?? 'UTC';
+        $this->switchTimezone();
+    }
+
+    /**
+     * The switch timezone, resolved on first use and cached on the component.
+     *
+     * This cannot be assigned in the mount hook and read from the schema: Filament
+     * builds the table -- and evaluates every filter default with it -- in
+     * bootedInteractsWithTable(), which runs *before* mountFiltersCallLog(). A
+     * property assigned at mount is therefore still at its declared default when
+     * the date pickers compute `now($tz)`, so the fields were pre-filled with the
+     * UTC clock while the label, rendered later, correctly read the switch zone.
+     * Five hours of skew on a Central switch, and the screen opened on a window
+     * that had not happened yet, which is why it looked empty until you moved it.
+     *
+     * Resolving lazily removes the ordering question entirely.
+     */
+    protected function switchTimezone(): string
+    {
+        return $this->timezone ??= Settings::first()?->switch_data_timezone ?? 'UTC';
     }
 
     /**
@@ -72,15 +96,22 @@ trait FiltersCallLog
     protected function callLogFilterSchema(): array
     {
         return [
+            // Defaults are formatted to a naive string rather than handed over as a
+            // Carbon. A Carbon carries a timezone, and the picker normalises it to
+            // config('app.timezone') -- UTC here -- so a field labelled
+            // "(America/Chicago)" was pre-filled with the UTC clock, five hours
+            // ahead of the switch data, and the screen opened on an empty range.
+            // The string is taken at face value, which is what the label promises
+            // and what callLogQuery() passes to the T-SQL.
             DateTimePicker::make('start_date')
-                ->label('Start Date ('.$this->timezone.')')
+                ->label('Start Date ('.$this->switchTimezone().')')
                 ->seconds(false)
-                ->default(now($this->timezone)->subHour()),
+                ->default(now($this->switchTimezone())->subHour()->format('Y-m-d H:i:s')),
 
             DateTimePicker::make('end_date')
-                ->label('End Date ('.$this->timezone.')')
+                ->label('End Date ('.$this->switchTimezone().')')
                 ->seconds(false)
-                ->default(now($this->timezone)),
+                ->default(now($this->switchTimezone())->format('Y-m-d H:i:s')),
 
             TextInput::make('client_number')->label('Client Number'),
             TextInput::make('ani')->label('ANI'),
@@ -123,7 +154,8 @@ trait FiltersCallLog
         $normalised = [];
 
         foreach ($options as $value => $label) {
-            if ($label === null || $label === '' || $value === null || $value === '') {
+            // An array key is never null, only the label can be.
+            if ($label === null || $label === '' || $value === '') {
                 continue;
             }
 
@@ -147,9 +179,9 @@ trait FiltersCallLog
         $team = request()->user()->currentTeam;
 
         return new CallLogStats(
-            Carbon::parse($f['start_date'] ?? now($this->timezone)->subHour())->format('Y-m-d H:i:s'),
-            Carbon::parse($f['end_date'] ?? now($this->timezone))->format('Y-m-d H:i:s'),
-            $this->timezone,
+            Carbon::parse($f['start_date'] ?? now($this->switchTimezone())->subHour())->format('Y-m-d H:i:s'),
+            Carbon::parse($f['end_date'] ?? now($this->switchTimezone()))->format('Y-m-d H:i:s'),
+            $this->switchTimezone(),
             $f['client_number'] ?? null,
             $f['ani'] ?? null,
             $f['call_type'] ?? null,

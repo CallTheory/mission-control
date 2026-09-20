@@ -27,6 +27,10 @@ class Overview extends Stat
 
     private string $account_setting_value;
 
+    private string $did_limit;
+
+    private string $did_limit_operator;
+
     public function __construct(array $config)
     {
         $this->client_name = $config['client_name'] ?? '';
@@ -43,6 +47,11 @@ class Overview extends Stat
         $this->account_setting = $config['account_setting'] ?? '';
         $this->account_setting_value = $config['account_setting_value'] ?? '';
         $this->client_source = $config['client_source'] ?? '';
+        $this->did_limit = (string) ($config['did_limit'] ?? '');
+        // Interpolated into the T-SQL below -- an operator cannot be bound -- so it
+        // is resolved against a fixed allow-list here at the sink, the same way
+        // order_by is. The value itself is still bound.
+        $this->did_limit_operator = self::resolveDidLimitOperator($config['did_limit_operator'] ?? null);
 
         // stupid version of validation
         if (strlen($this->account_setting_value)) {
@@ -58,7 +67,7 @@ class Overview extends Stat
     /**
      * Columns this listing is allowed to sort by.
      */
-    public const ORDERABLE = ['ClientNumber', 'ClientName', 'BillingCode'];
+    public const ORDERABLE = ['ClientNumber', 'ClientName', 'BillingCode', 'DIDLimit'];
 
     private static function resolveOrderBy(?string $column): string
     {
@@ -68,6 +77,16 @@ class Overview extends Stat
     private static function resolveOrderDirection(?string $direction): string
     {
         return strtolower((string) $direction) === 'desc' ? 'desc' : 'asc';
+    }
+
+    /**
+     * Comparisons the DID limit filter may use, mapped to their SQL operator.
+     */
+    public const DID_LIMIT_OPERATORS = ['eq' => '=', 'ne' => '<>'];
+
+    private static function resolveDidLimitOperator(?string $operator): string
+    {
+        return self::DID_LIMIT_OPERATORS[$operator] ?? '';
     }
 
     public function validateParams(): bool
@@ -155,7 +174,16 @@ class Overview extends Stat
             $client_source_filter = '';
         }
 
-        $full_filter = trim("{$client_name_filter}{$client_number_filter}{$billing_code_filter}{$allowed_accounts_filter}{$allowed_billing_filter}{$account_setting_filter}{$client_source_filter}");
+        // A DID limit of 0 means unlimited, so 0 is a meaningful value to filter on
+        // and the operator -- not the number -- is what decides whether to apply it.
+        if (strlen($this->did_limit_operator) && is_numeric($this->did_limit)) {
+            $did_limit_filter = "and cltClients.DIDLimit {$this->did_limit_operator} ?\n";
+            $this->parameters['did_limit'] = (int) $this->did_limit;
+        } else {
+            $did_limit_filter = '';
+        }
+
+        $full_filter = trim("{$client_name_filter}{$client_number_filter}{$billing_code_filter}{$allowed_accounts_filter}{$allowed_billing_filter}{$account_setting_filter}{$client_source_filter}{$did_limit_filter}");
         if (Str::startsWith($full_filter, 'and')) {
             $full_filter = 'where '.substr($full_filter, 3);
         }
@@ -163,7 +191,7 @@ class Overview extends Stat
         return <<<TSQL
                 select
                 cltClients.cltId, cltClients.Stamp, cltClients.ClientNumber, cltClients.ClientName,
-                cltClients.BillingCode, subjects.[Name] as Directory
+                cltClients.BillingCode, cltClients.DIDLimit, subjects.[Name] as Directory
                 from cltClients
                 left join dirSubjects subjects on subjects.subid = cltclients.subid
                 {$full_filter}

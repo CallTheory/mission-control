@@ -4,6 +4,7 @@
 /public/build
 /public/js/filament
 /public/css/filament
+/public/vendor/livewire
 /storage/*.key
 /vendor
 .env
