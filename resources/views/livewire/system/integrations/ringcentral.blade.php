@@ -2,7 +2,7 @@
     <button type="button" wire:click="mountAction('configure')"
         class="col-span-1 w-full flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover cursor-pointer"
         title="Configure RingCentral">
-        <img class="h-12 rounded-sm grayscale" src="/images/ring-central.svg" alt="RingCentral">
+        <img class="h-12 rounded-sm logo-mark" src="/images/ring-central.svg" alt="RingCentral">
     </button>
 
     <x-filament-actions::modals />

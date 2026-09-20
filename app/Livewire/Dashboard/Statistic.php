@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
+use App\Enums\DashboardTimeframe;
 use App\Models\Stats\Aggregate\AbandonRate;
 use App\Models\Stats\Aggregate\AgentAbandon;
 use App\Models\Stats\Aggregate\AnswerTime;
@@ -12,9 +13,9 @@ use App\Models\Stats\Aggregate\SystemAbandon;
 use App\Models\Stats\Aggregate\TalkTime;
 use App\Models\Stats\Aggregate\TotalAbandon;
 use App\Models\System\Settings;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Statistic extends Component
@@ -31,6 +32,12 @@ class Statistic extends Component
 
     public string $type = '';
 
+    /**
+     * Recalculate the metric. The window is read from the viewer's saved
+     * preference rather than passed in from the markup, so the header select
+     * can refresh every widget over the wire instead of waiting for a reload.
+     */
+    #[On('saved')]
     public function update(?string $period = null): void
     {
         $settings = Settings::firstOrFail();
@@ -41,16 +48,9 @@ class Statistic extends Component
             $switchTimezone = 'UTC';
         }
 
-        $startDate = Carbon::now($switchTimezone)->subHours(24)->format('Y-m-d H:i:s');
-        $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
+        $period ??= request()->user()?->dashboard_timeframe;
 
-        if (isset($period) && $period === 'lastHour') {
-            $startDate = Carbon::now($switchTimezone)->subHours(1)->format('Y-m-d H:i:s');
-            $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
-        } elseif (isset($period) && $period === 'sinceMidnight') {
-            $startDate = Carbon::today($switchTimezone)->format('Y-m-d H:i:s');
-            $endDate = Carbon::now($switchTimezone)->format('Y-m-d H:i:s');
-        }
+        [$startDate, $endDate] = DashboardTimeframe::fromStored($period)->queryRange($switchTimezone);
 
         $allowed_accounts = request()->user()->currentTeam->allowed_accounts ?? '';
         $allowed_billing = request()->user()->currentTeam->allowed_billing ?? '';

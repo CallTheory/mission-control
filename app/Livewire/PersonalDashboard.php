@@ -2,12 +2,12 @@
 
 namespace App\Livewire;
 
+use App\Enums\DashboardTimeframe;
 use App\Models\Stats\Agents\Agent;
 use App\Models\Stats\Agents\AgentCalls;
 use App\Models\Stats\Agents\AgentTracker;
 use App\Models\Stats\Helpers;
 use App\Models\System\Settings;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -52,16 +52,11 @@ class PersonalDashboard extends Component
             $this->user_details['teams'][$key]['permissions'] = $user->teamPermissions($user->currentTeam)[0];
         }
 
-        if ($user->dashboard_timeframe === 'lastHour') {
-            $activity_start = Carbon::now($this->switch_timezone)->timezone($user->timezone)->subHour();
-            $activity_end = Carbon::now($this->switch_timezone)->timezone($user->timezone);
-        } elseif ($user->dashboard_timeframe === 'sinceMidnight') {
-            $activity_start = Carbon::today($this->switch_timezone)->timezone($user->timezone);
-            $activity_end = Carbon::now($this->switch_timezone)->timezone($user->timezone);
-        } else {
-            $activity_start = Carbon::now($this->switch_timezone)->timezone($user->timezone)->subHours(24);
-            $activity_end = Carbon::now($this->switch_timezone)->timezone($user->timezone);
-        }
+        // Switch-timezone wall clock, matching the dashboard statistic widgets.
+        // This used to convert into the viewer's timezone before formatting,
+        // which shifted the window off the switch data whenever the two differed.
+        [$activity_start, $activity_end] = DashboardTimeframe::fromStored($user->dashboard_timeframe)
+            ->queryRange($this->switch_timezone);
 
         if ($user->agtId) {
             try {
@@ -76,8 +71,8 @@ class PersonalDashboard extends Component
 
             try {
                 $c = new AgentCalls(['agtId' => $user->agtId, 'agtId2' => $user->agtId, 'agtId3' => $user->agtId, // $user->agtId
-                    'start_date' => $activity_start->format('Y-m-d H:i:s'),
-                    'end_date' => $activity_end->format('Y-m-d H:i:s'),
+                    'start_date' => $activity_start,
+                    'end_date' => $activity_end,
                 ]);
 
                 if ($c->results[0]) {
@@ -90,8 +85,8 @@ class PersonalDashboard extends Component
             try {
                 $t = new AgentTracker([
                     'agtId' => $user->agtId, // $user->agtId,
-                    'start_date' => $activity_start->format('Y-m-d H:i:s'),
-                    'end_date' => $activity_end->format('Y-m-d H:i:s'),
+                    'start_date' => $activity_start,
+                    'end_date' => $activity_end,
                 ]);
                 if ($t->results[0]) {
                     $this->agent_tracker = $t->results;

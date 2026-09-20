@@ -85,11 +85,11 @@ trait FiltersCallLog
             TextInput::make('client_number')->label('Client Number'),
             TextInput::make('ani')->label('ANI'),
 
-            Select::make('call_type')->label('Call Type')->options($this->ck)->searchable(),
+            Select::make('call_type')->label('Call Type')->options(self::selectOptions($this->ck))->searchable(),
 
             Select::make('agent')
                 ->label('Agent')
-                ->options(collect($this->agents)->pluck('Name', 'Name')->all())
+                ->options(self::selectOptions(collect($this->agents)->pluck('Name', 'Name')->all()))
                 ->searchable(),
 
             TextInput::make('min_duration')->label('Min. Duration (seconds)')->numeric(),
@@ -97,7 +97,7 @@ trait FiltersCallLog
 
             Select::make('keyword')
                 ->label('Keyword')
-                ->options(collect($this->keywords)->pluck('Keyword', 'Keyword')->all())
+                ->options(self::selectOptions(collect($this->keywords)->pluck('Keyword', 'Keyword')->all()))
                 ->searchable(),
 
             TextInput::make('keyword_search')->label('Keyword Contains'),
@@ -106,6 +106,31 @@ trait FiltersCallLog
             Checkbox::make('has_recordings')->label('Has recordings'),
             Checkbox::make('has_video')->label('Has screen capture'),
         ];
+    }
+
+    /**
+     * Amtelco rows carry NULL names and keywords -- an agent record with no name,
+     * a keyword row with a null value. Plucking those straight into a Select gives
+     * Filament a null label, and Select::isOptionDisabled() type-errors on it while
+     * rendering the filter form, taking the whole screen down. Drop the unusable
+     * entries and hand Filament strings.
+     *
+     * @param  array<array-key, mixed>  $options
+     * @return array<string, string>
+     */
+    protected static function selectOptions(array $options): array
+    {
+        $normalised = [];
+
+        foreach ($options as $value => $label) {
+            if ($label === null || $label === '' || $value === null || $value === '') {
+                continue;
+            }
+
+            $normalised[(string) $value] = (string) $label;
+        }
+
+        return $normalised;
     }
 
     /**

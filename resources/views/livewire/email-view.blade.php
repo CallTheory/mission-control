@@ -111,11 +111,14 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary group
                                                 <div class="my-4">
                                                     <x-label for="text" value="{{ __('Email Body') }}" />
 
-                                                    <textarea rows="10" disabled id="text" class="mt-1 block w-full h-full border-border focus:border-primary focus:ring focus:ring-primary rounded-md shadow ">{{ $this->state['text'] }}</textarea>
+                                                    {{-- readonly, not disabled: a disabled textarea renders greyed-out
+                                                         text the browser picks, which is unreadable in dark mode, and it
+                                                         cannot be selected or copied. The surface colours match x-input. --}}
+                                                    <textarea rows="10" readonly id="text" class="mt-1 block w-full h-full border-border bg-surface text-surface-fg focus:border-primary focus:ring focus:ring-primary/30 rounded-md shadow">{{ $this->state['text'] }}</textarea>
 
                                                 </div>
 
-                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-2    text-right
+                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-3    text-right
                                                 sm:px-6 shadow sm:rounded-md sm:rounded-md">
 
                                                     <x-action-message class="mr-3 " on="forwarded">

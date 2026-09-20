@@ -177,7 +177,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary group
 
 
                                                 </div>
-                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-2    text-right
+                                                <div class="flex items-center justify-end px-4 py-3 bg-surface-3    text-right
                                                 sm:px-6 shadow sm:rounded-md sm:rounded-md">
 
                                                     @if(isset($state['id']))

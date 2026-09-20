@@ -17,6 +17,18 @@
                 Board Check
             @elseif(Str::startsWith(request()->path(), 'utilities/call-lookup'))
                 Call Lookup
+            @elseif(Str::startsWith(request()->path(), 'utilities/cloud-faxing'))
+                {{-- The provider is a child route, so the bare segment would read
+                     just "Ringcentral" with no sign of which utility it belongs to. --}}
+                @php
+                    $faxProvider = basename(request()->path());
+                    $faxProvider = match ($faxProvider) {
+                        'cloud-faxing' => '',
+                        'ringcentral' => ' · RingCentral',
+                        default => ' · mFax',
+                    };
+                @endphp
+                Cloud Faxing{{ $faxProvider }}
             @else
                 {{ ucwords(implode(' ', explode('-', basename(request()->path())))) }}
             @endif

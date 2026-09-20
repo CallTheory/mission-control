@@ -208,6 +208,23 @@
 }
 
 /*
+ * Vendor logo marks (the System > API Integrations grid).
+ *
+ * The logos are grayscaled so the grid reads as one set rather than nine brand
+ * palettes. Several of them are near-black, which vanishes against a dark card,
+ * so in dark mode the mark is flattened to black and inverted to white. A filter
+ * is not something a colour token can express, which is why this is a named
+ * class here rather than a `dark:` variant repeated across nine views.
+ */
+.logo-mark {
+    filter: grayscale(1);
+}
+
+.dark .logo-mark {
+    filter: grayscale(1) brightness(0) invert(1);
+}
+
+/*
  * Shell defaults. The <body> and the app gradient both read from the canvas
  * tokens so the page ground follows the theme without per-layout `dark:` pairs.
  */
@@ -221,31 +238,59 @@ body {
  * and hardcoded border, which survives into dark mode and produces white inputs
  * on a dark card. Re-point that reset at the tokens once, here, rather than
  * annotating several hundred individual controls.
+ *
+ * Every selector is prefixed with :root deliberately. The plugin's reset lands in
+ * the same cascade layer at the same specificity -- `select`, `textarea`,
+ * `[type=checkbox]` -- and is emitted *after* this block, so a plain `select` rule
+ * here loses the tie and the control stays #fff in dark mode. :root adds the one
+ * point of specificity that settles it. Only colours are restated; the plugin
+ * keeps owning padding, borders and appearance.
  */
 @layer base {
-    input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']),
-    select,
-    textarea {
+    :root input:not([type='button']):not([type='submit']):not([type='reset']):not([type='checkbox']):not([type='radio']),
+    :root select,
+    :root textarea {
         background-color: var(--color-surface);
         border-color: var(--color-border);
         color: var(--color-surface-fg);
     }
 
-    input::placeholder,
-    textarea::placeholder {
+    /* Popup lists inherit the control on some platforms but not others. */
+    :root option,
+    :root optgroup {
+        background-color: var(--color-surface);
+        color: var(--color-surface-fg);
+    }
+
+    :root input::placeholder,
+    :root textarea::placeholder {
         color: var(--color-muted);
     }
 
-    [type='checkbox'],
-    [type='radio'] {
+    :root [type='checkbox'],
+    :root [type='radio'] {
         background-color: var(--color-surface);
         border-color: var(--color-border-strong);
     }
 
-    [type='checkbox']:checked,
-    [type='radio']:checked {
+    :root [type='checkbox']:checked,
+    :root [type='radio']:checked {
         background-color: var(--color-primary);
         border-color: var(--color-primary);
+    }
+
+    /*
+     * Disabled controls. Left alone, the browser greys these itself -- Safari via
+     * opacity, others via a UA colour -- which reads as unreadable light-on-white
+     * in dark mode. Say "recessed but legible" in tokens instead.
+     */
+    :root input:disabled,
+    :root select:disabled,
+    :root textarea:disabled {
+        background-color: var(--color-surface-2);
+        color: var(--color-muted);
+        opacity: 1;
+        cursor: not-allowed;
     }
 
     /* Native pickers ship a dark-on-light glyph; flip it with the theme. */

@@ -111,27 +111,43 @@ class Helpers
         return ['log' => $log, 'envelope' => $envelope];
     }
 
+    /**
+     * Strip the noise labels from switch message lines and bold the known ones.
+     *
+     * The return value is HTML -- it carries the <strong> tags -- so every caller
+     * renders it unescaped. That means the line has to be escaped *here*, before
+     * the markup goes in: the text is caller-entered switch content, and the
+     * better-emails preview renders it straight into an authenticated page.
+     *
+     * @param  array<int, string>  $arr
+     * @return array<int, string> escaped HTML, safe to echo with {!! !!}
+     */
     public static function messageFiltering(array $arr): array
     {
-        $reassemble = null;
+        $reassemble = [];
 
         foreach ($arr as $i => $line) {
-            $reassemble[$i] = $line;
+            $line = (string) $line;
 
             // remove labels
             foreach (Helpers::$removeFromMessages as $item) {
-                $reassemble[$i] = str_replace($item, '', $reassemble[$i]);
+                $line = str_replace($item, '', $line);
             }
+
+            $safe = e($line);
 
             // format our labels
             foreach (Helpers::$knownMessageLabels as $label) {
                 if (Str::startsWith($line, $label)) {
-                    $reassemble[$i] = str_replace($label, "<strong>{$label}</strong>", $reassemble[$i]);
+                    $escaped = e($label);
+                    $safe = str_replace($escaped, "<strong>{$escaped}</strong>", $safe);
                 }
             }
+
+            $reassemble[$i] = $safe;
         }
 
-        return $reassemble ?? [];
+        return $reassemble;
     }
 
     /**

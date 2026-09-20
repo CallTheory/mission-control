@@ -12,8 +12,9 @@
             help="{{ __('Switch between light and dark mode.') }}">
             <select id="user_theme" wire:model.live="state.user_theme"
                 class="p-2 mt-1 block w-full rounded-md border-border bg-surface text-surface-fg shadow focus:border-primary focus:ring focus:ring-primary/30">
-                <option value="">{{ __('Light') }}</option>
-                <option value="dark">{{ __('Dark') }}</option>
+                @foreach(\App\Enums\ThemePreference::options() as $value => $label)
+                    <option value="{{ $value }}" class="bg-surface text-surface-fg">{{ __($label) }}</option>
+                @endforeach
             </select>
         </x-form-field>
 
@@ -21,9 +22,7 @@
             help="{{ __('The timeframe in-which dashboard statistics are displayed. Based on switch timezone.') }}">
             <select id="dashboard_timeframe" wire:model.live="state.dashboard_timeframe"
                 class="p-2 mt-1 block w-full rounded-md border-border bg-surface text-surface-fg shadow focus:border-primary focus:ring focus:ring-primary/30">
-                <option value="">{{ __('Last 24 Hours') }}</option>
-                <option value="lastHour">{{ __('Last Hour') }}</option>
-                <option value="sinceMidnight">{{ __('Since Midnight') }}</option>
+                <x-timeframe-options />
             </select>
         </x-form-field>
     </x-slot>

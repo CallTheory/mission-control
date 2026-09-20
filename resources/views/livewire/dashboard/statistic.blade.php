@@ -1,7 +1,6 @@
-@php
-use Illuminate\Support\Facades\Auth;
-@endphp
-<li wire:poll.5000ms.visible="update('{{ Auth::user()->dashboard_timeframe ?? '' }}')"
+{{-- No timeframe argument: the component reads the viewer's saved preference,
+     so changing it in the header updates every widget without a reload. --}}
+<li wire:poll.5000ms.visible="update"
     wire:id="{{ uniqid('widget') }}"
     class="widget relative"
     style="min-height: 20rem;">

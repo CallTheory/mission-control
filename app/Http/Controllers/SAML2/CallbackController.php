@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SAML2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Profile\SsoLinkController;
 use App\Models\System\Settings;
 use App\Models\Team;
 use App\Models\User;
@@ -133,6 +134,14 @@ class CallbackController extends Controller
                 return redirect('/login')->withErrors(['Your account domain is not permitted to sign in.']);
             }
 
+            // A link request started from the profile page: attach the subject id to
+            // that account rather than signing anyone in.
+            $linkUserId = $request->session()->pull(SsoLinkController::SESSION_KEY);
+
+            if ($linkUserId !== null) {
+                return $this->completeAccountLink((int) $linkUserId, $emailAttribute, (string) $samlUser->getId());
+            }
+
             try {
                 // rotate secure passwords every time a user syncs?
                 $bytes = openssl_random_pseudo_bytes(64);
@@ -168,6 +177,45 @@ class CallbackController extends Controller
         }
 
         return redirect('/login')->withErrors(['SAML2 is not enabled']);
+    }
+
+    /**
+     * Finish a link started from the profile page.
+     *
+     * The assertion has already been validated by the caller; what is checked
+     * here is that it belongs to the person who asked. Requiring both a still
+     * logged-in session for that user and a matching email address keeps an
+     * assertion for some other account from being pinned onto this one.
+     */
+    protected function completeAccountLink(int $userId, string $assertionEmail, string $subjectId): RedirectResponse
+    {
+        $user = User::find($userId);
+
+        if (! $user || Auth::id() !== $user->id) {
+            Log::warning('SAML2 account link rejected: no matching authenticated session', [
+                'user_id' => $userId,
+            ]);
+
+            return redirect('/user/profile')
+                ->with('flash.banner', 'Your session expired before the link could be completed. Please try again.')
+                ->with('flash.bannerStyle', 'danger');
+        }
+
+        if (strcasecmp($user->email, $assertionEmail) !== 0) {
+            Log::warning('SAML2 account link rejected: assertion email does not match the account', [
+                'user_id' => $user->id,
+            ]);
+
+            return redirect('/user/profile')
+                ->with('flash.banner', 'That identity provider account uses a different email address, so it was not linked.')
+                ->with('flash.bannerStyle', 'danger');
+        }
+
+        $user->saml_linked_id = $subjectId;
+        $user->save();
+
+        return redirect('/user/profile')
+            ->with('flash.banner', 'Your account is now linked to single sign-on.');
     }
 
     /**

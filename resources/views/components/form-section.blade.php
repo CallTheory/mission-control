@@ -15,7 +15,11 @@
             </div>
 
             @if (isset($actions))
-                <div class="flex items-center justify-end px-4 py-3 bg-surface-2 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
+                {{-- surface-3, not surface-2: several pages put these forms on a
+                     surface-2 page background, where a surface-2 footer had no edge
+                     against it at all. surface-3 is distinct from both the card body
+                     and any page ground, in either theme. --}}
+                <div class="flex items-center justify-end px-4 py-3 bg-surface-3 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
                     {{ $actions }}
                 </div>
             @endif

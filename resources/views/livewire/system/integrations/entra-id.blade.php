@@ -2,7 +2,7 @@
     <button type="button" wire:click="mountAction('configure')"
         class="col-span-1 w-full flex justify-center py-8 px-8 bg-surface-inverse hover:bg-surface-inverse-hover cursor-pointer"
         title="Configure Microsoft Entra ID">
-        <img class="h-12 rounded-sm grayscale" src="/images/entra-id.svg" alt="Microsoft Entra ID">
+        <img class="h-12 rounded-sm logo-mark" src="/images/entra-id.svg" alt="Microsoft Entra ID">
     </button>
 
     @if($this->isConfigured())
@@ -10,7 +10,7 @@
             @if($this->isEnabled())
                 <span class="text-success">Token watcher enabled</span>
             @else
-                <span class="text-muted">Configured, sweeps off</span>
+                <span class="text-muted">Configured, checks off</span>
             @endif
 
             <button type="button" wire:click="testConnection" wire:loading.attr="disabled"

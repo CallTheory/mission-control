@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailUnsubscribeController;
 use App\Http\Controllers\PrivacyPolicyController;
 // use App\Http\Controllers\SAML2\SingleLogoutServiceController as SAMLLogoutController;
+use App\Http\Controllers\Profile\SsoLinkController;
 use App\Http\Controllers\RecordingController;
 use App\Http\Controllers\RedirectHomeController;
 use App\Http\Controllers\SAML2\CallbackController as SAMLCallbackController;
@@ -192,6 +193,11 @@ if (Helpers::isSystemFeatureEnabled('wctp-gateway')) {
             ->name('wctp.provider.callback');
     });
 }
+
+// Linking an existing account to the IdP -- see Profile\SsoLinkController.
+Route::middleware(['auth:sanctum', 'verified'])
+    ->post('/user/sso/link', SsoLinkController::class)
+    ->name('profile.sso.link');
 
 // Support SAML2 get/post, but default to POST (see services.php)
 Route::match(['get', 'post'], '/sso/saml2/redirect', SAMLRedirectController::class)->name('sso.saml2.redirect');

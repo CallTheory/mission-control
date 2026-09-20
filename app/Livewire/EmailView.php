@@ -61,7 +61,10 @@ class EmailView extends Component
     public function openEmailPanel(InboundEmail $email): void
     {
         $this->email = $email;
-        $this->isOpen = ! $this->isOpen;
+        // Always open. Toggling meant that clicking a second email while the panel
+        // was already up closed it instead of switching to that email, so it took
+        // two clicks to read anything after the first.
+        $this->isOpen = true;
         $this->state['subject'] = $this->email->subject;
         $this->state['to'] = $this->email->to;
         $this->state['from'] = $this->email->from;

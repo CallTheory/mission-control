@@ -97,7 +97,7 @@ class EntraId extends Component implements HasActions, HasSchemas
                     : 'No secret stored yet. Use the longest expiry Azure allows -- the watcher monitors its own secret too.'),
 
             Toggle::make('azure_enabled')
-                ->label('Run the daily sweep')
+                ->label('Daily credential check')
                 ->helperText('When off, credentials stay stored but nothing is read from Graph.'),
         ];
     }

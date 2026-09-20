@@ -4,8 +4,10 @@
 <div class="inline-flex w-full py-2 px-4 mx-auto my-8">
 
     <div class="flex flex-col  w-full">
-        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+        {{-- Same as the rules table above: no negative margins, or the list
+             overhangs the card it sits in. --}}
+        <div class="overflow-x-auto">
+            <div class="py-2 align-middle inline-block min-w-full">
 
             <h3 class="font-semibold text-2xl my-2 0 my-4">Received Emails</h3>
 
@@ -61,7 +63,7 @@
 
                                     @elseif($email->ignored_at)
 
-                                        <span class="px-2 inline-flex text-xs leading-5 rounded bg-steel-400 text-steel-100 border border-steel-200">
+                                        <span class="px-2 inline-flex text-xs leading-5 rounded bg-surface-3 text-surface-fg border border-border">
                                          Ignored
                                         </span>
 

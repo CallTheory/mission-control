@@ -47,8 +47,10 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary ease-
             <div class="inline-flex min-w-full px-4 mx-auto mb-4">
                 <div class="flex flex-col w-full">
 
-                    <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    {{-- overflow-x-auto only. This used to carry -mx-6/-mx-8 against a
+                         parent with just px-4, so the table hung past the card edge. --}}
+                    <div class="overflow-x-auto">
+                        <div class="py-2 align-middle inline-block min-w-full">
                             <h3 class="font-semibold text-2xl my-2 flex my-4">Inbound Rules&nbsp;<livewire:open-panel-button :r="$new_rule" :wire.key="uniqid()"/></h3>
                             <div class="shadow overflow-hidden border border-border rounded-lg">
 
@@ -129,14 +131,14 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary ease-
                                                         $trigger = MergeCommISWebTrigger::find( $r->mergecomm_trigger_id);
 
                                                     @endphp
-                                                    <div class="flex text-surface-inverse-fg">
-                                                        <code class="shadow text-xs bg-primary px-2 py-1 rounded-l-lg border border-none">{{ $trigger->clientNumber ?? '' }}</code>
-                                                        <code class="shadow text-xs border border-none bg-steel-900 px-2 py-1 rounded-r-lg">MergeComm {!!  $trigger->apiKey !!}</code>
+                                                    <div class="flex">
+                                                        <code class="shadow text-xs bg-primary text-primary-fg px-2 py-1 rounded-l-lg">{{ $trigger->clientNumber ?? '' }}</code>
+                                                        <code class="shadow text-xs bg-surface-3 text-surface-fg border border-border px-2 py-1 rounded-r-lg">MergeComm {!!  $trigger->apiKey !!}</code>
                                                     </div>
                                                 @elseif($r->account)
-                                                    <div class="flex ">
-                                                        <code class="shadow text-xs text-primary-fg bg-primary px-2 py-1 rounded-l-lg border border-none"> {{ $r->account ?? '' }}</code>
-                                                        <code class="shadow text-xs border border-none text-primary bg-steel-900 px-2 py-1 rounded-r-lg">Inbound SMTP</code>
+                                                    <div class="flex">
+                                                        <code class="shadow text-xs text-primary-fg bg-primary px-2 py-1 rounded-l-lg">{{ $r->account ?? '' }}</code>
+                                                        <code class="shadow text-xs bg-surface-3 text-surface-fg border border-border px-2 py-1 rounded-r-lg">Inbound SMTP</code>
                                                     </div>
                                                 @else
                                                     {!!  $warning_icon  !!} Unknown

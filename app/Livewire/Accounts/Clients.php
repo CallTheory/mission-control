@@ -82,6 +82,24 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
         'ExemptFromSystemEmergency' => 'Exempt From System Emergency',
     ];
 
+    /**
+     * Comparisons offered against the number of sources attached to an account.
+     *
+     * The count comes from cltSources, which the listing already loads in full to
+     * render the Sources badges, so this filters the fetched rows rather than
+     * pushing another condition into the Overview T-SQL.
+     *
+     * @var array<string, string>
+     */
+    public const SOURCE_COUNT_OPERATORS = [
+        'eq' => 'Exactly',
+        'ne' => 'Not',
+        'gte' => 'At least',
+        'lte' => 'At most',
+        'gt' => 'More than',
+        'lt' => 'Fewer than',
+    ];
+
     public function table(Table $table): Table
     {
         return $table
@@ -107,6 +125,7 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('Sources')
                     ->label('Sources')
                     ->badge()
+                    ->placeholder('None')
                     ->state(fn (array $record): array => $this->sourcesByClient()[$record['cltId']] ?? []),
             ])
             ->filters([
@@ -123,10 +142,24 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                         Select::make('account_setting_value')
                             ->label('Setting Value')
                             ->options(['0' => 'Off', '1' => 'On']),
+                        Select::make('source_count_operator')
+                            ->label('Source Count')
+                            ->options(self::SOURCE_COUNT_OPERATORS)
+                            ->placeholder('Any')
+                            // The count defaults to 0 so picking "Exactly" alone
+                            // answers the common question: which accounts have none?
+                            ->live(),
+                        TextInput::make('source_count')
+                            ->label('Sources')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->visible(fn ($get): bool => filled($get('source_count_operator'))),
                     ])
                     ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
-                    // Filtering happens inside the T-SQL, not over the returned rows,
-                    // so there is nothing to apply to a query builder here.
+                    // Every filter but the source count is applied inside the T-SQL,
+                    // and that one runs over the fetched rows in clientRows(), so
+                    // there is no query builder to modify here either way.
                     ->query(fn ($query) => $query),
             ], layout: FiltersLayout::AboveContent)
             // One filter group, so it gets the whole width. Filament's default grid
@@ -153,7 +186,7 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
         $team = request()->user()->currentTeam;
 
         try {
-            return (new Overview([
+            $rows = (new Overview([
                 // Overview allow-lists both of these before interpolating them into
                 // its ORDER BY, so an unexpected column falls back rather than injecting.
                 'order_by' => $sortColumn ?? 'ClientNumber',
@@ -172,6 +205,44 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
         } catch (Exception) {
             return [];
         }
+
+        return $this->filterBySourceCount(
+            $rows,
+            (string) ($account['source_count_operator'] ?? ''),
+            $account['source_count'] ?? null,
+        );
+    }
+
+    /**
+     * Keep only the accounts whose number of sources satisfies the comparison.
+     *
+     * A blank operator means no filtering. A blank count is read as 0, so
+     * "Exactly" on its own finds the accounts with no sources at all.
+     *
+     * @param  array<int, object>  $rows
+     * @return array<int, object>
+     */
+    private function filterBySourceCount(array $rows, string $operator, mixed $count): array
+    {
+        if ($operator === '' || ! array_key_exists($operator, self::SOURCE_COUNT_OPERATORS)) {
+            return $rows;
+        }
+
+        $target = max(0, (int) $count);
+        $sources = $this->sourcesByClient();
+
+        return array_values(array_filter($rows, function (object $row) use ($operator, $target, $sources): bool {
+            $actual = count($sources[$row->cltId] ?? []);
+
+            return match ($operator) {
+                'eq' => $actual === $target,
+                'ne' => $actual !== $target,
+                'gte' => $actual >= $target,
+                'lte' => $actual <= $target,
+                'gt' => $actual > $target,
+                'lt' => $actual < $target,
+            };
+        }));
     }
 
     /**

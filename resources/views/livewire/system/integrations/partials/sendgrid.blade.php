@@ -16,7 +16,7 @@
                 @else
                     <x-alert-warning
                         title="Parse webhook secret not configured"
-                        description="Set INBOUND_EMAIL_PARSE_SECRET in the environment to generate the destination URL." />
+                        description="Set INBOUND_EMAIL_PARSE_SECRET in the environment to generate the destination URL. Upgrading an install that already had inbound email working? The old URL used a value derived from APP_URL -- run `php artisan inbound-email:backfill-secrets` to recover it so SendGrid keeps delivering." />
                 @endif
 
                 <x-label>Scripting API Key</x-label>
@@ -25,6 +25,6 @@
                 @else
                     <x-alert-warning
                         title="Forward API key not configured"
-                        description="Set INBOUND_EMAIL_FORWARD_SECRET in the environment to enable the agent forward endpoint." />
+                        description="Set INBOUND_EMAIL_FORWARD_SECRET in the environment to enable the agent forward endpoint. Existing agent scripts send a key derived from APP_URL -- run `php artisan inbound-email:backfill-secrets` to recover it rather than re-keying every script." />
                 @endif
 </div>

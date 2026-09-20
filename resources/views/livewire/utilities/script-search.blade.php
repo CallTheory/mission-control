@@ -9,7 +9,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end px-4 py-3 bg-surface-2 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
+            <div class="flex items-center justify-end px-4 py-3 bg-surface-3 text-right sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
 
                 <span class="mr-3 text-sm" wire:loading>
                     {{ __('Searching...') }}

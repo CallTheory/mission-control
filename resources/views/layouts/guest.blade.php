@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ auth()->user()?->dark_mode === 'dark' ? 'dark' : '' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ \App\Enums\ThemePreference::fromStored(auth()->user()?->dark_mode)->htmlClass() }}">
     <head>
+        @include('partials.theme-script')
+
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">

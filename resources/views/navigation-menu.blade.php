@@ -158,6 +158,10 @@ use App\Models\Team;
                                 @endif
                             @endcan
 
+                            @livewire('menu-break')
+
+                            <!-- Appearance -->
+                            @livewire('profile.theme-toggle', [], 'theme-toggle-desktop')
 
                             @livewire('menu-break')
 
@@ -224,6 +228,9 @@ use App\Models\Team;
                         </x-responsive-nav-link>
                     @endif
                 @endcan
+
+                <!-- Appearance -->
+                @livewire('profile.theme-toggle', [], 'theme-toggle-mobile')
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">

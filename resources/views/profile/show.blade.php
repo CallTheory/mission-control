@@ -31,6 +31,18 @@
             @endif
 
             <div class="mt-10 sm:mt-0">
+                @livewire('profile.user-theme')
+            </div>
+
+            <x-section-border />
+
+            <div class="mt-10 sm:mt-0">
+                @livewire('profile.sso-connection')
+            </div>
+
+            <x-section-border />
+
+            <div class="mt-10 sm:mt-0">
                 @livewire('profile.logout-other-browser-sessions-form')
             </div>
 

@@ -21,11 +21,12 @@ use App\Models\MergeCommISWebTrigger;
                 @include('layouts.width-toggle')
             </div>
 
-            <livewire:utilities.card-processing lazy="lazy"></livewire:utilities.card-processing>
-
+            {{-- The card body needs its own gutter; the component renders edge to
+                 edge otherwise, which is how every other utility page wraps it. --}}
+            <div class="block min-w-full px-4 pb-4 mx-auto">
+                <livewire:utilities.card-processing lazy="lazy"></livewire:utilities.card-processing>
             </div>
-
         </div>
-        </div>
+    </div>
 
 </x-app-layout>

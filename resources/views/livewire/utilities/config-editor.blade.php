@@ -38,8 +38,9 @@
                 <x-filament::section heading="Email Accounts ({{ count($emailAccounts) }})" compact>
                     <div class="max-h-48 overflow-y-auto flex flex-wrap gap-2">
                         @foreach($emailAccounts as $account)
-                            <x-button wire:click="loadEmailAccount({{ $account['id'] }})" class="text-xs">
-                                {{ $account['id'] }}
+                            {{-- The row is keyed 'ID' the way cltEmailAccounts spells it. --}}
+                            <x-button wire:click="loadEmailAccount({{ $account['ID'] }})" class="text-xs">
+                                {{ $account['Name'] ?: $account['ID'] }}
                             </x-button>
                         @endforeach
                     </div>
