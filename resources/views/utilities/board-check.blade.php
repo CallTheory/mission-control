@@ -20,7 +20,7 @@ use App\Models\MergeCommISWebTrigger;
             <div class="m-2">
                 @include('layouts.width-toggle')
             </div>
-            <div class="inline-flex min-w-full p-2 mx-auto mb-4">
+            <div class="block min-w-full p-2 mx-auto mb-4">
                 <livewire:utilities.board-check lazy="lazy"></livewire:utilities.board-check>
             </div>
         </div>

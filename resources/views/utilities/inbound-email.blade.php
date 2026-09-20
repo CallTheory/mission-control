@@ -44,7 +44,7 @@ $warning_icon = '<svg class="w-6 h-6 mx-auto rounded-full p-1 text-primary ease-
                </dl>
             </div>
 
-            <div class="inline-flex min-w-full px-4 mx-auto mb-4">
+            <div class="block min-w-full px-4 mx-auto mb-4">
                 <div class="flex flex-col w-full">
 
                     {{-- overflow-x-auto only. This used to carry -mx-6/-mx-8 against a

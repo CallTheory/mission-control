@@ -13,7 +13,7 @@
             <div class="m-4">
                 @include('layouts.width-toggle')
             </div>
-            <div class="inline-flex min-w-full p-2 mx-auto mb-4">
+            <div class="block min-w-full p-2 mx-auto mb-4">
                 <livewire:accounts.client :client_number="$client_number"></livewire:accounts.client>
             </div>
         </div>
