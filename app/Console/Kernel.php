@@ -56,13 +56,23 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('isfax:process')->everyMinute();
-        $schedule->command('isfax:process-ring-central')->everyMinute();
+        // Every fax command reads the spool directories, which on a mounted share can
+        // block. withoutOverlapping() is given an explicit expiry because the bare form
+        // takes a 1440-minute lock: a scheduler killed while wedged would otherwise leave
+        // the mutex held and silently stop the command running for a full day.
+        // One dispatcher for every (source, provider) lane. It only reads the database,
+        // so an unreachable spool can no longer block the scheduler — each lane is scanned
+        // by its own queued job, with its own timeout.
+        $schedule->command('isfax:scan')->everyMinute()->withoutOverlapping(5);
         $schedule->command('inbound-email:check')->everyMinute();
-        $schedule->command('isfax:check-pending')->everyMinute()->withoutOverlapping();
-        $schedule->command('isfax:build-ringcentral-dashboard')->everyMinute()->withoutOverlapping();
-        $schedule->command('isfax:monitor mfax')->everyThirtyMinutes();
-        $schedule->command('isfax:monitor ringcentral')->everyThirtyMinutes();
+        $schedule->command('isfax:check-pending')->everyMinute()->withoutOverlapping(5);
+        // Per-source spool snapshots, so the status pages never read a share inside a
+        // web request. Dispatches queued jobs; it does not read the spool itself.
+        $schedule->command('isfax:build-dashboards')->everyMinute()->withoutOverlapping(5);
+        // Provider-level RingCentral data (the fax list and webhook heartbeat).
+        $schedule->command('isfax:build-ringcentral-dashboard')->everyMinute()->withoutOverlapping(5);
+        // One run covers every spool source; a run per provider would alert twice.
+        $schedule->command('isfax:monitor')->everyThirtyMinutes()->withoutOverlapping(30);
         $schedule->command('telescope:prune --hours=1')->hourly();
         $schedule->command('intelligent-data:sync')->everyThirtyMinutes();
         $schedule->command('board-check:export-peoplepraise')->everyFifteenMinutes();

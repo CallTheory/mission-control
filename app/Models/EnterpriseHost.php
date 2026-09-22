@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\SmsProvider;
 use App\Services\Sms\SmsGatewayManager;
+use App\Support\PhoneNumber;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -188,13 +189,10 @@ class EnterpriseHost extends Model
      */
     public static function normalizeNumber(string $phoneNumber): string
     {
-        $digits = preg_replace('/\D+/', '', $phoneNumber) ?? '';
-
-        if (strlen($digits) === 10) {
-            $digits = '1'.$digits;
-        }
-
-        return $digits;
+        // The rule now lives in App\Support\PhoneNumber so fax provider pins key numbers
+        // identically to these SMS carrier overrides. Kept as a method because it is used
+        // across this model and its tests.
+        return PhoneNumber::normalize($phoneNumber);
     }
 
     /**

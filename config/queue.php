@@ -96,6 +96,19 @@ return [
             'after_commit' => false,
         ],
 
+        // Consumed by horizon's supervisor-fax-scan, which times out at 45s. The window
+        // has to be far wider than that timeout: a scan wedged on an unreachable share
+        // would otherwise be re-reserved while the first worker is still stuck on it, and
+        // one dead Intelligent Series server would quietly consume every scan worker.
+        'redis-fax-scan' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'fax-scan',
+            'retry_after' => 300,
+            'block_for' => null,
+            'after_commit' => false,
+        ],
+
         // Consumed by horizon's supervisor-transcriptions, which times out at 1830s. The
         // shared 90s window meant any transcription running longer than a minute and a
         // half was re-reserved and transcribed again.

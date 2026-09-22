@@ -2,11 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Enums\FaxProvider;
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxLockKey;
+use App\Services\Faxing\FaxRoute;
+use App\Services\Faxing\FaxRouter;
+use App\Services\Faxing\FaxSpool;
 use App\Services\Observability\GuzzleTracing;
 use Exception;
 use GuzzleHttp\Client as Guzzle;
@@ -34,6 +39,35 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
     public int $jobID;
 
     public string $fsFileName;
+
+    /**
+     * Which spool source this fax came out of.
+     *
+     * Nullable with a null default on purpose: a job serialized before sources existed
+     * unserializes against this class, and PHP only applies declared defaults for
+     * properties the payload does not carry. A typed non-nullable property would fatal
+     * with "must not be accessed before initialization" — in handle() *and* in failed(),
+     * so the fax would be neither sent nor reported. Null resolves to the legacy
+     * provider-named source, which is exactly where such a payload came from.
+     */
+    public ?string $spoolSourceKey = null;
+
+    /**
+     * Why the router chose this provider, and whether a failed submission may be retried
+     * through a different one. Both default so a payload written before routing existed
+     * unserializes — see the note on $spoolSourceKey.
+     */
+    public ?string $routingReason = null;
+
+    public bool $allowFailover = false;
+
+    /**
+     * Providers already attempted for this fax, so failover walks forward rather than
+     * bouncing between two providers until the retry window runs out.
+     *
+     * @var array<int, string>
+     */
+    public array $triedProviders = [];
 
     public string $capfile;
 
@@ -72,13 +106,23 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         $this->phone = preg_replace('/[^0-9+]/', '', $fax['phone']);
         $this->status = $fax['status'];
         $this->fsFileName = basename($fax['fsFileName']);
+        $this->spoolSourceKey = $fax['source_key'] ?? null;
+        $this->routingReason = $fax['routing_reason'] ?? null;
+        $this->allowFailover = (bool) ($fax['allow_failover'] ?? false);
+        $this->triedProviders = $fax['tried_providers'] ?? [];
 
         $this->notes = $this->datasource->mfax_notes ?? '';
 
+        // All of these columns are nullable and only the API key is required to enable
+        // mFax, so an install that never configured a cover page is a supported one.
+        // Assigning null to these string properties threw from the *constructor*, which
+        // meant the fax was never even queued: the .fs simply stayed in tosend until the
+        // buildup alert fired, with a TypeError as the only clue. handle() already treats
+        // an empty cover page id as "no cover page".
         $this->mFaxApiKey = $this->datasource->mfax_api_key;
-        $this->coverPageId = $this->datasource->mfax_cover_page_id;
-        $this->subject = $this->datasource->mfax_subject;
-        $this->senderName = $this->datasource->mfax_sender_name;
+        $this->coverPageId = $this->datasource->mfax_cover_page_id ?? '';
+        $this->subject = $this->datasource->mfax_subject ?? '';
+        $this->senderName = $this->datasource->mfax_sender_name ?? '';
     }
 
     /**
@@ -168,6 +212,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 'phone' => $this->phone,
                 'status' => $this->status,
                 'fsFileName' => $this->fsFileName,
+                'source_key' => $this->sourceKey(),
             ];
 
             $useCoverPage = 'false';
@@ -175,7 +220,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
             $attachments = [
                 'name' => 'attachments',
-                'contents' => file_get_contents(storage_path('app/mfax/tosend/'.$this->capfile)),
+                'contents' => file_get_contents((new FaxSpool)->path(FaxProvider::Mfax->value, 'tosend', $this->sourceKey()).$this->capfile),
                 'filename' => str_replace('.cap', '.txt', $this->capfile),
                 'headers' => [
                     'content-type' => 'text/plain',
@@ -224,6 +269,8 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
                 PendingFax::create([
                     'api_fax_id' => $apiFaxId,
                     'fax_provider' => 'mfax',
+                    'spool_source_key' => $this->sourceKey(),
+                    'routing_reason' => $this->routingReason,
                     'job_id' => $this->jobID,
                     'fs_file_name' => $this->fsFileName,
                     'cap_file' => $this->capfile,
@@ -253,11 +300,65 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             'status' => $this->status,
             'fsFileName' => $this->fsFileName,
             'account' => $this->accountLabel(),
+            'source_key' => $this->sourceKey(),
         ];
 
         Log::error("SendFaxJob failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
+
+        // Handing the fax to the other provider means it is still in flight, so neither
+        // the failure alert nor the fail/ move may happen yet.
+        if ($this->attemptFailover($faxFsDetails)) {
+            return;
+        }
+
         Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
-        MoveFailedFaxFiles::dispatch($faxFsDetails);
+        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::Mfax->value, $this->sourceKey());
+    }
+
+    private function currentProvider(): FaxProvider
+    {
+        return FaxProvider::Mfax;
+    }
+
+    /**
+     * Try the other provider before giving up, when the route allowed it.
+     *
+     * Only reached from failed(), i.e. after this provider has exhausted its own retries.
+     * Returns true when the fax has been handed on, in which case the caller must NOT
+     * report a failure back to Intelligent Series — the fax is still in flight.
+     */
+    private function attemptFailover(array $faxFsDetails): bool
+    {
+        $next = app(FaxRouter::class)->nextProvider(
+            new FaxRoute($this->currentProvider(), $this->routingReason ?? 'unknown', $this->allowFailover),
+            [...$this->triedProviders, $this->currentProvider()->value],
+        );
+
+        if ($next === null) {
+            return false;
+        }
+
+        $payload = $faxFsDetails + [
+            'routing_reason' => 'failover from '.$this->currentProvider()->value,
+            'allow_failover' => $this->allowFailover,
+            'tried_providers' => [...$this->triedProviders, $this->currentProvider()->value],
+        ];
+
+        Log::warning("Fax {$this->fsFileName} failing over from {$this->currentProvider()->value} to {$next->value}");
+
+        $next === FaxProvider::RingCentral
+            ? SendFaxRingCentral::dispatch($payload)
+            : SendFaxJob::dispatch($payload);
+
+        return true;
+    }
+
+    /**
+     * The spool source this fax belongs to, defaulting to the legacy mFax one.
+     */
+    public function sourceKey(): string
+    {
+        return $this->spoolSourceKey ?? FaxProvider::Mfax->value;
     }
 
     /**
@@ -285,7 +386,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
      */
     public function uniqueId(): string
     {
-        return $this->fsFileName;
+        return FaxLockKey::for($this->spoolSourceKey, FaxProvider::Mfax->value, $this->fsFileName);
     }
 
     /**

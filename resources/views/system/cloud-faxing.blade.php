@@ -21,6 +21,30 @@ use Illuminate\Support\Facades\Auth;
                <livewire:system.fax-notification-settings></livewire:system.fax-notification-settings>
             </div>
             <hr class="my-4 border border-border">
+            <div class="overflow-hidden sm:rounded-lg">
+                <div class="bg-surface my-3 rounded-sm border border-border shadow p-4 w-full">
+                    <h3 class="text-lg leading-6 font-medium text-surface-fg mb-1">Fax Servers</h3>
+                    <p class="text-sm text-muted mb-4">
+                        Where faxes arrive from. Several Intelligent Series servers can feed Mission Control;
+                        only one of them processes faxes at a time, and each is read independently so one being
+                        unavailable never holds up another.
+                    </p>
+                    <livewire:system.fax-spool-sources></livewire:system.fax-spool-sources>
+                </div>
+            </div>
+            <hr class="my-4 border border-border">
+            <div class="overflow-hidden sm:rounded-lg">
+                <div class="bg-surface my-3 rounded-sm border border-border shadow p-4 w-full">
+                    <h3 class="text-lg leading-6 font-medium text-surface-fg mb-1">Provider Routing</h3>
+                    <p class="text-sm text-muted mb-4">
+                        Which provider a fax goes out through. Set the default here rather than by re-pointing
+                        Intelligent Series, and pin individual numbers or accounts when one provider's route
+                        to them stops working.
+                    </p>
+                    <livewire:system.fax-provider-pins></livewire:system.fax-provider-pins>
+                </div>
+            </div>
+            <hr class="my-4 border border-border">
             <div class="overflow-hidden  sm:rounded-lg  flex">
 
                 <div class="text-center bg-surface my-3 rounded-sm border border-border shadow py-4 w-full">

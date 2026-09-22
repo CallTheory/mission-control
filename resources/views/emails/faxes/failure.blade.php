@@ -12,7 +12,7 @@ This fax will show in Infinity as failed with error <strong>261</strong>. Please
 | Detail | Value |
 |-------:|:------|
 @foreach($fax as $key => $value)
-|  **{{ $key }}** | {{ $value }} |
+|  **{{ $key }}** | {{ is_array($value) ? implode(', ', $value) : $value }} |
 @endforeach
 
 @component('mail::button', ['url' => secure_url('/')])

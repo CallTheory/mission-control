@@ -88,6 +88,15 @@ RUN chown -R sail /opt/whisper.cpp/*
 
 RUN apt-get install -y sox lame libsox-fmt-all ffmpeg
 
+# Cloud faxing can reach an Intelligent Series server's share directly rather than through
+# a kernel CIFS mount. icewind/smb drives the smbclient binary, and `timeout` (coreutils)
+# is what bounds a wedged session — without it there is no wall-clock guard at all.
+# en_US.UTF-8 is generated because icewind's output parser forces that locale in the
+# smbclient child; without it glibc falls back to C.
+RUN apt-get install -y smbclient coreutils locales \
+    && sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
+    && locale-gen
+
 COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY php.ini /etc/php/8.4/cli/conf.d/99-sail.ini

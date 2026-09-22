@@ -118,6 +118,19 @@ class FaxSpoolTest extends TestCase
         (new FaxSpool)->files('nope', 'tosend');
     }
 
+    public function test_it_addresses_the_infinity_messages_folder(): void
+    {
+        // messages/ is the Infinity switch engine's .cap store. It is addressable but
+        // deliberately absent from FOLDERS, so the dashboards do not render it.
+        $this->assertSame(
+            storage_path('app/ringcentral/messages/'),
+            (new FaxSpool)->path('ringcentral', 'messages')
+        );
+
+        $this->assertNotContains('messages', array_values(FaxSpool::FOLDERS));
+        $this->assertContains('messages', FaxSpool::allFolders());
+    }
+
     public function test_it_refuses_an_unknown_folder(): void
     {
         $this->expectException(InvalidArgumentException::class);

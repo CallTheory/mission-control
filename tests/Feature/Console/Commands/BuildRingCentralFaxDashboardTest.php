@@ -5,6 +5,7 @@ namespace Tests\Feature\Console\Commands;
 use App\Console\Commands\ISFaxing\BuildRingCentralFaxDashboard;
 use App\Models\DataSource;
 use App\Models\PendingFax;
+use App\Services\Faxing\FaxDashboardSnapshot;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
@@ -52,6 +53,11 @@ class BuildRingCentralFaxDashboardTest extends TestCase
 
     public function test_it_caches_a_snapshot_of_the_spool_folders(): void
     {
+        // The spool half of the snapshot moved to isfax:build-dashboards, which builds one
+        // per source: several Intelligent Series servers have separate directories, and a
+        // single shared key would show whichever was written last as though it were all
+        // of them. This command keeps the account-level RingCentral data, which genuinely
+        // is shared — a provider callback carries no notion of which server sent the fax.
         DataSource::create([]); // No RingCentral credentials configured.
 
         file_put_contents(storage_path('app/ringcentral/tosend/IS20.fs'), '$var_def DATA5 "4242"'."\r\n".'$var_def DATA6 "IS20.cap"');
@@ -75,6 +81,31 @@ class BuildRingCentralFaxDashboardTest extends TestCase
             'submitted_at' => now(),
         ]);
 
+        $this->artisan('isfax:build-dashboards --sync')->assertExitCode(0);
+
+        $data = app(FaxDashboardSnapshot::class)->read('ringcentral');
+
+        $this->assertSame(2, $data['files_to_send_count']);
+        $this->assertSame(1, $data['files_in_sent_count']);
+        $this->assertSame(0, $data['files_in_fail_count']);
+        $this->assertFalse($data['unreachable']);
+
+        $names = array_column($data['files_to_send'], 'name');
+        $this->assertContains('IS20.fs', $names);
+        $this->assertContains('IS20.cap', $names);
+
+        $descriptors = array_column($data['files_to_send'], null, 'name');
+        $this->assertSame('fs', $descriptors['IS20.fs']['type']);
+        $this->assertSame(4242, $descriptors['IS20.fs']['job_id']);
+        $this->assertSame('cap', $descriptors['IS20.cap']['type']);
+        $this->assertSame('9001 — Acme Clinic', $descriptors['IS20.cap']['account']);
+        $this->assertNotNull($data['generated_at']);
+    }
+
+    public function test_the_provider_snapshot_holds_the_account_level_data(): void
+    {
+        DataSource::create([]); // No RingCentral credentials configured.
+
         $captured = null;
         Redis::shouldReceive('get')->andReturn(null);
         Redis::shouldReceive('setEx')
@@ -89,23 +120,12 @@ class BuildRingCentralFaxDashboardTest extends TestCase
 
         $data = json_decode($captured['json'], true);
 
-        $this->assertSame(2, $data['files_to_send_count']);
-        $this->assertSame(1, $data['files_in_sent_count']);
-        $this->assertSame(0, $data['files_in_fail_count']);
-
-        $names = array_column($data['files_to_send'], 'name');
-        $this->assertContains('IS20.fs', $names);
-        $this->assertContains('IS20.cap', $names);
-
-        $descriptors = array_column($data['files_to_send'], null, 'name');
-        $this->assertSame('fs', $descriptors['IS20.fs']['type']);
-        $this->assertSame(4242, $descriptors['IS20.fs']['job_id']);
-        $this->assertSame('cap', $descriptors['IS20.cap']['type']);
-        $this->assertSame('9001 — Acme Clinic', $descriptors['IS20.cap']['account']);
-
         // No RingCentral client configured → page should render the API-unavailable notice.
         $this->assertFalse($data['failed_faxes']);
         $this->assertNotNull($data['generated_at']);
+
+        // The spool folders are no longer this command's business.
+        $this->assertArrayNotHasKey('files_to_send', $data);
     }
 
     public function test_it_does_nothing_when_feature_disabled(): void

@@ -32,6 +32,12 @@ trait ManagesFaxSpool
     abstract protected function faxProvider(): string;
 
     /**
+     * Which spool source this page is managing. Several Intelligent Series servers can
+     * feed one provider and each has its own folders, so a delete has to say which.
+     */
+    abstract protected function faxSource(): string;
+
+    /**
      * Re-read the folder listings after a mutation, so the page reflects the deletion
      * immediately rather than waiting for the next poll.
      */
@@ -63,7 +69,8 @@ trait ManagesFaxSpool
                         $this->faxProvider(),
                         $folder,
                         $file,
-                        $this->spoolActor()
+                        $this->spoolActor(),
+                        $this->faxSource(),
                     );
                 } catch (Throwable $e) {
                     Notification::make()
@@ -104,7 +111,7 @@ trait ManagesFaxSpool
                 $folder = (string) ($arguments['folder'] ?? '');
 
                 try {
-                    $deleted = (new FaxSpool)->clear($this->faxProvider(), $folder, $this->spoolActor());
+                    $deleted = (new FaxSpool)->clear($this->faxProvider(), $folder, $this->spoolActor(), $this->faxSource());
                 } catch (Throwable $e) {
                     Notification::make()
                         ->title(__('Could not clear the folder'))

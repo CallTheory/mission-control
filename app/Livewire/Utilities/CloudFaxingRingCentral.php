@@ -5,6 +5,8 @@ namespace App\Livewire\Utilities;
 use App\Console\Commands\ISFaxing\BuildRingCentralFaxDashboard;
 use App\Livewire\Concerns\ManagesFaxSpool;
 use App\Models\DataSource;
+use App\Models\FaxSpoolSource;
+use App\Services\Faxing\FaxDashboardSnapshot;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
 use Exception;
@@ -28,6 +30,12 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
     use InteractsWithSchemas;
     use ManagesFaxSpool;
 
+    /**
+     * Which spool source this page is showing. Several Intelligent Series servers can
+     * feed the same provider, and each has its own folders.
+     */
+    public string $sourceKey = 'ringcentral';
+
     public array $tags = [];
 
     public array $state = [];
@@ -43,9 +51,10 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         $this->state['success_message'][$faxMessageId] = true;
     }
 
-    public function mount(): void
+    public function mount(?string $source = null): void
     {
         $this->datasource = DataSource::firstOrFail();
+        $this->sourceKey = FaxSpoolSource::resolveKey($source, 'ringcentral');
         $this->state['ringcentral_failed_faxes'] = [];
         $this->state['files_to_send'] = [];
         $this->state['files_in_sent'] = [];
@@ -168,22 +177,19 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
      */
     public function updateFaxData(): void
     {
-        $snapshot = Redis::get(BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY);
+        // The spool half is per source; the provider half (the RingCentral fax list and
+        // the webhook heartbeat) is account-level and shared by every source, because a
+        // provider callback carries no notion of which IS server produced the fax.
+        $data = app(FaxDashboardSnapshot::class)->read($this->sourceKey) ?? [];
+        $providerData = $this->providerSnapshot();
 
-        if ($snapshot === null) {
-            // The scheduler hasn't built a snapshot yet; keep the current/default state.
+        if ($data === [] && $providerData === []) {
+            // Nothing built yet; keep the current/default state rather than blanking.
             return;
         }
 
-        try {
-            $data = json_decode($snapshot, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
-            Log::error('CloudFaxingRingCentral: invalid dashboard snapshot: '.$e->getMessage());
-
-            return;
-        }
-
-        $this->state['ringcentral_failed_faxes'] = $data['failed_faxes'] ?? [];
+        $this->state['ringcentral_failed_faxes'] = $providerData['failed_faxes'] ?? [];
+        $this->state['unreachable'] = $data['unreachable'] ?? false;
         // normalizeListing() so a snapshot written by the previous version of the builder
         // — plain filename strings, still in Redis until its TTL expires after a deploy —
         // renders instead of breaking the page.
@@ -196,7 +202,34 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         $this->state['files_in_fail_count'] = $data['files_in_fail_count'] ?? 0;
         $this->state['files_in_pre_count'] = $data['files_in_pre_count'] ?? 0;
         $this->state['generated_at'] = $data['generated_at'] ?? null;
-        $this->state['webhook_last_received_at'] = $data['webhook_last_received_at'] ?? null;
+        $this->state['webhook_last_received_at'] = $providerData['webhook_last_received_at'] ?? null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function providerSnapshot(): array
+    {
+        $cached = Redis::get(BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY);
+
+        if ($cached === null) {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($cached, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            Log::error('CloudFaxingRingCentral: invalid provider snapshot: '.$e->getMessage());
+
+            return [];
+        }
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    protected function faxSource(): string
+    {
+        return $this->sourceKey;
     }
 
     private function ringCentral(): RingCentralClient
@@ -217,28 +250,24 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
      * without this a deleted file would keep appearing for up to a minute — for every
      * viewer, not just the one who deleted it.
      */
+    /**
+     * Re-read the spool after a deletion and write the result straight back into the
+     * shared snapshot.
+     *
+     * The page normally renders from the snapshot the scheduler builds each minute, so
+     * without this a deleted file would keep appearing for up to a minute — for every
+     * viewer, not just the one who deleted it. This is a synchronous read of the spool,
+     * but only ever in response to an operator explicitly asking for it.
+     */
     protected function refreshFaxSpoolState(): void
     {
-        $snapshot = (new FaxSpool)->snapshot('ringcentral');
+        $source = FaxSpoolSource::findByKey($this->sourceKey);
 
-        $cached = Redis::get(BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY);
-
-        if ($cached !== null) {
-            try {
-                $existing = json_decode($cached, true, 512, JSON_THROW_ON_ERROR);
-                Redis::setEx(
-                    BuildRingCentralFaxDashboard::DASHBOARD_CACHE_KEY,
-                    180,
-                    json_encode(array_merge($existing, $snapshot), JSON_UNESCAPED_SLASHES)
-                );
-            } catch (JsonException $e) {
-                Log::error('CloudFaxingRingCentral: unable to update dashboard snapshot: '.$e->getMessage());
-            }
+        if ($source !== null) {
+            app(FaxDashboardSnapshot::class)->build($source);
         }
 
-        foreach ($snapshot as $key => $value) {
-            $this->state[$key] = $value;
-        }
+        $this->updateFaxData();
     }
 
     public function placeholder(): string

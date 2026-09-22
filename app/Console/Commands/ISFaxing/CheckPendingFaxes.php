@@ -261,13 +261,16 @@ class CheckPendingFaxes extends Command
             'status' => $pendingFax->original_status,
             'fsFileName' => $pendingFax->fs_file_name,
             'account' => $pendingFax->accountLabel() ?? 'Unknown',
+            // Neither a provider callback nor the poller knows which Intelligent Series
+            // server produced this fax; the pending row is the only thing that does.
+            'source_key' => $pendingFax->spool_source_key,
         ];
 
         if ($outcome === 'success') {
-            MoveSuccessfulFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider);
+            MoveSuccessfulFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
             $this->info("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.");
         } else {
-            MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider);
+            MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
             Mail::queue(new FaxFailAlert($faxFsDetails, $reason ?? 'Fax delivery failed'));
             $this->error("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
         }

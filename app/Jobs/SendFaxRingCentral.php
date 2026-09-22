@@ -2,11 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Enums\FaxProvider;
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxLockKey;
+use App\Services\Faxing\FaxRoute;
+use App\Services\Faxing\FaxRouter;
+use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
 use App\Services\Faxing\RingCentralThrottle;
 use Exception;
@@ -42,6 +47,36 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     public string $fsFileName;
 
+    /**
+     * Which spool source this fax came out of.
+     *
+     * Nullable with a null default on purpose. This job releases itself back onto the
+     * queue while throttled and bounds itself with retryUntil, so a payload serialized
+     * before sources existed can be unserialized up to retry_window (two hours by
+     * default) after the deploy that added this property. PHP applies declared defaults
+     * only for properties absent from the payload, so a non-nullable typed property would
+     * fatal in handle() and again in failed() — the fax would be neither sent nor
+     * reported, and the .fs would sit in tosend until the buildup alert fired.
+     */
+    public ?string $spoolSourceKey = null;
+
+    /**
+     * Why the router chose this provider, and whether a failed submission may be retried
+     * through a different one. Both default so a payload written before routing existed
+     * unserializes — see the note on $spoolSourceKey.
+     */
+    public ?string $routingReason = null;
+
+    public bool $allowFailover = false;
+
+    /**
+     * Providers already attempted for this fax, so failover walks forward rather than
+     * bouncing between two providers until the retry window runs out.
+     *
+     * @var array<int, string>
+     */
+    public array $triedProviders = [];
+
     public string $capfile;
 
     public string $filename;
@@ -66,6 +101,10 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $this->filename = basename($fax['filename']);
         $this->status = $fax['status'];
         $this->fsFileName = basename($fax['fsFileName']);
+        $this->spoolSourceKey = $fax['source_key'] ?? null;
+        $this->routingReason = $fax['routing_reason'] ?? null;
+        $this->allowFailover = (bool) ($fax['allow_failover'] ?? false);
+        $this->triedProviders = $fax['tried_providers'] ?? [];
         $this->onQueue('ringcentral');
     }
 
@@ -96,7 +135,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      */
     public function uniqueId(): string
     {
-        return $this->fsFileName;
+        return FaxLockKey::for($this->spoolSourceKey, FaxProvider::RingCentral->value, $this->fsFileName);
     }
 
     /**
@@ -145,6 +184,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             'phone' => $this->phone,
             'status' => $this->status,
             'fsFileName' => $this->fsFileName,
+            'source_key' => $this->sourceKey(),
         ];
 
         // Resolve the Intelligent Series account before sending, so the record we write
@@ -179,6 +219,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             $apiMessageId = (string) ($respData->id ?? '');
 
             PendingFax::create([
+                'spool_source_key' => $this->sourceKey(),
+                'routing_reason' => $this->routingReason,
                 'api_fax_id' => $apiMessageId,
                 'fax_provider' => 'ringcentral',
                 'job_id' => $this->jobID,
@@ -238,14 +280,60 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             'phone' => $this->phone,
             'status' => $this->status,
             'fsFileName' => $this->fsFileName,
+            'source_key' => $this->sourceKey(),
             // Cached from the send attempt, so this costs nothing and tells whoever reads
             // the alert whose fax failed.
             'account' => $this->accountLabel(),
         ];
 
         Log::error("SendFaxRingCentral failed: {$exception->getMessage()}", $faxFsDetails);
+
+        // Handing the fax to the other provider means it is still in flight, so neither
+        // the failure alert nor the fail/ move may happen yet.
+        if ($this->attemptFailover($faxFsDetails)) {
+            return;
+        }
+
         Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
-        MoveFailedFaxFiles::dispatch($faxFsDetails, 'ringcentral');
+        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::RingCentral->value, $this->sourceKey());
+    }
+
+    private function currentProvider(): FaxProvider
+    {
+        return FaxProvider::RingCentral;
+    }
+
+    /**
+     * Try the other provider before giving up, when the route allowed it.
+     *
+     * Only reached from failed(), i.e. after this provider has exhausted its own retries.
+     * Returns true when the fax has been handed on, in which case the caller must NOT
+     * report a failure back to Intelligent Series — the fax is still in flight.
+     */
+    private function attemptFailover(array $faxFsDetails): bool
+    {
+        $next = app(FaxRouter::class)->nextProvider(
+            new FaxRoute($this->currentProvider(), $this->routingReason ?? 'unknown', $this->allowFailover),
+            [...$this->triedProviders, $this->currentProvider()->value],
+        );
+
+        if ($next === null) {
+            return false;
+        }
+
+        $payload = $faxFsDetails + [
+            'routing_reason' => 'failover from '.$this->currentProvider()->value,
+            'allow_failover' => $this->allowFailover,
+            'tried_providers' => [...$this->triedProviders, $this->currentProvider()->value],
+        ];
+
+        Log::warning("Fax {$this->fsFileName} failing over from {$this->currentProvider()->value} to {$next->value}");
+
+        $next === FaxProvider::RingCentral
+            ? SendFaxRingCentral::dispatch($payload)
+            : SendFaxJob::dispatch($payload);
+
+        return true;
     }
 
     private function accountLabel(): string
@@ -274,9 +362,17 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      */
     private function capFilePath(): string
     {
-        return config('app.switch_engine') === 'infinity'
-            ? storage_path('app/ringcentral/messages/'.$this->capfile)
-            : storage_path('app/ringcentral/tosend/'.$this->capfile);
+        $folder = config('app.switch_engine') === 'infinity' ? 'messages' : 'tosend';
+
+        return (new FaxSpool)->path(FaxProvider::RingCentral->value, $folder, $this->sourceKey()).$this->capfile;
+    }
+
+    /**
+     * The spool source this fax belongs to, defaulting to the legacy RingCentral one.
+     */
+    public function sourceKey(): string
+    {
+        return $this->spoolSourceKey ?? FaxProvider::RingCentral->value;
     }
 
     /**

@@ -188,7 +188,10 @@ return [
             'connection' => 'redis-faxing',
             'queue' => ['ringcentral', 'mfax'],
             'balance' => 'auto',
-            'maxProcesses' => 2,
+            // Raised from 2: the send and move jobs read .cap payloads off the spool, so
+            // with several sources a single unreachable one could otherwise occupy every
+            // sending worker and starve the source that is actually live.
+            'maxProcesses' => 4,
             'memory' => 128,
             // The jobs define their own retry behaviour: SendFaxRingCentral bounds itself
             // with retryUntil so a throttled fax keeps waiting, and SendFaxJob sets
@@ -196,6 +199,23 @@ return [
             'tries' => 3,
             'nice' => 0,
             'timeout' => 120,
+        ],
+        // Spool scanning is separated from sending on purpose. A scan can block on an
+        // unreachable share; sends must keep flowing for every source that is answering,
+        // which they cannot if a wedged scan is occupying the sending supervisor.
+        'supervisor-fax-scan' => [
+            'connection' => 'redis-fax-scan',
+            'queue' => ['fax-scan'],
+            // 'simple', not 'auto': auto shifts processes toward the busiest queue, and a
+            // wedged lane looks exactly like a busy one.
+            'balance' => 'simple',
+            'maxProcesses' => 2,
+            'memory' => 128,
+            // One attempt. Retrying a timed-out scan only puts a second worker on the
+            // same dead mount; the next scheduler tick re-dispatches anyway.
+            'tries' => 1,
+            'nice' => 0,
+            'timeout' => 45,
         ],
         'supervisor-transcriptions' => [
             'connection' => 'redis-transcriptions',
@@ -223,6 +243,11 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-fax-scan' => [
+                // One process per spool source is plenty; each lane is scanned once a
+                // minute and is idle on every server that is not currently active.
+                'maxProcesses' => 4,
+            ],
             'supervisor-transcriptions' => [
                 'maxProcesses' => 1,
             ],
@@ -233,6 +258,9 @@ return [
                 'maxProcesses' => 3,
             ],
             'supervisor-faxing' => [
+                'maxProcesses' => 2,
+            ],
+            'supervisor-fax-scan' => [
                 'maxProcesses' => 2,
             ],
             'supervisor-transcriptions' => [

@@ -6,7 +6,10 @@ namespace App\Services\Faxing;
 
 use App\Jobs\SendFaxJob;
 use App\Jobs\SendFaxRingCentral;
+use App\Models\FaxSpoolSource;
 use App\Models\PendingFax;
+use App\Services\Faxing\Spool\SpoolFilesystem;
+use App\Services\Faxing\Spool\SpoolFilesystemFactory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +54,39 @@ class FaxSpool
      */
     private const IGNORED = ['.', '..', '.gitignore'];
 
+    /**
+     * Every folder name that may legitimately be addressed, as opposed to the four the
+     * dashboards render.
+     *
+     * `messages/` is the Infinity switch engine's `.cap` store — SendFaxRingCentral and
+     * both Move*FaxFiles jobs read and write it — but it was missing from FOLDERS, so
+     * path() rejected it and those jobs had to build storage_path() literals instead.
+     * That is the one spool directory nothing here could address, and it is a *shared*
+     * payload store, so anything that walks it must stay source-aware.
+     *
+     * Derived from FOLDERS rather than restated, so the two cannot drift.
+     *
+     * @return array<int, string>
+     */
+    public static function allFolders(): array
+    {
+        return [...array_values(self::FOLDERS), 'messages'];
+    }
+
     private ?FaxAccountLookup $accounts;
+
+    /**
+     * Resolved spool roots, keyed by source. A snapshot walks four folders and the
+     * dashboards re-read constantly, so the source row is looked up once per instance.
+     *
+     * @var array<string, string>
+     */
+    private array $roots = [];
+
+    /**
+     * @var array<string, SpoolFilesystem>
+     */
+    private array $filesystems = [];
 
     public function __construct(?FaxAccountLookup $accounts = null)
     {
@@ -63,14 +98,14 @@ class FaxSpool
      *
      * @return array<string, mixed>
      */
-    public function snapshot(string $provider): array
+    public function snapshot(string $provider, ?string $sourceKey = null): array
     {
         $this->assertProvider($provider);
 
         $snapshot = [];
 
         foreach (array_keys(self::FOLDERS) as $key) {
-            $files = $this->files($provider, self::FOLDERS[$key]);
+            $files = $this->files($provider, self::FOLDERS[$key], $sourceKey);
 
             $snapshot[$key] = $files;
             $snapshot["{$key}_count"] = count($files);
@@ -85,43 +120,45 @@ class FaxSpool
      *
      * @return array<int, array<string, mixed>>
      */
-    public function files(string $provider, string $folder): array
+    public function files(string $provider, string $folder, ?string $sourceKey = null): array
     {
-        $path = $this->path($provider, $folder);
+        $this->assertProvider($provider);
+        $this->assertFolder($folder);
 
-        if (! is_dir($path)) {
-            return [];
-        }
-
-        $names = array_values(array_diff(scandir($path) ?: [], self::IGNORED));
+        $filesystem = $this->filesystem($provider, $sourceKey);
 
         $descriptors = [];
         $jobIds = [];
 
-        foreach ($names as $name) {
-            $full = $path.$name;
+        foreach ($filesystem->list($folder) as $file) {
+            $descriptor = $file->toDescriptor();
 
-            if (! is_file($full)) {
-                continue;
+            if ($file->type() === 'fs') {
+                // The job id identifies the account. Read through the driver rather than
+                // the filesystem so this works for a remote share too.
+                $descriptor['job_id'] = $this->jobIdFromContents($filesystem->read($folder, $file->name));
+
+                if ($descriptor['job_id'] !== null) {
+                    $jobIds[] = $descriptor['job_id'];
+                }
             }
 
-            $jobId = Str::endsWith($name, '.fs') ? $this->jobIdFromFsFile($full) : null;
-
-            if ($jobId !== null) {
-                $jobIds[] = $jobId;
-            }
-
-            $descriptors[] = [
-                'name' => $name,
-                'type' => $this->describeType($name),
-                'size' => @filesize($full) ?: 0,
-                'modified_at' => Carbon::createFromTimestamp(@filemtime($full) ?: 0)->toIso8601String(),
-                'job_id' => $jobId,
-                'account' => null,
-            ];
+            $descriptors[] = $descriptor;
         }
 
-        return $this->attributeAccounts($provider, $folder, $descriptors, $jobIds);
+        return $this->attributeAccounts($provider, $folder, $descriptors, $jobIds, $sourceKey);
+    }
+
+    /**
+     * The driver for a source, memoized: a snapshot walks four folders, and an SMB source
+     * would otherwise negotiate a fresh session for each of them.
+     */
+    public function filesystem(string $provider, ?string $sourceKey = null): SpoolFilesystem
+    {
+        $key = ($sourceKey ?? $provider)."|{$provider}";
+
+        return $this->filesystems[$key] ??= app(SpoolFilesystemFactory::class)
+            ->forKey($sourceKey ?? $provider, $provider);
     }
 
     /**
@@ -130,9 +167,9 @@ class FaxSpool
      * Returns false when the file is already gone, which is the common case for a phantom
      * that the fax service cleaned up between the page rendering and the click.
      */
-    public function delete(string $provider, string $folder, string $filename, ?string $actor = null): bool
+    public function delete(string $provider, string $folder, string $filename, ?string $actor = null, ?string $sourceKey = null): bool
     {
-        $target = $this->resolveFile($provider, $folder, $filename);
+        $target = $this->resolveFile($provider, $folder, $filename, $sourceKey);
 
         if ($target === null) {
             return false;
@@ -146,12 +183,13 @@ class FaxSpool
         // always recorded with who did it.
         Log::warning('Fax spool file deleted', [
             'provider' => $provider,
+            'source' => $sourceKey ?? $provider,
             'folder' => $folder,
             'file' => basename($target),
             'actor' => $actor,
         ]);
 
-        $this->abandonTracking($provider, basename($target), $actor);
+        $this->abandonTracking($provider, basename($target), $actor, $sourceKey);
 
         return true;
     }
@@ -159,9 +197,9 @@ class FaxSpool
     /**
      * Empty a spool folder. Returns the number of files removed.
      */
-    public function clear(string $provider, string $folder, ?string $actor = null): int
+    public function clear(string $provider, string $folder, ?string $actor = null, ?string $sourceKey = null): int
     {
-        $path = $this->path($provider, $folder);
+        $path = $this->path($provider, $folder, $sourceKey);
 
         if (! is_dir($path)) {
             return 0;
@@ -175,7 +213,7 @@ class FaxSpool
             }
 
             try {
-                if ($this->delete($provider, $folder, $name, $actor)) {
+                if ($this->delete($provider, $folder, $name, $actor, $sourceKey)) {
                     $deleted++;
                 }
             } catch (Throwable $e) {
@@ -185,6 +223,7 @@ class FaxSpool
 
         Log::warning('Fax spool folder cleared', [
             'provider' => $provider,
+            'source' => $sourceKey ?? $provider,
             'folder' => $folder,
             'deleted' => $deleted,
             'actor' => $actor,
@@ -235,15 +274,50 @@ class FaxSpool
         }, $files));
     }
 
-    public function path(string $provider, string $folder): string
+    public function path(string $provider, string $folder, ?string $sourceKey = null): string
     {
         $this->assertProvider($provider);
 
-        if (! in_array($folder, self::FOLDERS, true)) {
-            throw new InvalidArgumentException("Unknown fax spool folder [{$folder}].");
-        }
+        $this->assertFolder($folder);
 
-        return storage_path("app/{$provider}/{$folder}/");
+        return $this->root($provider, $sourceKey)."/{$folder}/";
+    }
+
+    /**
+     * Where a source's spool folders live.
+     *
+     * Omitting the source means the legacy provider-named one, which is why every
+     * existing caller keeps resolving to exactly the directory it always did. The
+     * convention is applied directly when no row exists, so path building does not
+     * require a database — the spool has to be addressable from a unit test and from a
+     * console command running before the table is seeded.
+     */
+    private function root(string $provider, ?string $sourceKey): string
+    {
+        $sourceKey ??= $provider;
+
+        return $this->roots[$sourceKey] ??= $this->lookUpRoot($sourceKey)
+            ?? storage_path("app/{$sourceKey}");
+    }
+
+    /**
+     * The configured root for a source, or null to fall back to the convention.
+     *
+     * Swallows database failures deliberately. Resolving a spool path must not depend on
+     * a database being reachable: these paths are built inside queued jobs that run while
+     * the database may be down, and inside unit tests that have none. Falling back to
+     * storage/app/{source} yields exactly the legacy directory, so the worst case is that
+     * a source with a custom root is read at its default location rather than not at all.
+     */
+    private function lookUpRoot(string $sourceKey): ?string
+    {
+        try {
+            return FaxSpoolSource::findByKey($sourceKey)?->rootPath();
+        } catch (Throwable $e) {
+            Log::warning("FaxSpool: unable to resolve spool source [{$sourceKey}]: ".$e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -256,6 +330,7 @@ class FaxSpool
             'sent' => 'Sent',
             'fail' => 'Failed',
             'preproc' => 'Pre-Proc',
+            'messages' => 'Messages',
             default => ucfirst($folder),
         };
     }
@@ -269,9 +344,9 @@ class FaxSpool
      * inside the intended directory — a symlink or a traversal attempt resolves outside
      * it and is refused.
      */
-    private function resolveFile(string $provider, string $folder, string $filename): ?string
+    private function resolveFile(string $provider, string $folder, string $filename, ?string $sourceKey = null): ?string
     {
-        $path = $this->path($provider, $folder);
+        $path = $this->path($provider, $folder, $sourceKey);
         $name = basename(trim($filename));
 
         if ($name === '' || in_array($name, self::IGNORED, true) || str_starts_with($name, '.')) {
@@ -304,14 +379,20 @@ class FaxSpool
      * unique lock, which would refuse to re-dispatch that .fs name if the fax service
      * later dropped a fresh file with it.
      */
-    private function abandonTracking(string $provider, string $filename, ?string $actor): void
+    private function abandonTracking(string $provider, string $filename, ?string $actor, ?string $sourceKey = null): void
     {
         if (! Str::endsWith($filename, '.fs')) {
             return;
         }
 
+        $sourceKey ??= $provider;
+
         PendingFax::pending()
             ->where('fax_provider', $provider)
+            // Scoped to the source: a .fs name is only unique within one, so without this
+            // deleting one server's IS20.fs would resolve another server's live fax as
+            // failed and move its files out from under it.
+            ->where('spool_source_key', $sourceKey)
             ->where('fs_file_name', $filename)
             ->get()
             ->each(function (PendingFax $fax) use ($actor) {
@@ -323,19 +404,20 @@ class FaxSpool
                 Log::warning("PendingFax #{$fax->id} abandoned: spool file deleted".($actor ? " by {$actor}" : ''));
             });
 
-        $this->releaseUniqueLock($provider, $filename);
+        $this->releaseUniqueLock($provider, $filename, $sourceKey);
     }
 
     /**
      * Force-release the ShouldBeUnique lock keyed on this .fs name. The key format is
      * Illuminate\Bus\UniqueLock::getKey(): the job class, then the job's uniqueId().
      */
-    private function releaseUniqueLock(string $provider, string $filename): void
+    private function releaseUniqueLock(string $provider, string $filename, ?string $sourceKey = null): void
     {
         $jobClass = $provider === 'ringcentral' ? SendFaxRingCentral::class : SendFaxJob::class;
+        $uniqueId = FaxLockKey::for($sourceKey, $provider, $filename);
 
         try {
-            Cache::lock("laravel_unique_job:{$jobClass}:{$filename}")->forceRelease();
+            Cache::lock("laravel_unique_job:{$jobClass}:{$uniqueId}")->forceRelease();
         } catch (Throwable $e) {
             Log::warning("Unable to release fax job lock for {$filename}: ".$e->getMessage());
         }
@@ -353,7 +435,7 @@ class FaxSpool
      * @param  array<int, int>  $jobIds
      * @return array<int, array<string, mixed>>
      */
-    private function attributeAccounts(string $provider, string $folder, array $descriptors, array $jobIds): array
+    private function attributeAccounts(string $provider, string $folder, array $descriptors, array $jobIds, ?string $sourceKey = null): array
     {
         if ($descriptors === []) {
             return [];
@@ -376,11 +458,11 @@ class FaxSpool
             array_filter($descriptors, fn (array $d) => $d['type'] === 'cap')
         ));
 
-        $capAccounts = $capNames === [] ? [] : $this->accountsForCapFiles($provider, $capNames);
+        $capAccounts = $capNames === [] ? [] : $this->accountsForCapFiles($provider, $capNames, $sourceKey);
 
         // A .fs sitting beside a .cap tells us the .cap's account even when no
         // pending_faxes row exists (the fax was never submitted).
-        $path = $this->path($provider, $folder);
+        $filesystem = $this->filesystem($provider, $sourceKey);
 
         foreach ($descriptors as $descriptor) {
             if ($descriptor['type'] !== 'fs' || $descriptor['job_id'] === null) {
@@ -393,7 +475,7 @@ class FaxSpool
                 continue;
             }
 
-            foreach ($this->capFilesReferencedBy($path.$descriptor['name'], $capNames) as $capName) {
+            foreach ($this->capFilesReferencedBy($filesystem->read($folder, $descriptor['name']), $capNames) as $capName) {
                 $capAccounts[$capName] ??= $account;
             }
         }
@@ -415,10 +497,11 @@ class FaxSpool
      * @param  array<int, string>  $capNames
      * @return array<string, array{number: string, name: string}>
      */
-    private function accountsForCapFiles(string $provider, array $capNames): array
+    private function accountsForCapFiles(string $provider, array $capNames, ?string $sourceKey = null): array
     {
         return PendingFax::query()
             ->where('fax_provider', $provider)
+            ->where('spool_source_key', $sourceKey ?? $provider)
             ->whereIn('cap_file', $capNames)
             ->whereNotNull('client_number')
             ->latest('id')
@@ -439,11 +522,9 @@ class FaxSpool
      * @param  array<int, string>  $capNames
      * @return array<int, string>
      */
-    private function capFilesReferencedBy(string $fsPath, array $capNames): array
+    private function capFilesReferencedBy(?string $contents, array $capNames): array
     {
-        $contents = @file_get_contents($fsPath);
-
-        if ($contents === false) {
+        if ($contents === null) {
             return [];
         }
 
@@ -456,11 +537,9 @@ class FaxSpool
      * Deliberately narrow: the full .fs parsers in the isfax:process commands own the
      * format, this only needs the one field that identifies the account.
      */
-    private function jobIdFromFsFile(string $path): ?int
+    private function jobIdFromContents(?string $contents): ?int
     {
-        $contents = @file_get_contents($path);
-
-        if ($contents === false) {
+        if ($contents === null) {
             return null;
         }
 
@@ -471,13 +550,11 @@ class FaxSpool
         return (int) $matches[1];
     }
 
-    private function describeType(string $name): string
+    private function assertFolder(string $folder): void
     {
-        return match (true) {
-            Str::endsWith($name, '.cap') => 'cap',
-            Str::endsWith($name, '.fs') => 'fs',
-            default => 'other',
-        };
+        if (! in_array($folder, self::allFolders(), true)) {
+            throw new InvalidArgumentException("Unknown fax spool folder [{$folder}].");
+        }
     }
 
     private function assertProvider(string $provider): void

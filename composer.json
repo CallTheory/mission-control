@@ -17,6 +17,7 @@
         "filament/schemas": "^5.7",
         "filament/tables": "^5.7",
         "guzzlehttp/guzzle": "^7.9.3",
+        "icewind/smb": "^3.8",
         "jfcherng/php-diff": "^6.16.2",
         "laravel/framework": "^12.15.0",
         "laravel/horizon": "^5.32.0",

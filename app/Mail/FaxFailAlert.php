@@ -37,6 +37,16 @@ class FaxFailAlert extends Mailable implements ShouldQueue
     }
 
     /**
+     * Which spool source the failing fax came from, when the dispatching job recorded it.
+     */
+    private function sourceLabel(): ?string
+    {
+        $key = $this->fax['source_key'] ?? null;
+
+        return is_string($key) && $key !== '' ? $key : null;
+    }
+
+    /**
      * Build the message.
      *
      * @return $this
@@ -44,7 +54,9 @@ class FaxFailAlert extends Mailable implements ShouldQueue
     public function build(): static
     {
         return $this->to($this->datasource->fax_failure_notification_email)
-            ->subject('Fax Failure Notification')
+            // Name the spool source: with several Intelligent Series servers an
+            // unqualified subject leaves the reader unable to tell which one failed.
+            ->subject('Fax Failure Notification'.($this->sourceLabel() === null ? '' : " — {$this->sourceLabel()}"))
             ->markdown('emails.faxes.failure')
             ->text('emails.faxes.failure-text');
     }

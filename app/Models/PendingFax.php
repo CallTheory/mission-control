@@ -20,6 +20,19 @@ class PendingFax extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $fax): void {
+            // Before spool sources existed the directory was named after the provider, so
+            // a row written without one belongs to that provider's legacy source.
+            // Defaulting here rather than at each call site means a missed one degrades to
+            // the old behaviour instead of storing a null that silently matches nothing —
+            // and a null would make abandonTracking() and the submission dedupe skip the
+            // row, which is how a fax goes quietly unsent.
+            $fax->spool_source_key ??= $fax->fax_provider;
+        });
+    }
+
     public function scopePending(Builder $query): Builder
     {
         return $query->where('delivery_status', 'pending');

@@ -116,6 +116,13 @@ return [
 
         // How long a fax may stay pending before it is given up on.
         'pending_timeout_seconds' => env('FAX_PENDING_TIMEOUT_SECONDS', 7200),
+
+        // Wall-clock budget for one smbclient session when a spool source is reached over
+        // SMB rather than through a kernel mount. icewind/smb reads replies with a
+        // blocking call that has no timeout of its own, so this is what stops an
+        // unresponsive Intelligent Series server holding a worker indefinitely. Keep it
+        // below the scan job's timeout (45s) so the session dies before the job does.
+        'smb_session_seconds' => env('FAX_SMB_SESSION_SECONDS', 40),
     ],
     'saml2' => [
         'metadata' => '',

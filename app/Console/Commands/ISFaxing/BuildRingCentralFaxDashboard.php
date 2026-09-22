@@ -6,7 +6,6 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxDeliveryWebhooks;
-use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
 use App\Services\Faxing\RingCentralThrottle;
 use Illuminate\Console\Command;
@@ -56,10 +55,16 @@ class BuildRingCentralFaxDashboard extends Command
             return CommandStatus::SUCCESS;
         }
 
-        $snapshot = (new FaxSpool)->snapshot('ringcentral');
-        $snapshot['failed_faxes'] = $this->fetchFailedFaxes($datasource);
-        $snapshot['webhook_last_received_at'] = FaxDeliveryWebhooks::lastReceivedAt('ringcentral');
-        $snapshot['generated_at'] = now()->toIso8601String();
+        // Provider-level only. The spool folders moved to a per-source snapshot
+        // (isfax:build-dashboards): several Intelligent Series servers have separate
+        // directories, and one shared key would show whichever was written last as
+        // though it were all of them. What is left here genuinely is shared — a
+        // RingCentral callback carries no notion of which IS server produced the fax.
+        $snapshot = [
+            'failed_faxes' => $this->fetchFailedFaxes($datasource),
+            'webhook_last_received_at' => FaxDeliveryWebhooks::lastReceivedAt('ringcentral'),
+            'generated_at' => now()->toIso8601String(),
+        ];
 
         Redis::setEx(self::DASHBOARD_CACHE_KEY, self::CACHE_TTL_SECONDS, json_encode($snapshot, JSON_UNESCAPED_SLASHES));
 

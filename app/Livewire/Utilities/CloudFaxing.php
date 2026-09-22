@@ -4,6 +4,8 @@ namespace App\Livewire\Utilities;
 
 use App\Livewire\Concerns\ManagesFaxSpool;
 use App\Models\DataSource;
+use App\Models\FaxSpoolSource;
+use App\Services\Faxing\FaxDashboardSnapshot;
 use App\Services\Faxing\FaxDeliveryWebhooks;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Observability\GuzzleTracing;
@@ -28,6 +30,12 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
     use InteractsWithSchemas;
     use ManagesFaxSpool;
 
+    /**
+     * Which spool source this page is showing. Several Intelligent Series servers can
+     * feed the same provider, and each has its own folders.
+     */
+    public string $sourceKey = 'mfax';
+
     private $guzzle;
 
     public array $tags = [];
@@ -45,9 +53,10 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
         $this->state['success_message'][$faxMessageId] = true;
     }
 
-    public function mount(): void
+    public function mount(?string $source = null): void
     {
         $this->datasource = DataSource::firstOrFail();
+        $this->sourceKey = FaxSpoolSource::resolveKey($source, 'mfax');
         $this->updateFaxData();
     }
 
@@ -263,15 +272,53 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
         return 'mfax';
     }
 
+    protected function faxSource(): string
+    {
+        return $this->sourceKey;
+    }
+
     /**
-     * Read the spool folders. Unlike the RingCentral page there is no cached snapshot to
-     * update here — this page has always scanned the directories per request.
+     * Read the spool folders from the cached per-source snapshot.
+     *
+     * This used to scan the directories inline, on every page load. That was tolerable
+     * while the spool was always a local directory; it is not once a source can be a
+     * remote share, because an unreachable server would hang an fpm worker on a user's
+     * request. The snapshot is built on the scheduler instead.
      */
     protected function refreshFaxSpoolState(): void
     {
-        foreach ((new FaxSpool)->snapshot('mfax') as $key => $value) {
-            $this->state[$key] = $value;
+        $snapshot = app(FaxDashboardSnapshot::class)->read($this->sourceKey);
+
+        if ($snapshot === null) {
+            // Nothing built yet. Leave the page as it is rather than blanking it.
+            return;
         }
+
+        foreach (FaxSpool::FOLDERS as $key => $folder) {
+            $this->state[$key] = FaxSpool::normalizeListing($snapshot[$key] ?? []);
+            $this->state["{$key}_count"] = $snapshot["{$key}_count"] ?? 0;
+        }
+
+        $this->state['generated_at'] = $snapshot['generated_at'] ?? null;
+        // An unreachable source must not look like an idle one: every server that is not
+        // currently processing legitimately has an empty tosend/.
+        $this->state['unreachable'] = $snapshot['unreachable'] ?? false;
+    }
+
+    /**
+     * Re-read the spool after a deletion and write the result straight back into the
+     * shared snapshot, so the file stops appearing for every viewer rather than just the
+     * one who deleted it.
+     */
+    protected function rebuildFaxSpoolSnapshot(): void
+    {
+        $source = FaxSpoolSource::findByKey($this->sourceKey);
+
+        if ($source !== null) {
+            app(FaxDashboardSnapshot::class)->build($source);
+        }
+
+        $this->refreshFaxSpoolState();
     }
 
     public function placeholder(): string

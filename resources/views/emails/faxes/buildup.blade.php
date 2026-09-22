@@ -1,7 +1,7 @@
 @component('mail::message')
-# Fax Buildup Warning
+# Fax Buildup Warning: {{ $sourceName }}
 
-One or more of the monitored fax processing folders has a buildup of files older than 15 minutes.
+One or more of the monitored fax processing folders on **{{ $sourceName }}** has a buildup of files older than 15 minutes.
 
 @component('mail::panel')
 This typically means the Amtelco Intelligent Series Fax Service or the Mission Control cloud faxing integration are not processing faxes.

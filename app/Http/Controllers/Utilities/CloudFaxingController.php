@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Utilities;
 use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Models\DataSource;
+use App\Models\FaxSpoolSource;
 use Illuminate\Http\Request;
 
 class CloudFaxingController extends Controller
@@ -33,10 +34,18 @@ class CloudFaxingController extends Controller
             abort(404);
         }
 
-        if ($provider === 'ringcentral') {
-            return view('utilities.cloud-faxing-ringcentral', compact('mfaxEnabled', 'ringcentralEnabled'));
-        }
+        // The source arrives as a query parameter rather than a path segment: the route's
+        // one optional segment is already the provider, /utilities/cloud-faxing/is2 would
+        // be ambiguous with a provider name, and the buildup alert builds its link by
+        // string concatenation.
+        $sources = FaxSpoolSource::query()->enabled()->orderBy('name')->get();
+        $sourceKey = FaxSpoolSource::resolveKey(
+            $request->query('source') === null ? null : (string) $request->query('source'),
+            $provider === 'ringcentral' ? 'ringcentral' : 'mfax',
+        );
 
-        return view('utilities.cloud-faxing', compact('mfaxEnabled', 'ringcentralEnabled'));
+        $view = $provider === 'ringcentral' ? 'utilities.cloud-faxing-ringcentral' : 'utilities.cloud-faxing';
+
+        return view($view, compact('mfaxEnabled', 'ringcentralEnabled', 'sources', 'sourceKey'));
     }
 }

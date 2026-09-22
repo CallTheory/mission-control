@@ -19,8 +19,10 @@ use App\Models\MergeCommISWebTrigger;
             <div class="w-full">
                 @include('utilities.cloud-faxing-nav')
 
+                @include('utilities.cloud-faxing-sources')
+
                 <div>
-                    <livewire:utilities.cloud-faxing lazy="lazy"></livewire:utilities.cloud-faxing>
+                    <livewire:utilities.cloud-faxing :source="$sourceKey" lazy="lazy"></livewire:utilities.cloud-faxing>
                 </div>
 
             </div>

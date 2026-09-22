@@ -9,7 +9,7 @@ We had an issue submitting a fax through the cloud fax provider.
 Failed-fax details:
 
 @foreach($fax as $key => $value)
-- {{ $key }}: {{ $value }}\n
+- {{ $key }}: {{ is_array($value) ? implode(', ', $value) : $value }}\n
 @endforeach
 
 Thanks,<br>

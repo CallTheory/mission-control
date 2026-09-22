@@ -30,6 +30,21 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
      */
     public string $spoolUrl;
 
+    /**
+     * Which spool source is backing up.
+     *
+     * Two Intelligent Series servers otherwise produce byte-identical "Fax Buildup
+     * Warning" emails and nobody can tell which one is stuck — the exact question this
+     * alert exists to answer.
+     *
+     * Defaulted because this is a queued mailable: a message serialized before sources
+     * existed is unserialized against this class, and a typed property with no default
+     * would be left uninitialized and fatal when the view rendered it.
+     */
+    public string $sourceKey = 'mfax';
+
+    public string $sourceName = 'Default';
+
     private DataSource $datasource;
 
     /**
@@ -40,8 +55,13 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(array $paths, array $stuckFiles = [], string $provider = 'mfax')
-    {
+    public function __construct(
+        array $paths,
+        array $stuckFiles = [],
+        string $provider = 'mfax',
+        string $sourceKey = 'mfax',
+        string $sourceName = 'Default',
+    ) {
         $this->datasource = DataSource::firstOrFail();
 
         if (empty($this->datasource->fax_buildup_notification_email)) {
@@ -50,7 +70,11 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
 
         $this->paths = $paths;
         $this->stuckFiles = $stuckFiles;
-        $this->spoolUrl = secure_url('/utilities/cloud-faxing'.($provider === 'ringcentral' ? '/ringcentral' : ''));
+        $this->sourceKey = $sourceKey;
+        $this->sourceName = $sourceName;
+        $this->spoolUrl = secure_url('/utilities/cloud-faxing'
+            .($provider === 'ringcentral' ? '/ringcentral' : '')
+            .'?source='.urlencode($sourceKey));
         $this->queue = 'outbound-email';
     }
 
@@ -62,7 +86,7 @@ class FaxBuildupAlert extends Mailable implements ShouldQueue
     public function build(): static
     {
         return $this->to($this->datasource->fax_buildup_notification_email)
-            ->subject('Fax Buildup Warning')
+            ->subject("Fax Buildup Warning — {$this->sourceName}")
             ->markdown('emails.faxes.buildup');
         // ->text('emails.faxes.buildup-text');
     }

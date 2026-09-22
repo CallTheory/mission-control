@@ -32,11 +32,29 @@ class MonitorFaxBuildupDisabledTest extends TestCase
         Mail::assertNothingQueued();
     }
 
-    public function test_an_unknown_provider_still_fails(): void
+    /**
+     * The provider argument is a leftover from when the spool was addressed by provider
+     * rather than by source. One run now covers every source, so the argument is accepted
+     * and ignored rather than validated — a scheduled `isfax:monitor mfax` left in a
+     * customer's crontab must keep working instead of failing twice an hour.
+     */
+    public function test_the_deprecated_provider_argument_is_ignored(): void
     {
         $this->enableSystemFeature('cloud-faxing');
 
+        Mail::fake();
+
         $this->artisan('isfax:monitor', ['fax_provider' => 'not-a-provider'])
-            ->assertExitCode(CommandStatus::FAILURE);
+            ->assertExitCode(CommandStatus::SUCCESS);
+    }
+
+    public function test_it_checks_every_source_in_a_single_run(): void
+    {
+        $this->enableSystemFeature('cloud-faxing');
+
+        Mail::fake();
+
+        // No argument at all is now the scheduled form.
+        $this->artisan('isfax:monitor')->assertExitCode(CommandStatus::SUCCESS);
     }
 }
