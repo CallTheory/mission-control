@@ -67,8 +67,11 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
                     ->label('Client')
                     ->description(fn (array $record): ?string => $record['ClientName'] ?? null),
 
-                TextColumn::make('Agents')
+                // AgentNames, not Agents: the query has never returned a column by that
+                // name, so this cell rendered empty for every call, filtered or not.
+                TextColumn::make('AgentNames')
                     ->label('Agent(s)')
+                    ->wrap()
                     ->placeholder('—'),
 
                 TextColumn::make('CallDuration')

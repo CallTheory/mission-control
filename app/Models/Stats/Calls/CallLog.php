@@ -124,16 +124,18 @@ class CallLog extends Stat
         }
 
         if ($this->agent) {
-            $agent_sql_filter = "AND (
-                  SELECT STRING_AGG(agtId, ',')
-                  FROM (
-                      SELECT DISTINCT agt.agtId AS agtId
-                      FROM statCallTracker sct
-                      JOIN agtAgents agt ON sct.agtId = agt.agtId
-                      WHERE sct.callId = statCallStart.callId
-                  ) AS distinctAgents
-              ) LIKE CONCAT ('%', ?, '%')\n";
-            $this->parameters['agent'] = $this->agent;
+            // Was: STRING_AGG the call's agent ids and LIKE '%id%' against them. That
+            // substring match made agent 5 match calls handled by agents 15, 51 and 52,
+            // and it aggregated an int column without the cast its sibling query uses.
+            // An EXISTS is exact, and seeks the tracker index instead of building a
+            // string for every candidate row.
+            $agent_sql_filter = "AND EXISTS (
+                  SELECT 1
+                  FROM statCallTracker sct
+                  WHERE sct.callId = statCallStart.callId
+                    AND sct.agtId = ?
+              )\n";
+            $this->parameters['agent'] = (int) $this->agent;
         } else {
             $agent_sql_filter = '';
         }
@@ -242,11 +244,17 @@ class CallLog extends Stat
             $keyword_search_sql_filter = '';
         }
 
-        if ($this->hasAny === true) {
-            $has_video_sql_filter = '';
-            $has_messages_sql_filter = '';
-            $has_recording_sql_filter = '';
-        } else {
+        // Default to "no asset filter" up front. The branches below only assign when a
+        // flag is an explicit true or false, so a null left all three undefined and the
+        // interpolation into $total_filter raised an undefined-variable warning — which
+        // Laravel turns into an exception, which callRows() swallows into an empty table.
+        // The screen always passes booleans, so this never fired through the UI; any
+        // other caller would have got a silently empty call log.
+        $has_video_sql_filter = '';
+        $has_messages_sql_filter = '';
+        $has_recording_sql_filter = '';
+
+        if ($this->hasAny !== true) {
 
             if ($this->hasVideo === true) {
                 $has_video_sql_filter = " and EXISTS (
@@ -408,6 +416,21 @@ class CallLog extends Stat
                             WHERE sct.callId = statCallStart.callId
                         ) AS distinctAgents
                 ) as [AgentList]
+                ,(
+                    -- AgentList is a packed id-name-initials-station-type record that the
+                    -- CSV export writes out verbatim, so it cannot change shape. This is
+                    -- the same set prepared for display, built in SQL rather than taken
+                    -- apart in PHP: agent names contain hyphens and commas, which is
+                    -- exactly what a positional split of AgentList gets wrong.
+                    SELECT STRING_AGG(agtName + ' (' + agtInitials + ')', ', ')
+                        FROM (
+                            SELECT DISTINCT agt.Name AS agtName,
+                            agt.Initials AS agtInitials
+                            FROM statCallTracker sct
+                            JOIN agtAgents agt ON sct.agtId = agt.agtId
+                            WHERE sct.callId = statCallStart.callId
+                        ) AS distinctAgentNames
+                ) as [AgentNames]
                 ,CASE
                 WHEN EXISTS (
                     select 1

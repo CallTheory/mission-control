@@ -120,7 +120,10 @@ trait FiltersCallLog
 
             Select::make('agent')
                 ->label('Agent')
-                ->options(self::selectOptions(collect($this->agents)->pluck('Name', 'Name')->all()))
+                // Keyed on agtId, not Name: the call log filters on the agent ids
+                // recorded against the call, so submitting a display name matched
+                // nothing and the filter silently returned no calls at all.
+                ->options(self::selectOptions(collect($this->agents)->pluck('Name', 'agtId')->all()))
                 ->searchable(),
 
             TextInput::make('min_duration')->label('Min. Duration (seconds)')->numeric(),
