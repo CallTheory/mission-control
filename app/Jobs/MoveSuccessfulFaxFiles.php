@@ -105,6 +105,27 @@ class MoveSuccessfulFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, Shoul
     }
 
     /**
+     * Bound the unique lock so an interrupted worker cannot hold it forever.
+     *
+     * Without a window, Laravel takes the lock with no expiry (UniqueLock::acquire falls
+     * back to `uniqueFor ?? 0`) and releases it only when the job completes. A worker
+     * killed mid-move — a deploy, a Horizon restart, an OOM — therefore stranded the lock
+     * permanently, and because Intelligent Series reuses `.fs` filenames, *every* later
+     * fax that happened to be called IS342.fs had its move silently dropped by
+     * PendingDispatch::__destruct.
+     *
+     * The consequence was not a stuck file but a duplicate fax: the .fs stayed in tosend/,
+     * the submission dedupe only suppresses rows that are still `pending`, so the next
+     * scan submitted the same fax again, and again, every few minutes.
+     *
+     * Both send jobs already guard against this; the move jobs were missed.
+     */
+    public function uniqueFor(): int
+    {
+        return 3600;
+    }
+
+    /**
      * The spool source these files live in, defaulting to the provider-named legacy one.
      */
     public function sourceKey(): string

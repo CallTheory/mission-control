@@ -193,9 +193,13 @@ class FaxSpoolSource extends Model
         return $this->driver === self::DRIVER_SMB;
     }
 
-    public static function resolveKey(?string $requested, string $preferred): string
+    /**
+     * @param  array<int, string>|null  $allowed  restrict to these keys, e.g. the servers
+     *                                            that can feed the provider being viewed
+     */
+    public static function resolveKey(?string $requested, string $preferred, ?array $allowed = null): string
     {
-        $enabled = static::query()->enabled()->orderBy('key')->pluck('key')->all();
+        $enabled = $allowed ?? static::query()->enabled()->orderBy('key')->pluck('key')->all();
 
         if ($requested !== null && in_array($requested, $enabled, true)) {
             return $requested;

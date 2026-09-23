@@ -38,10 +38,22 @@ class CloudFaxingController extends Controller
         // one optional segment is already the provider, /utilities/cloud-faxing/is2 would
         // be ambiguous with a provider name, and the buildup alert builds its link by
         // string concatenation.
-        $sources = FaxSpoolSource::query()->enabled()->orderBy('name')->get();
+        $provider = $provider === 'ringcentral' ? 'ringcentral' : 'mfax';
+
+        // Only the servers that can feed *this* provider. The two seeded sources are the
+        // original provider-named directories, so passing every enabled source drew a
+        // second row of "mFax | RingCentral" underneath the provider tabs that already
+        // say exactly that — which reads like a setting rather than the view filter it is.
+        $sources = FaxSpoolSource::query()
+            ->enabled()
+            ->where(fn ($query) => $query->whereNull('pinned_provider')->orWhere('pinned_provider', $provider))
+            ->orderBy('name')
+            ->get();
+
         $sourceKey = FaxSpoolSource::resolveKey(
             $request->query('source') === null ? null : (string) $request->query('source'),
-            $provider === 'ringcentral' ? 'ringcentral' : 'mfax',
+            $provider,
+            $sources->pluck('key')->all(),
         );
 
         $view = $provider === 'ringcentral' ? 'utilities.cloud-faxing-ringcentral' : 'utilities.cloud-faxing';
