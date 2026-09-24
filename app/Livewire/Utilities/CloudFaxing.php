@@ -3,6 +3,7 @@
 namespace App\Livewire\Utilities;
 
 use App\Livewire\Concerns\ManagesFaxSpool;
+use App\Livewire\Concerns\ShowsFaxFailures;
 use App\Models\DataSource;
 use App\Models\FaxSpoolSource;
 use App\Services\Faxing\FaxDashboardSnapshot;
@@ -29,6 +30,7 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
     use InteractsWithActions;
     use InteractsWithSchemas;
     use ManagesFaxSpool;
+    use ShowsFaxFailures;
 
     /**
      * Which spool source this page is showing. Several Intelligent Series servers can

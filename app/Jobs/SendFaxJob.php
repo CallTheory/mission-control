@@ -8,6 +8,7 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxFailureLog;
 use App\Services\Faxing\FaxLockKey;
 use App\Services\Faxing\FaxRoute;
 use App\Services\Faxing\FaxRouter;
@@ -304,6 +305,17 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         ];
 
         Log::error("SendFaxJob failed after {$this->tries} attempts: {$exception->getMessage()}", $faxFsDetails);
+
+        // Record it before anything else. This fax never reached the provider, so it
+        // cannot appear in the provider history the status pages list — without a row of
+        // our own the only trace is the email, which is not something anyone can retry
+        // from.
+        app(FaxFailureLog::class)->recordSubmissionFailure(
+            $faxFsDetails,
+            FaxProvider::Mfax->value,
+            $this->sourceKey(),
+            $exception->getMessage(),
+        );
 
         // Handing the fax to the other provider means it is still in flight, so neither
         // the failure alert nor the fail/ move may happen yet.

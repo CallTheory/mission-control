@@ -8,6 +8,7 @@ use App\Enums\FaxProvider;
 use App\Models\FaxSpoolSource;
 use App\Models\PendingFax;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxFailureLog;
 use App\Services\Faxing\FaxRouter;
 use App\Services\Faxing\FaxSourceHealth;
 use App\Services\Faxing\FaxSpool;
@@ -154,6 +155,25 @@ class ScanFaxSpoolLane implements ShouldBeUnique, ShouldQueue
             return;
         }
 
+        // A .fs whose payload has gone is unsendable, and dispatching it anyway is how a
+        // single orphan turns into a failure email every minute for ever: the send job
+        // fails, and the job that would move it to fail/ is itself suppressed whenever a
+        // lock for that filename is stranded. Quarantine it here instead — straight
+        // through the driver, so nothing can swallow it.
+        if (! $this->payloadExists($spool, $isfax)) {
+            $reason = "Fax payload missing: {$isfax['capfile']}";
+
+            // Recorded as well as quarantined: the operator needs to see that this fax
+            // did not go out, and the .cap is gone so it cannot simply be sent again.
+            app(FaxFailureLog::class)->recordSubmissionFailure(
+                $isfax, $this->providerFor($isfax), $this->sourceKey, $reason
+            );
+
+            $this->quarantine($spool, $fsFile, $name, $reason);
+
+            return;
+        }
+
         $route = $router->route($isfax, $source, fn (): ?string => $this->accountNumber($isfax));
         $isfax['routing_reason'] = $route->reason;
         $isfax['allow_failover'] = $route->allowFailover;
@@ -187,9 +207,53 @@ class ScanFaxSpoolLane implements ShouldBeUnique, ShouldQueue
      * Move a persistently invalid `.fs` out of the way so it stops re-failing every
      * minute forever. The grace window guards against catching the fax service mid-write.
      */
+    /**
+     * Which provider this fax would have used, for the failure record.
+     *
+     * @param  array<string, mixed>  $isfax
+     */
+    private function providerFor(array $isfax): string
+    {
+        $source = FaxSpoolSource::findByKey($this->sourceKey);
+
+        return $source?->pinned_provider->value ?? FaxProvider::fallback()->value;
+    }
+
+    /**
+     * Whether the .cap this .fs points at is actually there.
+     *
+     * Payloads are shared: Intelligent Series fans one .cap out to several .fs files, so
+     * a sibling's successful move can legitimately remove the payload while this .fs is
+     * still waiting. That leaves an orphan that can never be sent.
+     *
+     * @param  array<string, mixed>  $isfax
+     */
+    private function payloadExists(FaxSpool $spool, array $isfax): bool
+    {
+        $capfile = (string) ($isfax['capfile'] ?? '');
+
+        if ($capfile === '') {
+            return false;
+        }
+
+        // Infinity keeps payloads in its own directory; classic IS leaves them beside
+        // the .fs in tosend.
+        $folder = config('app.switch_engine') === FsFileParser::ENGINE_INFINITY ? 'messages' : 'tosend';
+
+        return $spool->filesystem(FaxProvider::fallback()->value, $this->sourceKey)
+            ->read($folder, $capfile) !== null;
+    }
+
+    /**
+     * Move a .fs that can never be processed out of the way, so it stops being retried —
+     * and emailed about — every minute for ever.
+     *
+     * The grace window guards against catching the fax service mid-write, where the .fs
+     * lands a moment before its payload.
+     */
     private function quarantine(FaxSpool $spool, string $fsFile, string $name, string $reason): void
     {
-        Log::error("Invalid fax file {$name} [{$this->sourceKey}]: {$reason}");
+        Log::error("Unprocessable fax file {$name} [{$this->sourceKey}]: {$reason}");
 
         $modified = @filemtime($fsFile);
 
@@ -197,8 +261,10 @@ class ScanFaxSpoolLane implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        if (@rename($fsFile, $spool->path(FaxProvider::fallback()->value, 'fail', $this->sourceKey).$name)) {
-            Log::warning("Quarantined invalid fax file {$name} [{$this->sourceKey}] to fail/");
+        $filesystem = $spool->filesystem(FaxProvider::fallback()->value, $this->sourceKey);
+
+        if ($filesystem->move('tosend', $name, 'fail', $name)) {
+            Log::warning("Quarantined fax file {$name} [{$this->sourceKey}] to fail/: {$reason}");
         }
     }
 

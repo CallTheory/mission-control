@@ -103,6 +103,8 @@
     @endif
 
     <div class="mb-0 mt-12">
+    @include('utilities.cloud-faxing.failures')
+
         <h3 class="text-lg leading-6 font-medium text-surface-fg ">Fax Technical Details</h3>
         <p class="mt-1 max-w-2xl text-sm text-muted">
             This section is informational for troubleshooting the IS Fax and Ring Central integration within Mission Control.

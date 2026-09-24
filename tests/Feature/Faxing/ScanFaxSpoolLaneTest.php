@@ -61,6 +61,10 @@ class ScanFaxSpoolLaneTest extends TestCase
 
     private function writeFs(string $root, string $name, int $jobId = 4242): void
     {
+        // The payload goes down too: Intelligent Series always writes the pair, and a
+        // .fs without its .cap is the orphan case that gets quarantined.
+        File::put("{$root}/tosend/IS20.cap", 'payload');
+
         File::put("{$root}/tosend/{$name}", implode("\r\n", [
             '$var_def DATA5 "'.$jobId.'"',
             '$var_def DATA6 "c:\\copia\\tosend\\IS20.cap"',
@@ -223,6 +227,51 @@ class ScanFaxSpoolLaneTest extends TestCase
         $this->runLane('isa');
 
         Bus::assertDispatchedTimes(SendFaxJob::class, 1);
+    }
+
+    public function test_an_fs_whose_payload_has_gone_is_quarantined_not_retried(): void
+    {
+        // The production loop: Intelligent Series fans one .cap out to several .fs files,
+        // a sibling's move removes the shared payload, and the orphan left behind failed
+        // and emailed on every scan for ever because the job that would move it aside was
+        // itself suppressed by a stranded lock.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS368.fs');
+        File::delete("{$this->rootA}/tosend/IS20.cap");
+        touch("{$this->rootA}/tosend/IS368.fs", time() - 300);
+
+        $this->runLane('isa');
+
+        Bus::assertNotDispatched(SendFaxJob::class);
+        $this->assertFileDoesNotExist("{$this->rootA}/tosend/IS368.fs");
+        $this->assertFileExists("{$this->rootA}/fail/IS368.fs");
+    }
+
+    public function test_an_orphan_is_recorded_so_it_can_be_seen(): void
+    {
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS368.fs');
+        File::delete("{$this->rootA}/tosend/IS20.cap");
+        touch("{$this->rootA}/tosend/IS368.fs", time() - 300);
+
+        $this->runLane('isa');
+
+        $fax = PendingFax::sole();
+        $this->assertSame('failed', $fax->delivery_status);
+        $this->assertStringContainsString('payload missing', $fax->failure_reason);
+    }
+
+    public function test_a_payload_written_moments_later_is_left_alone(): void
+    {
+        // The .fs can land a moment before its .cap; quarantining immediately would throw
+        // away a fax that was about to be perfectly sendable.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS368.fs');
+        File::delete("{$this->rootA}/tosend/IS20.cap");
+
+        $this->runLane('isa');
+
+        $this->assertFileExists("{$this->rootA}/tosend/IS368.fs");
     }
 
     private function runLane(string $sourceKey): void
