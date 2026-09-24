@@ -274,6 +274,112 @@ class ScanFaxSpoolLaneTest extends TestCase
         $this->assertFileExists("{$this->rootA}/tosend/IS368.fs");
     }
 
+    public function test_a_delivered_fax_is_not_sent_again_while_its_file_awaits_moving(): void
+    {
+        // The exact production sequence. isfax:check-pending flips the row to success,
+        // MoveSuccessfulFaxFiles is queued but has not run, and the scan lane — which now
+        // runs moments later rather than inline ahead of check-pending — finds the .fs
+        // still sitting in tosend/. Keying the dedupe on "still pending" sent the fax to
+        // the recipient a second time, 1-3 seconds after the first was confirmed.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS328.fs', jobId: 49002);
+
+        PendingFax::create([
+            'api_fax_id' => '3313645276012',
+            'fax_provider' => 'mfax',
+            'spool_source_key' => 'isa',
+            'job_id' => 49002,
+            'fs_file_name' => 'IS328.fs',
+            'cap_file' => 'IS20.cap',
+            'filename' => 'IS20.cap',
+            'phone' => '7138637901',
+            'original_status' => '2',
+            'delivery_status' => 'success',
+            'resolved_at' => now(),
+        ]);
+
+        $this->runLane('isa');
+
+        Bus::assertNotDispatched(SendFaxJob::class);
+    }
+
+    public function test_a_reused_filename_with_a_new_job_id_still_sends(): void
+    {
+        // Intelligent Series recycles .fs names, so the guard cannot key on the filename
+        // alone or the next genuine fax called IS328.fs would never go out.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS328.fs', jobId: 50000);
+
+        PendingFax::create([
+            'api_fax_id' => 'older',
+            'fax_provider' => 'mfax',
+            'spool_source_key' => 'isa',
+            'job_id' => 49002,
+            'fs_file_name' => 'IS328.fs',
+            'cap_file' => 'IS20.cap',
+            'filename' => 'IS20.cap',
+            'phone' => '7138637901',
+            'original_status' => '2',
+            'delivery_status' => 'success',
+            'resolved_at' => now()->subDay(),
+        ]);
+
+        $this->runLane('isa');
+
+        Bus::assertDispatchedTimes(SendFaxJob::class, 1);
+    }
+
+    public function test_a_fanned_out_cap_still_reaches_every_recipient(): void
+    {
+        // One .cap, one job id, a .fs per recipient. Deduping on the job id alone would
+        // deliver to the first recipient and silently drop the rest.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS329.fs', jobId: 49003);
+
+        PendingFax::create([
+            'api_fax_id' => 'first-recipient',
+            'fax_provider' => 'mfax',
+            'spool_source_key' => 'isa',
+            'job_id' => 49003,
+            'fs_file_name' => 'IS328.fs',
+            'cap_file' => 'IS20.cap',
+            'filename' => 'IS20.cap',
+            'phone' => '7138637901',
+            'original_status' => '2',
+            'delivery_status' => 'success',
+            'resolved_at' => now(),
+        ]);
+
+        $this->runLane('isa');
+
+        Bus::assertDispatchedTimes(SendFaxJob::class, 1);
+    }
+
+    public function test_a_failed_fax_may_be_sent_again(): void
+    {
+        // Otherwise Send Again on the failures list could never work.
+        Bus::fake();
+        $this->writeFs($this->rootA, 'IS330.fs', jobId: 49004);
+
+        PendingFax::create([
+            'api_fax_id' => null,
+            'fax_provider' => 'mfax',
+            'spool_source_key' => 'isa',
+            'job_id' => 49004,
+            'fs_file_name' => 'IS330.fs',
+            'cap_file' => 'IS20.cap',
+            'filename' => 'IS20.cap',
+            'phone' => '7138637901',
+            'original_status' => '2',
+            'delivery_status' => 'failed',
+            'resolved_at' => now(),
+        ]);
+
+        $this->runLane('isa');
+
+        Bus::assertDispatchedTimes(SendFaxJob::class, 1);
+    }
+
     private function runLane(string $sourceKey): void
     {
         (new ScanFaxSpoolLane($sourceKey))->handle(

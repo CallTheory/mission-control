@@ -141,17 +141,7 @@ class ScanFaxSpoolLane implements ShouldBeUnique, ShouldQueue
             return;
         }
 
-        // Scoped to this source, and deliberately not to a provider: a .fs name is a
-        // short per-server Intelligent Series sequence, so the source is what makes it
-        // unique. Leaving the provider in would let a re-route resubmit a fax that is
-        // already in flight through the other provider.
-        $alreadyPending = PendingFax::query()
-            ->where('fs_file_name', $isfax['fsFileName'])
-            ->where('spool_source_key', $this->sourceKey)
-            ->where('delivery_status', 'pending')
-            ->exists();
-
-        if ($alreadyPending) {
+        if ($this->alreadySubmitted($isfax)) {
             return;
         }
 
@@ -183,6 +173,37 @@ class ScanFaxSpoolLane implements ShouldBeUnique, ShouldQueue
         $route->provider === FaxProvider::RingCentral
             ? SendFaxRingCentral::dispatch($isfax)
             : SendFaxJob::dispatch($isfax);
+    }
+
+    /**
+     * Whether this exact fax has already been handed to a provider.
+     *
+     * Keyed on the Intelligent Series job id *and* the .fs name, and deliberately not on
+     * delivery status.
+     *
+     * Status was the original discriminator — "is there a row still pending?" — and it
+     * only held because the scan used to run inline in the scheduler, ahead of
+     * isfax:check-pending, so a fax could not be resolved and re-scanned in the same
+     * minute. Scanning in a queued job removed that ordering: check-pending now flips a
+     * row to success, and the lane runs a second or two later, finds the .fs still in
+     * tosend/ because MoveSuccessfulFaxFiles has not been worked yet, sees nothing
+     * "pending", and sends the fax to the recipient a second time.
+     *
+     * The job id is what actually identifies a fax and survives Intelligent Series
+     * reusing filenames; the .fs name identifies the recipient, so a fanned-out .cap
+     * still reaches every one of them. Failed rows are excluded so a genuine retry can
+     * go out again.
+     *
+     * @param  array<string, mixed>  $isfax
+     */
+    private function alreadySubmitted(array $isfax): bool
+    {
+        return PendingFax::query()
+            ->where('spool_source_key', $this->sourceKey)
+            ->where('job_id', (int) ($isfax['jobID'] ?? 0))
+            ->where('fs_file_name', $isfax['fsFileName'])
+            ->where('delivery_status', '!=', 'failed')
+            ->exists();
     }
 
     /**
