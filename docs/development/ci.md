@@ -118,7 +118,7 @@ SQL Server. It needs a database, so it needs a service container:
     name: Integration suite
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest

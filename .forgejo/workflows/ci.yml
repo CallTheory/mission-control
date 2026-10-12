@@ -29,7 +29,7 @@ jobs:
     name: Test suite
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +58,7 @@ jobs:
     name: Static analysis
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -88,7 +88,7 @@ jobs:
     name: Asset build
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
     steps:
       - uses: actions/checkout@v4
 
