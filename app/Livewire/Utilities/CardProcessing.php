@@ -40,6 +40,17 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
     use InteractsWithTable;
     use WithFileUploads;
 
+    /**
+     * Every session key this page owns, so that clearing an import clears exactly that.
+     */
+    private const SESSION_KEYS = [
+        'utilities.card-processing.import_file',
+        'utilities.card-processing.import_records',
+        'utilities.card-processing.import_headers',
+        'utilities.card-processing.process_results',
+        'utilities.card-processing.export_file',
+    ];
+
     public $tbsExportFile;
 
     public $file_path;
@@ -320,6 +331,17 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
         abort(404);
     }
 
+    /**
+     * Parses the uploaded TBS export into the rows awaiting a charge.
+     *
+     * `$this->tbsExportFile` has to be the uploaded file, not a path. Filament's FileUpload
+     * normally stores the upload during form submission and leaves a path string in the
+     * action's data, which fails the `file` rule below -- a ValidationException into an error
+     * bag nothing on this page renders, so the import stopped dead with no error anywhere,
+     * not in the console and not in GlitchTip. The field is declared `storeFiles(false)` so
+     * that storing stays here, where the destination is chosen server-side and the rest of
+     * this component knows where to find it.
+     */
     public function save(): void
     {
         $results = [];
@@ -352,6 +374,14 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
         $csv_by_line = $lines;
 
         foreach ($csv_by_line as $k => $row) {
+            // Line 0 was already read as the header row above. It is narrower than a data
+            // row in the exports this was written against, so it fails the column test
+            // below anyway -- but a report whose header spans the full width would
+            // otherwise arrive as a row to charge.
+            if ($k === 0) {
+                continue;
+            }
+
             $temp = str_getcsv($row);
 
             if (count($temp) >= 38) {
@@ -395,11 +425,38 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
                     ->maxSize(2048)
                     ->required()
+                    // Filament would otherwise store the file itself before the action body
+                    // runs and hand back a path string, which save() cannot read -- see the
+                    // note on save(). Keeping the TemporaryUploadedFile also keeps the
+                    // destination server-side: Filament's stored path is submitted by the
+                    // browser on the next request, and this component has no record to
+                    // check it against.
+                    ->storeFiles(false)
                     ->helperText('CSV exported from TBS. Up to 2 MB.'),
             ])
             ->action(function (array $data): void {
                 $this->tbsExportFile = $data['tbsExportFile'];
                 $this->save();
+
+                // The upload has been copied into card-processing/ and is not needed again.
+                // Leaving it on the component would carry a temporary file through every
+                // subsequent Livewire request for the life of the page.
+                $this->tbsExportFile = null;
+
+                // A file that parses to nothing is the likeliest real failure: the rows are
+                // read by column position, so a TBS report rebuilt to a different width
+                // yields no rows at all. Saying so beats an empty table, which reads as "no
+                // balances to bill".
+                if (blank($this->records)) {
+                    Notification::make()
+                        ->title('Nothing to import')
+                        ->body('The file was read but no row had the 38 columns this import expects. Check that the TBS report is the custom billing export and that its columns have not moved.')
+                        ->warning()
+                        ->persistent()
+                        ->send();
+
+                    return;
+                }
 
                 Notification::make()
                     ->title('Import loaded. Review the rows before processing.')
@@ -510,8 +567,11 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
 
     public function clearSession(): void
     {
-        session()->flush();
+        // forget(), not flush(). flush() empties the whole session, which includes the
+        // authentication state -- clearing an import logged the user out on their next
+        // request.
+        session()->forget(self::SESSION_KEYS);
+
         $this->mount();
-        $this->render();
     }
 }
