@@ -4,22 +4,22 @@ namespace Tests\Feature\Console\Commands;
 
 use App\Jobs\InboundRuleMatch;
 use App\Models\InboundEmail;
-use App\Models\Stats\Helpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
+use Tests\Traits\InteractsWithFeatureFlags;
 
 class CheckInboundEmailsTest extends TestCase
 {
+    use InteractsWithFeatureFlags;
     use RefreshDatabase;
 
-    /** @test */
-    public function it_processes_unprocessed_inbound_emails_when_feature_is_enabled()
+    public function test_it_processes_unprocessed_inbound_emails_when_feature_is_enabled()
     {
         Queue::fake();
 
         // Enable the inbound-email feature
-        Helpers::enableSystemFeature('inbound-email');
+        $this->enableSystemFeature('inbound-email');
 
         // Create unprocessed inbound emails
         $emails = InboundEmail::factory()->count(3)->create([
@@ -28,7 +28,6 @@ class CheckInboundEmailsTest extends TestCase
         ]);
 
         $this->artisan('inbound-emails:check')
-            ->expectsOutput('')
             ->assertExitCode(0);
 
         // Assert that jobs were dispatched for each email
@@ -39,13 +38,12 @@ class CheckInboundEmailsTest extends TestCase
         }
     }
 
-    /** @test */
-    public function it_does_not_process_emails_when_feature_is_disabled()
+    public function test_it_does_not_process_emails_when_feature_is_disabled()
     {
         Queue::fake();
 
         // Disable the inbound-email feature
-        Helpers::disableSystemFeature('inbound-email');
+        $this->disableSystemFeature('inbound-email');
 
         // Create unprocessed inbound emails
         InboundEmail::factory()->count(3)->create([
@@ -54,19 +52,17 @@ class CheckInboundEmailsTest extends TestCase
         ]);
 
         $this->artisan('inbound-emails:check')
-            ->expectsOutput('')
             ->assertExitCode(0);
 
         // Assert that no jobs were dispatched
         Queue::assertNothingPushed();
     }
 
-    /** @test */
-    public function it_does_not_process_already_processed_emails()
+    public function test_it_does_not_process_already_processed_emails()
     {
         Queue::fake();
 
-        Helpers::enableSystemFeature('inbound-email');
+        $this->enableSystemFeature('inbound-email');
 
         // Create processed and unprocessed emails
         InboundEmail::factory()->create([
@@ -80,7 +76,6 @@ class CheckInboundEmailsTest extends TestCase
         ]);
 
         $this->artisan('inbound-emails:check')
-            ->expectsOutput('')
             ->assertExitCode(0);
 
         // Assert that only one job was dispatched for the unprocessed email

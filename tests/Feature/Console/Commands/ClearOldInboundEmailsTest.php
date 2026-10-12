@@ -17,8 +17,7 @@ class ClearOldInboundEmailsTest extends TestCase
         Storage::fake();
     }
 
-    /** @test */
-    public function it_removes_old_inbound_emails_and_their_attachments()
+    public function test_it_removes_old_inbound_emails_and_their_attachments()
     {
         // Create old and new inbound emails
         $oldEmail = InboundEmail::factory()->create([
@@ -46,8 +45,7 @@ class ClearOldInboundEmailsTest extends TestCase
         $this->assertTrue(Storage::exists("inbound-email/{$newEmail->id}"));
     }
 
-    /** @test */
-    public function it_removes_orphaned_attachment_directories()
+    public function test_it_removes_orphaned_attachment_directories()
     {
         // Create an attachment directory for a non-existent email
         $nonExistentEmailId = 999;
@@ -61,8 +59,7 @@ class ClearOldInboundEmailsTest extends TestCase
         $this->assertFalse(Storage::exists("inbound-email/{$nonExistentEmailId}"));
     }
 
-    /** @test */
-    public function it_handles_empty_inbound_emails_table()
+    public function test_it_handles_empty_inbound_emails_table()
     {
         $this->artisan('app:clear-old-inbound-emails')
             ->expectsOutput('Removing inbound emails older than '.config('utilities.inbound-email.days_to_keep').' days')
