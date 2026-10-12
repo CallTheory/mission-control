@@ -87,18 +87,54 @@ help. Authentication has to be configured on the runner itself, in the Docker da
 `config.json` — not in this workflow. That is why the fallback image is public: it keeps a
 fork's CI working with no runner changes at all.
 
-## Where the baseline comes from
+## Formatting: changed files only
 
-PHPStan is not clean on this codebase. It carries a count of pre-existing errors that
-predate the analysis being added, and `phpstan.neon.dist` analyses `app/` only.
+`vendor/bin/pint --test` with no arguments reports **60 style issues across 825 files** on
+this repository. None of them are anyone's current work; the codebase was never uniformly
+Pint-clean, and reformatting it wholesale would produce an unreviewable diff claiming
+authorship of churn nobody intended.
 
-The job runs it anyway, and that is the point: the count cannot grow without someone
-noticing. Before CI it was tracked by hand, which means it was tracked by whoever
-remembered to look.
+So the job runs `pint --test --diff=origin/main`, which checks only what the branch
+changed. New code is held to the standard and old drift is left for a deliberate pass of
+its own. That is also why the job checks out with `fetch-depth: 0` and fetches `main`
+explicitly: `actions/checkout` fetches the pull request's head, not the branch it targets,
+so without that there is no merge base to diff against.
 
-If you add code that raises the count, fix the code. If you are fixing something that
-legitimately changes the count downward, that is good news and the new number is the new
-baseline.
+Run the same check locally before pushing:
+
+```bash
+vendor/bin/pint --test --diff=main
+```
+
+## The PHPStan baseline
+
+`phpstan.neon.dist` analyses `app/` at level 5 and includes `phpstan-baseline.neon`, a
+generated record of the errors that predate the analysis being added. With it, a clean run
+exits zero and **only a new error fails the build** — which is the entire point of running
+it in CI, and was tracked by hand before CI existed.
+
+The baseline is a debt ledger, not an endorsement. Entries come out as the code behind them
+is fixed. To regenerate it after a deliberate cleanup:
+
+```bash
+vendor/bin/phpstan analyse --generate-baseline
+```
+
+Do not regenerate it to make a new error go away. That is what the ledger is for noticing.
+
+### `ignoreErrors` and the baseline are different things
+
+`phpstan.neon.dist` also keeps a hand-written `ignoreErrors` list. Those entries are
+*decisions*, each with a comment explaining why PHPStan is wrong about that code — a
+framework-imposed signature, an SDK it cannot resolve, a defensive null check it thinks is
+redundant. They are meant to be read.
+
+The baseline is the opposite: a machine-written list of things nobody has got to yet.
+
+`reportUnmatchedIgnoredErrors` is left at its default, so a hand-written ignore that stops
+matching is reported as an error rather than lingering. Six were removed when the baseline
+was introduced, having gone stale at some earlier point — which is also why the error count
+being tracked by hand had been six higher than the number of real findings.
 
 ## The test suite needs no services
 

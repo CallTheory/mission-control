@@ -60,7 +60,11 @@ jobs:
     container:
       image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
     steps:
+      # Full history, because Pint is asked below what changed relative to main and
+      # a shallow clone has no merge base to answer with.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -72,15 +76,26 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      # --test reports rather than rewrites. A formatter that edited files in CI
-      # would pass while leaving the branch unformatted.
-      - name: Check formatting
-        run: vendor/bin/pint --test
+      # actions/checkout fetches the pull request's head, not the branch it targets,
+      # so main has to be fetched before anything can be diffed against it.
+      - name: Fetch the base branch
+        run: git fetch --no-tags origin main:refs/remotes/origin/main
 
-      # This codebase is not PHPStan-clean and carries a baseline of pre-existing
-      # errors; see docs/development/ci.md. The value of running it here is that the
-      # count cannot grow without someone noticing, which was tracked by hand until
-      # now.
+      # Only the files this branch changed. This codebase is not uniformly
+      # Pint-clean -- a bare `pint --test` reports 60 pre-existing style issues
+      # across 825 files, none of them anybody's current work -- and reformatting
+      # them wholesale would produce an unreviewable diff that claims authorship of
+      # churn nobody intended. New code is held to the standard; old drift is its
+      # own job.
+      #
+      # --test rather than a fix: a formatter that edited files in CI would pass
+      # while leaving the branch unformatted.
+      - name: Check formatting of changed files
+        run: vendor/bin/pint --test --diff=origin/main
+
+      # Clean, via phpstan-baseline.neon, which records the errors that predate the
+      # analysis. So this fails only on a NEW error -- which is the whole point, and
+      # was tracked by hand before CI existed.
       - name: Static analysis
         run: vendor/bin/phpstan analyse --no-progress
 
