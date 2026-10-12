@@ -17,8 +17,7 @@ class ProcessingCleanupTest extends TestCase
         Storage::fake();
     }
 
-    /** @test */
-    public function it_removes_old_wav_files()
+    public function test_it_removes_old_wav_files()
     {
         // Create old and new wav files
         $oldFile = 'recordings/old.wav';
@@ -45,8 +44,7 @@ class ProcessingCleanupTest extends TestCase
         $this->assertTrue(Storage::exists($newFile));
     }
 
-    /** @test */
-    public function it_removes_old_json_files()
+    public function test_it_removes_old_json_files()
     {
         // Create old and new json files
         $oldFile = 'transcriptions/old.json';
@@ -73,8 +71,7 @@ class ProcessingCleanupTest extends TestCase
         $this->assertTrue(Storage::exists($newFile));
     }
 
-    /** @test */
-    public function it_removes_old_mp4_files()
+    public function test_it_removes_old_mp4_files()
     {
         // Create old and new mp4 files
         $oldFile = 'screencapture/old.mp4';
@@ -101,8 +98,7 @@ class ProcessingCleanupTest extends TestCase
         $this->assertTrue(Storage::exists($newFile));
     }
 
-    /** @test */
-    public function it_skips_files_with_incorrect_extensions()
+    public function test_it_skips_files_with_incorrect_extensions()
     {
         // Create files with incorrect extensions
         $wavFile = 'recordings/test.txt';
