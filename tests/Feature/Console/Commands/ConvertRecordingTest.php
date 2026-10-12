@@ -2,108 +2,54 @@
 
 namespace Tests\Feature\Console\Commands;
 
-use App\Jobs\WhisperCppTranscriptionJob;
-use App\Models\Stats\Calls\Call;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * `recording:convert` joins an Intelligent Series call's WAV fragments with sox, caches the
+ * result in Redis and queues transcription.
+ *
+ * These three tests never ran. They were written with `/** @test *\/`, which PHPUnit 12 no
+ * longer recognises, so the class looked empty and the suite reported success while exiting
+ * non-zero. Restoring the method names revealed that they could not have passed on any
+ * machine, because they were written against an API that does not exist:
+ *
+ *   - `Redis::fake()` is not a Laravel feature. The facade forwards the call to Redis as a
+ *     command literally named FAKE, and predis rejects it: "Command `FAKE` is not a
+ *     registered Redis command." That alone aborted all three in setUp.
+ *   - `Redis::assertExists()` / `assertMissing()` do not exist either, for the same reason.
+ *   - `$this->assertDispatched()` / `assertNotDispatched()` are not TestCase methods. The
+ *     real ones are Queue::assertPushed() and Bus::assertDispatched().
+ *
+ * And the premise was wrong even past those. The command does `new Call([...])` directly
+ * rather than resolving it from the container, so `$this->mock(Call::class)` cannot
+ * intercept it; `recordingData()` then queries the Intelligent Series database. Exercising
+ * this command for real needs SQL Server, a Redis server and the `sox` binary — which makes
+ * it an integration test, not a feature test.
+ *
+ * Skipped rather than deleted so the intent survives: the three behaviours below are worth
+ * covering, and the bullet list above is what it would take. Doing it properly means either
+ * moving them to tests/Integration (alongside the suite that already stands up SQL Server)
+ * or making the command resolve Call through the container so the data source can be
+ * substituted. Both are real changes and neither belongs in the commit that merely got
+ * these files collected again.
+ */
 class ConvertRecordingTest extends TestCase
 {
-    use RefreshDatabase;
+    private const WHY = 'Needs SQL Server, Redis and sox, and a command that resolves Call '
+        .'through the container. See this class docblock.';
 
-    protected function setUp(): void
+    public function test_it_converts_recording_and_dispatches_transcription_job(): void
     {
-        parent::setUp();
-        Storage::fake();
-        Redis::fake();
+        $this->markTestSkipped(self::WHY);
     }
 
-    /** @test */
-    public function it_converts_recording_and_dispatches_transcription_job()
+    public function test_it_handles_no_recordings(): void
     {
-        $isCallId = 'test-call-123';
-
-        // Mock the Call model and its recordingData method
-        $call = $this->mock(Call::class);
-        $call->shouldReceive('recordingData')
-            ->once()
-            ->andReturn(collect([
-                (object) [
-                    'fileID' => 'file1',
-                    'Data' => 'mock-wav-data-1',
-                ],
-                (object) [
-                    'fileID' => 'file2',
-                    'Data' => 'mock-wav-data-2',
-                ],
-            ]));
-
-        $this->artisan('recording:convert', ['isCallID' => $isCallId])
-            ->expectsOutput('Found recordings/test-call-123/file1.wav')
-            ->expectsOutput('Found recordings/test-call-123/file2.wav')
-            ->assertExitCode(0);
-
-        // Assert files were created
-        $this->assertTrue(Storage::exists("recordings/{$isCallId}/file1.wav"));
-        $this->assertTrue(Storage::exists("recordings/{$isCallId}/file2.wav"));
-
-        // Assert Redis key was set
-        Redis::assertExists("{$isCallId}.wav");
-
-        // Assert transcription job was dispatched
-        $this->assertDispatched(WhisperCppTranscriptionJob::class);
+        $this->markTestSkipped(self::WHY);
     }
 
-    /** @test */
-    public function it_handles_no_recordings()
+    public function test_it_cleans_up_files_after_conversion(): void
     {
-        $isCallId = 'test-call-123';
-
-        // Mock the Call model to return empty collection
-        $call = $this->mock(Call::class);
-        $call->shouldReceive('recordingData')
-            ->once()
-            ->andReturn(collect([]));
-
-        $this->artisan('recording:convert', ['isCallID' => $isCallId])
-            ->assertExitCode(1);
-
-        // Assert no files were created
-        $this->assertFalse(Storage::exists("recordings/{$isCallId}"));
-        $this->assertFalse(Storage::exists("recordings/{$isCallId}.wav"));
-
-        // Assert no Redis key was set
-        Redis::assertMissing("{$isCallId}.wav");
-
-        // Assert no transcription job was dispatched
-        $this->assertNotDispatched(WhisperCppTranscriptionJob::class);
-    }
-
-    /** @test */
-    public function it_cleans_up_files_after_conversion()
-    {
-        $isCallId = 'test-call-123';
-
-        // Mock the Call model
-        $call = $this->mock(Call::class);
-        $call->shouldReceive('recordingData')
-            ->once()
-            ->andReturn(collect([
-                (object) [
-                    'fileID' => 'file1',
-                    'Data' => 'mock-wav-data-1',
-                ],
-            ]));
-
-        $this->artisan('recording:convert', ['isCallID' => $isCallId])
-            ->assertExitCode(0);
-
-        // Assert temporary directory was cleaned up
-        $this->assertFalse(Storage::exists("recordings/{$isCallId}"));
-
-        // Assert final file exists
-        $this->assertTrue(Storage::exists("recordings/{$isCallId}.wav"));
+        $this->markTestSkipped(self::WHY);
     }
 }
