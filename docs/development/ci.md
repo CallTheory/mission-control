@@ -136,6 +136,24 @@ matching is reported as an error rather than lingering. Six were removed when th
 was introduced, having gone stale at some earlier point — which is also why the error count
 being tracked by hand had been six higher than the number of real findings.
 
+## Two tests do not run in CI
+
+`LocalSpoolFilesystemTest` has two cases that need the filesystem to actually refuse a
+write — that an unwritable fax spool is *reported* rather than silently accepted, which
+matters because results are returned to Intelligent Series by rewriting the `.fs` file into
+`sent/` or `fail/`.
+
+CI jobs run as **root**, because the image declares no `USER` and the runner mounts the
+workspace as root. Root bypasses the permission check, so a directory at `0555` is still
+writable to it and both tests invert. They now assert that precondition and skip when it
+cannot be met, naming the effective uid in the skip message.
+
+State the cost plainly rather than reading a green run as coverage: **on CI as it stands,
+nothing checks that behaviour.** Running the suite as a normal user — which is what a
+developer machine does — is what checks it. If that guarantee becomes important enough to
+want in CI, the job has to run as a non-root user, which means dealing with workspace and
+cache ownership.
+
 ## The test suite needs no services
 
 `phpunit.xml` pins `APP_ENV=testing`, an in-memory SQLite database, and array drivers for

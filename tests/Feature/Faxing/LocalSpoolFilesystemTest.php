@@ -157,6 +157,8 @@ class LocalSpoolFilesystemTest extends TestCase
         chmod($this->root, 0555);
 
         try {
+            $this->skipUnlessReadOnly($this->root);
+
             $this->assertFalse($this->fs->probe()->writable);
         } finally {
             chmod($this->root, 0775);
@@ -168,10 +170,50 @@ class LocalSpoolFilesystemTest extends TestCase
         chmod("{$this->root}/tosend", 0555);
 
         try {
+            $this->skipUnlessReadOnly("{$this->root}/tosend");
+
             $this->expectException(SpoolUnavailable::class);
             $this->fs->write('tosend', 'IS20.fs', 'x');
         } finally {
             chmod("{$this->root}/tosend", 0775);
+        }
+    }
+
+    /**
+     * Skip when a directory just chmodded to 0555 is still writable.
+     *
+     * The two tests above are the only ones here that need the filesystem to actually
+     * refuse a write, and some environments cannot be made to refuse one. Root is the case
+     * that matters in practice: it bypasses the permission check entirely, so 0555 means
+     * nothing to it and both tests invert. CI runs its jobs as root, because the image
+     * declares no USER and the runner mounts the workspace as root.
+     *
+     * The precondition is asserted rather than inferred from the user id, so this also
+     * covers an ACL or a mount option producing the same result for a different reason.
+     *
+     * What this costs is worth stating plainly: on any such machine, including CI as it
+     * stands, nothing checks that an unwritable spool is reported rather than silently
+     * accepted. A green run is not evidence for that behaviour. Running the suite as a
+     * normal user is.
+     */
+    private function skipUnlessReadOnly(string $path): void
+    {
+        // chmod() does not invalidate the stat cache, so a prior is_writable() or stat on
+        // this path would otherwise be answered from before the change.
+        clearstatcache(true, $path);
+
+        if (is_writable($path)) {
+            // posix_geteuid() rather than getmyuid(), which reports the owner of the
+            // script file -- not who is running it, and those differ precisely in the
+            // case this message is about: root executing a workspace owned by someone
+            // else.
+            $euid = function_exists('posix_geteuid') ? (string) posix_geteuid() : 'unknown';
+
+            $this->markTestSkipped(
+                "[{$path}] is still writable after chmod 0555, so this environment cannot "
+                ."express an unwritable spool. Running as uid {$euid}; root bypasses the "
+                .'permission check entirely.'
+            );
         }
     }
 }
