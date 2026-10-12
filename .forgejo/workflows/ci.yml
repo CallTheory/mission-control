@@ -1,0 +1,114 @@
+# Test suite, static analysis and the asset build.
+#
+# Every job runs inside a prebuilt PHP 8.4 image rather than installing PHP on the
+# runner, because this suite needs extensions that take minutes to compile --
+# mailparse, and sqlsrv/pdo_sqlsrv via pecl. Building that per run would cost more
+# than the tests do. The image is built from docker/8.4/Dockerfile; building and
+# hosting your own is in docs/development/ci.md.
+#
+# The image is overridable. Set a repository variable CI_IMAGE (Settings -> Actions
+# -> Variables) and every job below uses it instead. A fork that sets nothing falls
+# back to the literal, which is why that image is published in a public project --
+# nobody should need our credentials to run the tests they inherited.
+#
+# The literal is repeated per job on purpose: `container.image` is evaluated before
+# a job's environment exists, so neither `env` nor a prior step can supply it. Bump
+# the tag in all three places when docker/8.4/Dockerfile changes. It is deliberately
+# not `latest`: pinned to a mutable tag, a base rebuild can silently change what the
+# suite ran against and a red build stops being attributable to a commit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Test suite
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # phpunit.xml pins APP_ENV, an in-memory SQLite database and array drivers, so
+      # no database or cache service is needed here. APP_KEY is not among them, and
+      # the framework will not boot without one.
+      - name: Prepare the application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run the suite
+        run: php artisan test --testsuite=Unit,Feature
+
+  static:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # --test reports rather than rewrites. A formatter that edited files in CI
+      # would pass while leaving the branch unformatted.
+      - name: Check formatting
+        run: vendor/bin/pint --test
+
+      # This codebase is not PHPStan-clean and carries a baseline of pre-existing
+      # errors; see docs/development/ci.md. The value of running it here is that the
+      # count cannot grow without someone noticing, which was tracked by hand until
+      # now.
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress
+
+  assets:
+    name: Asset build
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ vars.CI_IMAGE || 'harbor.calltheory.com/mission-control/ci:8.4-1' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # An explicit store directory, so there is a known path to cache. Without it
+      # pnpm uses a location under HOME that varies with the image.
+      - name: Point pnpm at a cacheable store
+        run: |
+          corepack enable
+          pnpm config set store-dir "$(pwd)/.pnpm-ci-store"
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: .pnpm-ci-store
+          key: pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+
+      # The suite calls withoutVite(), so no job above needs built assets. Whether
+      # they still compile is a separate question and nothing was asking it.
+      - name: Install and build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
