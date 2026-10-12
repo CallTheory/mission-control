@@ -11,6 +11,12 @@ Three jobs, deliberately separate so a red build says *which* thing broke:
 | **Static analysis** | `pint --test` for formatting, `phpstan analyse` against the baseline |
 | **Asset build** | `pnpm run build` still produces a bundle |
 
+The asset build needs **Composer** packages as well as node ones, which is not obvious:
+`resources/css/app.css` imports seven stylesheets out of `vendor/filament` and `@source`s
+Filament's PHP and Blade so Tailwind can scan them for class names. Without `vendor/` the
+build fails on the first `@import`, and a build that somehow resolved it would still emit
+CSS missing every Filament class.
+
 ## Why a prebuilt image
 
 Every job runs inside a PHP 8.4 container rather than installing PHP on the runner.

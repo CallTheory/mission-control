@@ -92,6 +92,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # resources/css/app.css imports seven stylesheets out of vendor/filament and
+      # @sources Filament's PHP and Blade so Tailwind can scan them for class names.
+      # So this job needs Composer packages, not just node ones -- without them the
+      # build fails to resolve the first @import, and even if it resolved, the CSS
+      # would come out missing every Filament class. --no-scripts because nothing
+      # here boots the application; it only needs the files on disk.
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+
       # An explicit store directory, so there is a known path to cache. Without it
       # pnpm uses a location under HOME that varies with the image.
       - name: Point pnpm at a cacheable store
