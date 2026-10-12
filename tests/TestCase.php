@@ -12,7 +12,15 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
+        // Any test that renders a page goes through layouts/app.blade.php, which calls
+        // @vite(). Without a built manifest that throws ViteManifestNotFoundException, so
+        // the suite only passed because a developer happened to have run `pnpm run build`
+        // -- public/build is gitignored, and a fresh clone could not run the tests at all.
+        // Nothing here asserts on asset URLs; whether the assets compile is checked by its
+        // own CI job.
+        $this->withoutVite();
+
         // Ensure clean database state for each test
         if (config('database.default') === 'sqlite') {
             // Force rollback any existing transactions before starting

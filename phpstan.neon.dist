@@ -1,5 +1,10 @@
 includes:
     - vendor/larastan/larastan/extension.neon
+    # Pre-existing errors, recorded so that NEW ones fail the build. This is a debt
+    # ledger, not an endorsement: entries come out as the code behind them is fixed,
+    # and `phpstan analyse --generate-baseline` regenerates it. See
+    # docs/development/ci.md.
+    - phpstan-baseline.neon
 
 parameters:
     paths:
@@ -18,14 +23,8 @@ parameters:
             identifier: method.notFound
             path: app/Http/Controllers/API/Integrations/StripeFillOutController.php
         -
-            identifier: property.notFound
-            path: app/Http/Controllers/API/Integrations/StripeFillOutController.php
-        -
             identifier: method.notFound
             path: app/Services/TwilioService.php
-        -
-            identifier: method.notFound
-            path: app/Jobs/SendFaxRingCentral.php
         -
             identifier: method.notFound
             path: app/Livewire/Utilities/CardProcessing.php
@@ -73,9 +72,6 @@ parameters:
             identifier: variable.undefined
             path: app/Livewire/Utilities/CardProcessing.php
         -
-            identifier: catch.neverThrown
-            path: app/Livewire/Utilities/CardProcessing.php
-        -
             identifier: identical.alwaysFalse
             path: app/Livewire/Utilities/CardProcessing.php
         -
@@ -109,9 +105,6 @@ parameters:
         # Null coalescing on expressions that are technically not nullable
         # but serve as defensive coding. Harmless.
         # ---------------------------------------------------------------
-        -
-            identifier: nullCoalesce.expr
-            path: app/Console/Commands/ISFaxing/*
         -
             identifier: nullCoalesce.expr
             path: app/Jobs/InboundRuleMatch.php
@@ -156,17 +149,6 @@ parameters:
         -
             identifier: argument.type
             path: app/Jobs/SendEmailToMergeComm.php
-        -
-            identifier: arrayValues.list
-            path: app/Jobs/SendFaxJob.php
-
-        # ---------------------------------------------------------------
-        # EnterpriseHost — decrypt() inside Attribute accessor can throw
-        # DecryptException at runtime, but PHPStan cannot see through it
-        # ---------------------------------------------------------------
-        -
-            identifier: catch.neverThrown
-            path: app/Models/EnterpriseHost.php
 
         # ---------------------------------------------------------------
         # Settings::first() genuinely CAN return null — the `settings` row is

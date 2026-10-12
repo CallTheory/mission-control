@@ -1,0 +1,277 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:validateSecurityCode\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Api/WctpController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>switch_data_timezone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Livewire/Concerns/FiltersCallLog.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\Profile\\UpdateProfileInformationForm\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Profile/UpdateProfileInformationForm.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\BoardCheck\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/BoardCheck.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\AmtelcoSMTP\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/AmtelcoSMTP.php
+
+		-
+			message: '#^Call to method getMessage\(\) on an unknown class App\\Livewire\\System\\DataSources\\Exception\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Livewire/System/DataSources/AmtelcoSMTP.php
+
+		-
+			message: '#^Caught class App\\Livewire\\System\\DataSources\\Exception not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Livewire/System/DataSources/AmtelcoSMTP.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\ClientDb\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/ClientDb.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\Intelligent\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/Intelligent.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\IsUser\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/IsUser.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\IsWebApi\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/IsWebApi.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\MarketingSite\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/MarketingSite.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\DataSources\\MiteamWeb\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/DataSources/MiteamWeb.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\FaxNotificationSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/FaxNotificationSettings.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$mfax_enabled\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/System/Integrations/Mfax.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$ringcentral_enabled\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/System/Integrations/Ringcentral.php
+
+		-
+			message: '#^Property App\\Livewire\\System\\SamlSettings\:\:\$saml_enabled \(bool\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Livewire/System/SamlSettings.php
+
+		-
+			message: '#^Property App\\Livewire\\System\\SamlSettings\:\:\$sign_assertions \(bool\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Livewire/System/SamlSettings.php
+
+		-
+			message: '#^Property App\\Livewire\\System\\SamlSettings\:\:\$stateless_callback \(bool\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Livewire/System/SamlSettings.php
+
+		-
+			message: '#^Property App\\Livewire\\System\\SamlSettings\:\:\$stateless_redirect \(bool\) on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Livewire/System/SamlSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\System\\Timezone\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/System/Timezone.php
+
+		-
+			message: '#^Parameter \#1 \$rules of method App\\Livewire\\System\\User\:\:validate\(\) expects array\<string, array\<mixed\>\>\|null, array\<string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Livewire/System/User.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$senderID\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/System/Wctp/Messages.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>better_emails_theme" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Livewire/Utilities/BetterEmails.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timezone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Livewire/Utilities/BoardActivity.php
+
+		-
+			message: '#^Undefined variable\: \$escalate$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Livewire/Utilities/BoardCheck.php
+
+		-
+			message: '#^Undefined variable\: \$escalate$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Livewire/Utilities/BoardReport.php
+
+		-
+			message: '#^Undefined variable\: \$escalate$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Livewire/Utilities/BoardReview.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/Utilities/CloudFaxing.php
+
+		-
+			message: '#^Constant JSON_THROW_ON_ERROR is not allowed for parameter \#3 \$depth of function json_decode\.$#'
+			identifier: argument.invalidConstant
+			count: 1
+			path: app/Livewire/Utilities/CloudFaxing.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\PendingFax\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Livewire/Utilities/CloudFaxing.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Livewire/Utilities/CloudFaxingRingCentral.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\PendingFax\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Livewire/Utilities/CloudFaxingRingCentral.php
+
+		-
+			message: '#^Access to an undefined property App\\Livewire\\Utilities\\CsvExport\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Utilities/CsvExport.php
+
+		-
+			message: '#^Access to property \$results on an unknown class App\\Livewire\\Utilities\\CallLogStats\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Livewire/Utilities/CsvExport.php
+
+		-
+			message: '#^Instantiated class App\\Livewire\\Utilities\\CallLogStats not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Livewire/Utilities/CsvExport.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$timezone\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Livewire/Utilities/VoicemailDigestHistory.php
+
+		-
+			message: '#^Parameter \#1 \$schedule of job class App\\Jobs\\SendVoicemailDigest constructor expects App\\Models\\VoicemailDigest in App\\Jobs\\SendVoicemailDigest\:\:dispatch\(\), Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Livewire/Utilities/VoicemailDigestHistory.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: app/Services/Faxing/RingCentralClient.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Faxing/RingCentralThrottle.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Psr\\Http\\Message\\ResponseInterface\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/Faxing/RingCentralThrottle.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type RingCentral\\SDK\\Http\\ApiResponse\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Services/Faxing/RingCentralThrottle.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\<mixed, mixed\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Sms/Gateways/CommioGateway.php
+
+		-
+			message: '#^Method App\\Support\\Tables\\StatRecords\:\:toArrays\(\) should return Illuminate\\Support\\Collection\<int, array\<string, mixed\>\> but returns Illuminate\\Support\\Collection\<int, non\-empty\-array\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/Tables/StatRecords.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/View/Components/BoardCheckModal.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/View/Components/GeneralModal.php
