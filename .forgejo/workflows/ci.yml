@@ -29,7 +29,7 @@ jobs:
     name: Test suite
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-2' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +58,7 @@ jobs:
     name: Static analysis
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-2' }}
     steps:
       # Full history, because Pint is asked below what changed relative to main and
       # a shallow clone has no merge base to answer with.
@@ -103,7 +103,7 @@ jobs:
     name: Asset build
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-2' }}
     steps:
       - uses: actions/checkout@v4
 
