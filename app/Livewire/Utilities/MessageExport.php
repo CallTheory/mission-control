@@ -111,6 +111,22 @@ class MessageExport extends Component implements HasActions, HasSchemas, HasTabl
         }
     }
 
+    /**
+     * The account select's options. Rows from Overview are stdClass objects, as every
+     * DB::select() row is; reading them as arrays threw "Cannot use object of type
+     * stdClass as array" and took the whole form down with a 500.
+     *
+     * @param  array<int, object>  $clients
+     * @return array<string, string>
+     */
+    public static function clientOptions(array $clients): array
+    {
+        return collect($clients)
+            ->mapWithKeys(fn (object $c): array => [
+                (string) $c->ClientNumber => trim($c->ClientNumber.' — '.($c->ClientName ?? '')),
+            ])->all();
+    }
+
     private function findClientName(string $clientNumber): ?string
     {
         $clients = $this->getClients();
@@ -135,10 +151,7 @@ class MessageExport extends Component implements HasActions, HasSchemas, HasTabl
 
             Select::make('client_number')
                 ->label('Account')
-                ->options(fn (): array => collect($this->getClients())
-                    ->mapWithKeys(fn ($c): array => [
-                        ($c['ClientNumber'] ?? $c['client_number'] ?? '') => trim(($c['ClientNumber'] ?? $c['client_number'] ?? '').' — '.($c['ClientName'] ?? $c['client_name'] ?? '')),
-                    ])->all())
+                ->options(fn (): array => self::clientOptions($this->getClients()))
                 ->searchable()
                 ->required()
                 // The available message fields depend on the account, so the checkbox
