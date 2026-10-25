@@ -71,14 +71,17 @@ class AbandonRate extends Stat
             $allowed_billing_filter = '';
         }
 
+        // One pass, with the dates bound straight into the predicate. This used to copy them
+        // into declared variables and count twice; SQL Server cannot see a local variable's
+        // value when it plans, so on statCallEnd it scanned the clustered index instead of
+        // seeking IX_statCallEnd_Stamp -- twice, on every poll, for every open dashboard.
         return trim(<<<TSQL
-            declare @total bigint;
-            declare @abandons bigint;
-            declare @startDate datetime = ?;
-            declare @endDate datetime = ?;
-            set @total = (select cast(count(*) as float) from statCallEnd left join cltClients on cltClients.cltId = statCallEnd.cltId where statCallEnd.kind in (1,2) and statCallEnd.Stamp between @startDate and @endDate {$allowed_accounts_filter}{$allowed_billing_filter});
-            set @abandons = (select cast(count(*) as float) from statCallEnd left join cltClients on cltClients.cltId = statCallEnd.cltId where statCallEnd.kind in (1,2) and statCallEnd.compcode = 3 and statCallEnd.Stamp between @startDate and @endDate {$allowed_accounts_filter}{$allowed_billing_filter});
-            select cast(@abandons as float)/nullif(cast(@total as float), 0)* 100 as [average];
+            select cast(sum(case when statCallEnd.compcode = 3 then 1 else 0 end) as float)
+                / nullif(cast(count(*) as float), 0) * 100 as [average]
+            from statCallEnd
+            left join cltClients on cltClients.cltId = statCallEnd.cltId
+            where statCallEnd.kind in (1,2) and statCallEnd.Stamp between ? and ?
+            {$allowed_accounts_filter}{$allowed_billing_filter}
             TSQL);
     }
 
