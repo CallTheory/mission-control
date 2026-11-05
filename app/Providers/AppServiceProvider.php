@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Database\GuardedSqlServerConnector;
 use App\Extensions\SafeSaml2Provider;
 use App\Services\FeatureFlags;
 use Filament\Support\Colors\Color;
@@ -21,6 +22,12 @@ class AppServiceProvider extends ServiceProvider
         // A singleton so its per-request memo actually spans the request: the
         // flag map is read many times per page.
         $this->app->singleton(FeatureFlags::class);
+
+        // Laravel's ConnectionFactory resolves `db.connector.{driver}` from the container when
+        // it is bound, so this one line covers every SQL Server connection the application
+        // makes, including the many that configure themselves at runtime. See the class for
+        // why an unreachable server needs this.
+        $this->app->bind('db.connector.sqlsrv', GuardedSqlServerConnector::class);
     }
 
     /**
