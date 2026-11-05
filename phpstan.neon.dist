@@ -52,12 +52,13 @@ parameters:
         # RingCentralClient reads the credentials from the data source instead of
         # copying them onto the component — so the ignore is no longer needed, and a
         # new write-only property should be reported rather than hidden.
+        #
+        # function.impossibleType went the same way: its one match was a null check
+        # on Settings::firstOrFail() in the dashboard Statistic tile, which can never
+        # be null, and that check is gone.
         # ---------------------------------------------------------------
         -
             identifier: assign.propertyType
-            path: app/Livewire/*
-        -
-            identifier: function.impossibleType
             path: app/Livewire/*
         -
             identifier: function.alreadyNarrowedType
