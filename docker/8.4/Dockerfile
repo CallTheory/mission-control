@@ -59,6 +59,12 @@ RUN apt-get update && apt-get upgrade -y \
 
 RUN setcap "cap_net_bind_service=+ep" /usr/bin/php8.4
 
+# PHP is not pinned -- the ondrej PPA only keeps its newest build -- so a build
+# against a stale mirror could quietly ship a vulnerable PHP. 8.4.27 fixes PHP2Shell
+# (CVE-2026-109618, CVE-2026-109619); fail the build rather than produce anything older.
+RUN php -r 'exit(version_compare(PHP_VERSION, "8.4.27", ">=") ? 0 : 1);' \
+    || (echo "PHP $(php -r 'echo PHP_VERSION;') predates the PHP2Shell fix (8.4.27)" >&2 && exit 1)
+
 RUN groupadd --force -g $WWWGROUP sail
 RUN useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u 1337 sail
 
