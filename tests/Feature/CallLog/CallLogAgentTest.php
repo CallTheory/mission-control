@@ -95,12 +95,42 @@ class CallLogAgentTest extends TestCase
                 continue;
             }
 
+            // Either aliased (`... as [CallStart]`) or selected bare under its own
+            // name (`statCallEnd.[Kind]`), which yields the same key.
+            $name = preg_quote($column->getName(), '/');
+
             $this->assertMatchesRegularExpression(
-                '/as \[?'.preg_quote($column->getName(), '/').'\]?/i',
+                '/(as \[?'.$name.'\]?|\.\['.$name.'\])/i',
                 $sql,
                 "The call log renders a [{$column->getName()}] column, but the query never selects one."
             );
         }
+    }
+
+    public function test_the_call_type_column_labels_the_call_kind(): void
+    {
+        // The Filament conversion dropped the Secretarial / Checkin / IVR badge the
+        // old screen showed under each Call ID.
+        $user = User::factory()->create();
+        $team = Team::factory()->create(['personal_team' => false, 'utility_call_lookup' => true]);
+        $user->teams()->attach($team, ['role' => 'admin']);
+        $user->switchTeam($team);
+
+        $column = Livewire::actingAs($user->fresh())
+            ->test(CallLog::class)
+            ->instance()
+            ->getTable()
+            ->getColumn('Kind');
+
+        $this->assertNotNull($column, 'The call log has no call type column.');
+        $this->assertSame('Type', $column->getLabel());
+
+        $this->assertSame('Secretarial', $column->formatState(1));
+        $this->assertSame('Checkin', $column->formatState(2));
+        $this->assertSame('IVR', $column->formatState(5));
+        // Amtelco returns Kind as a string from SQL Server.
+        $this->assertSame('Dispatch', $column->formatState('18'));
+        $this->assertSame('Unknown', $column->formatState(99));
     }
 
     public function test_the_agent_filter_matches_the_agent_id_exactly(): void
