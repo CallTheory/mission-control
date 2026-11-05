@@ -65,3 +65,20 @@ The team dashboard provides an aggregate display of statistics for your team. It
 - Greeting Hangups
 
 > You can adjust the timeframe from the Timeframe dropdown at the top left of the dashboard.
+
+### Refresh and caching
+
+Each statistic is a query against the Intelligent Series database, so the team dashboard
+refreshes on an interval and shares results between viewers rather than querying for every
+tile on every refresh.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `DASHBOARD_POLL_SECONDS` | `30` | How often each tile refreshes while the dashboard is visible. |
+| `DASHBOARD_CACHE_SECONDS` | `30` | How long a result is reused. `0` turns caching off. |
+
+A cached result is shared by everyone asking the same question: the same tile, the same
+timeframe, and the same team account and billing filters. Opening the dashboard in more
+tabs, or for more users, therefore adds little or no database load. Numbers can be up to
+`DASHBOARD_CACHE_SECONDS` behind. If the cache is unavailable, tiles query the database
+directly. A failed query is never cached; it is retried on the next refresh.
