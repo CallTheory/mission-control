@@ -34,7 +34,7 @@ development — so CI uses the same environment developers do, which is the poin
 **Settings → Actions → Variables** and all three jobs use it instead:
 
 ```
-CI_IMAGE = registry.example.com/your-project/ci:8.4-1
+CI_IMAGE = registry.example.com/your-project/ci:8.4-2
 ```
 
 A fork that sets nothing falls back to the image named in the workflow, which is published
@@ -50,10 +50,10 @@ From a clone of this repository:
 # nothing is bind-mounted from a host user.
 docker build \
   --build-arg WWWGROUP=1000 \
-  -t registry.example.com/your-project/ci:8.4-1 \
+  -t registry.example.com/your-project/ci:8.4-2 \
   docker/8.4
 
-docker push registry.example.com/your-project/ci:8.4-1
+docker push registry.example.com/your-project/ci:8.4-2
 ```
 
 It is a large image and takes several minutes to build — a full PHP 8.4 stack, Microsoft's
@@ -71,7 +71,7 @@ writable. If you build your own from a base that drops privileges, check that
 
 ### Tag it explicitly, never `latest`
 
-The workflow pins a tag (`ci:8.4-1`) rather than tracking `latest`, and you should too.
+The workflow pins a tag (`ci:8.4-2`) rather than tracking `latest`, and you should too.
 Pinned to a mutable tag, a base rebuild can silently change what the suite ran against —
 and a red build stops being attributable to the commit that caused it. Bump the number
 when the Dockerfile changes.
@@ -178,7 +178,7 @@ SQL Server. It needs a database, so it needs a service container:
     name: Integration suite
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-1' }}
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-2' }}
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest
