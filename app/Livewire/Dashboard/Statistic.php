@@ -12,11 +12,14 @@ use App\Models\Stats\Aggregate\Secretarial;
 use App\Models\Stats\Aggregate\SystemAbandon;
 use App\Models\Stats\Aggregate\TalkTime;
 use App\Models\Stats\Aggregate\TotalAbandon;
+use App\Models\Stats\Stat;
 use App\Models\System\Settings;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Throwable;
 
 class Statistic extends Component
 {
@@ -33,6 +36,23 @@ class Statistic extends Component
     public string $type = '';
 
     /**
+     * Each tile type, the stat that answers it, and the result field holding the number.
+     *
+     * @var array<string, array{class-string<Stat>, string}>
+     */
+    private const STATS = [
+        'secretarial_calls' => [Secretarial::class, 'total'],
+        'average_answer_time' => [AnswerTime::class, 'average'],
+        'average_talk_time' => [TalkTime::class, 'average'],
+        'greeting_hangups' => [GreetingHangup::class, 'total'],
+        'total_abandons' => [TotalAbandon::class, 'total'],
+        'system_abandons' => [SystemAbandon::class, 'total'],
+        'agent_abandons' => [AgentAbandon::class, 'total'],
+        'average_abandon_rate' => [AbandonRate::class, 'average'],
+        'average_disc_time' => [DiscTime::class, 'average'],
+    ];
+
+    /**
      * Recalculate the metric. The window is read from the viewer's saved
      * preference rather than passed in from the markup, so the header select
      * can refresh every widget over the wire instead of waiting for a reload.
@@ -40,143 +60,81 @@ class Statistic extends Component
     #[On('saved')]
     public function update(?string $period = null): void
     {
-        $settings = Settings::firstOrFail();
-
-        if (! is_null($settings)) {
-            $switchTimezone = $settings->switch_data_timezone ?? 'UTC';
-        } else {
-            $switchTimezone = 'UTC';
+        if (! array_key_exists($this->type, self::STATS)) {
+            return;
         }
 
-        $period ??= request()->user()?->dashboard_timeframe;
-
-        [$startDate, $endDate] = DashboardTimeframe::fromStored($period)->queryRange($switchTimezone);
-
+        $timeframe = DashboardTimeframe::fromStored($period ?? request()->user()?->dashboard_timeframe);
         $allowed_accounts = request()->user()->currentTeam->allowed_accounts ?? '';
         $allowed_billing = request()->user()->currentTeam->allowed_billing ?? '';
 
-        switch ($this->type) {
-            case 'secretarial_calls':
-                try {
-                    $secretarial_calls = new Secretarial([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
+        $seconds = (int) config('dashboard.cache_seconds');
+        $key = self::cacheKey($this->type, $timeframe, $allowed_accounts, $allowed_billing);
 
-                $this->metric = $secretarial_calls->total ?? 0.0;
-                break;
+        // The cache saves the Intelligent Series server from repeat queries; it is not
+        // needed to answer one. If the cache store is down, query directly rather than
+        // blank the dashboard -- so each half is guarded on its own, and a failed write
+        // never costs a second query.
+        if ($seconds > 0) {
+            try {
+                $cached = Cache::get($key);
+            } catch (Throwable) {
+                $cached = null;
+            }
 
-            case 'average_answer_time':
-                try {
-                    $average_answer_time = new AnswerTime([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
+            if ($cached !== null) {
+                $this->metric = (float) $cached;
 
-                $this->metric = $average_answer_time->average ?? 0.0;
-                break;
-            case 'average_talk_time':
-                try {
-                    $average_talk_time = new TalkTime([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $average_talk_time->average ?? 0.0;
-                break;
-
-            case 'greeting_hangups':
-                try {
-                    $greeting_hangups = new GreetingHangup([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $greeting_hangups->total ?? 0.0;
-                break;
-
-            case 'total_abandons':
-                try {
-                    $total_abandons = new TotalAbandon([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $total_abandons->total ?? 0.0;
-                break;
-
-            case 'system_abandons':
-                try {
-                    $system_abandons = new SystemAbandon([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $system_abandons->total ?? 0.0;
-                break;
-
-            case 'agent_abandons':
-                try {
-                    $agent_abandons = new AgentAbandon([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $agent_abandons->total ?? 0.0;
-                break;
-
-            case 'average_abandon_rate':
-                try {
-                    $average_abandon_rate = new AbandonRate([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $average_abandon_rate->average ?? 0.0;
-                break;
-
-            case 'average_disc_time':
-                try {
-                    $average_disc_time = new DiscTime([
-                        'start_date' => $startDate,
-                        'end_date' => $endDate,
-                        'allowed_accounts' => $allowed_accounts,
-                        'allowed_billing' => $allowed_billing,
-                    ]);
-                } catch (Exception $e) {
-                }
-                $this->metric = $average_disc_time->average ?? 0.0;
-                break;
-
-            default:
-                break;
+                return;
+            }
         }
+
+        $metric = $this->measure($timeframe, $allowed_accounts, $allowed_billing);
+
+        // A failed query is not cached: it is retried on the next poll, not served for the TTL.
+        if ($seconds > 0 && $metric !== null) {
+            try {
+                Cache::put($key, $metric, $seconds);
+            } catch (Throwable) {
+            }
+        }
+
+        $this->metric = $metric ?? 0.0;
+    }
+
+    /**
+     * One result per question, shared by every viewer who asks it. Keyed on the
+     * timeframe rather than its exact start and end, which move on every poll and so
+     * would never repeat.
+     */
+    public static function cacheKey(string $type, DashboardTimeframe $timeframe, string $allowed_accounts, string $allowed_billing): string
+    {
+        return 'dashboard:statistic:'.$type.':'.$timeframe->value.':'.md5($allowed_accounts."\0".$allowed_billing);
+    }
+
+    /**
+     * Query the stat behind this tile. Null when the query fails.
+     */
+    private function measure(DashboardTimeframe $timeframe, string $allowed_accounts, string $allowed_billing): ?float
+    {
+        $settings = Settings::firstOrFail();
+        $switchTimezone = $settings->switch_data_timezone ?? 'UTC';
+
+        [$startDate, $endDate] = $timeframe->queryRange($switchTimezone);
+        [$class, $field] = self::STATS[$this->type];
+
+        try {
+            $stat = new $class([
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'allowed_accounts' => $allowed_accounts,
+                'allowed_billing' => $allowed_billing,
+            ]);
+        } catch (Exception) {
+            return null;
+        }
+
+        return (float) ($stat->{$field} ?? 0.0);
     }
 
     public function mount(string $type): void
