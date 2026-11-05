@@ -1,6 +1,8 @@
 {{-- No timeframe argument: the component reads the viewer's saved preference,
-     so changing it in the header updates every widget without a reload. --}}
-<li wire:poll.5000ms.visible="update"
+     so changing it in the header updates every widget without a reload.
+     Every poll is a query against the Intelligent Series server, so the interval
+     comes from config/dashboard.php rather than being fixed here. --}}
+<li wire:poll.{{ max(1, (int) config('dashboard.poll_seconds')) * 1000 }}ms.visible="update"
     wire:id="{{ uniqid('widget') }}"
     class="widget relative"
     style="min-height: 20rem;">

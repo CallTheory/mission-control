@@ -74,7 +74,11 @@ class Kernel extends ConsoleKernel
         // One run covers every spool source; a run per provider would alert twice.
         $schedule->command('isfax:monitor')->everyThirtyMinutes()->withoutOverlapping(30);
         $schedule->command('telescope:prune --hours=1')->hourly();
-        $schedule->command('intelligent-data:sync')->everyThirtyMinutes();
+        // Daily, not half-hourly: this only feeds the MergeComm web trigger catalogue, and
+        // inbound email rules that name an account never read it. System -> Tools runs it on
+        // demand. withoutOverlapping takes an explicit expiry because the bare form holds
+        // the mutex for 24 hours, which on a daily task can skip a whole run.
+        $schedule->command('intelligent-data:sync')->daily()->withoutOverlapping(10);
         $schedule->command('board-check:export-peoplepraise')->everyFifteenMinutes();
         $schedule->command('board-check:purge-activity')->daily();
         $schedule->command('app:processing-cleanup')->everyFifteenMinutes();

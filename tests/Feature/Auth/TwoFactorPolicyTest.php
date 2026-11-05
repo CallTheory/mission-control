@@ -8,6 +8,9 @@ use App\Models\System\Settings;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
+use Livewire\Features\SupportTesting\Testable;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
@@ -94,5 +97,74 @@ class TwoFactorPolicyTest extends TestCase
         $this->requirePolicy();
 
         $this->get('/login')->assertOk();
+    }
+
+    /**
+     * A Livewire update request as the browser sends it.
+     *
+     * @param  list<array<string, mixed>>  $components
+     */
+    private function livewireUpdate(User $user, array $components): TestResponse
+    {
+        return $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->withHeader('X-Livewire', '1')
+            ->postJson(Livewire::getUpdateUri(), ['components' => $components]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function invoke(Testable $component, string $method): array
+    {
+        return [
+            'snapshot' => json_encode(\Livewire\invade($component)->lastState->getSnapshot()),
+            'updates' => (object) [],
+            'calls' => [['method' => $method, 'params' => [], 'metadata' => (object) []]],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function forged(string $name): array
+    {
+        return ['snapshot' => json_encode(['memo' => ['name' => $name]]), 'updates' => (object) [], 'calls' => []];
+    }
+
+    public function test_two_factor_can_be_enabled_while_the_policy_demands_it(): void
+    {
+        // Under Livewire 4 the update endpoint is /livewire-{hash}/update, which the
+        // old 'livewire/*' allowance never matched: "Enable" was redirected to the
+        // profile page and nothing happened, so the policy could not be satisfied.
+        $this->requirePolicy();
+        $user = $this->user(['saml_linked_id' => null]);
+
+        $this->actingAs($user);
+        $form = Livewire::test('profile.two-factor-authentication-form');
+
+        $this->livewireUpdate($user, [$this->invoke($form, 'enableTwoFactorAuthentication')])->assertOk();
+
+        $this->assertNotNull($user->fresh()->two_factor_secret);
+    }
+
+    public function test_other_components_stay_blocked_until_enrolled(): void
+    {
+        $this->requirePolicy();
+        $user = $this->user(['saml_linked_id' => null]);
+
+        $this->livewireUpdate($user, [$this->forged('dashboard.statistic')])
+            ->assertRedirect(route('profile.show'));
+    }
+
+    public function test_one_blocked_component_blocks_the_whole_batch(): void
+    {
+        $this->requirePolicy();
+        $user = $this->user(['saml_linked_id' => null]);
+
+        $this->livewireUpdate($user, [
+            $this->forged('profile.two-factor-authentication-form'),
+            $this->forged('utilities.message-export'),
+        ])->assertRedirect(route('profile.show'));
     }
 }
