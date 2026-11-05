@@ -52,6 +52,17 @@ class CallLog extends Component implements HasActions, HasSchemas, HasTable
                     ->fontFamily('mono')
                     ->url(fn (array $record): string => '/utilities/call-lookup/'.$record['CallId']),
 
+                // The call type (Secretarial, Checkin, IVR...). The pre-Filament screen
+                // showed it as a badge under the Call ID; the conversion dropped it.
+                // Read from Helpers directly rather than $this->ck, which is assigned
+                // at mount -- after Filament has already built the table.
+                TextColumn::make('Kind')
+                    ->label('Type')
+                    ->badge()
+                    ->color('gray')
+                    ->formatStateUsing(fn ($state): string => Helpers::callTypes()[(int) $state] ?? 'Unknown')
+                    ->placeholder('Unknown'),
+
                 TextColumn::make('CallStart')
                     ->label('Call Start')
                     ->formatStateUsing(fn ($state): string => Carbon::parse($state, $this->switchTimezone())
