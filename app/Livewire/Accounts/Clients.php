@@ -140,7 +140,7 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
                 TextColumn::make('ClientName')
                     ->label('Client Name')
                     ->sortable()
-                    ->url(fn (array $record): string => '/accounts/client/'.$record['ClientNumber']),
+                    ->url(fn (array $record): string => self::detailUrl($record)),
 
                 TextColumn::make('DIDLimit')
                     ->label('DID Limit')
@@ -236,6 +236,18 @@ class Clients extends Component implements HasActions, HasSchemas, HasTable
      * @param  array<string, mixed>  $filters
      * @return array<int, object>
      */
+    /**
+     * Built from the route rather than spelled out, so the link cannot drift from it
+     * again: it pointed at /accounts/client/{n}, which no route serves, and every
+     * account in the list opened a 404.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    public static function detailUrl(array $record): string
+    {
+        return route('accounts.{client_number}', ['client_number' => $record['ClientNumber']]);
+    }
+
     private function clientRows(array $filters, ?string $search, ?string $sortColumn, ?string $sortDirection): array
     {
         $account = $filters['account'] ?? [];
