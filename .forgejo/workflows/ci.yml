@@ -13,7 +13,7 @@
 #
 # The literal is repeated per job on purpose: `container.image` is evaluated before
 # a job's environment exists, so neither `env` nor a prior step can supply it. Bump
-# the tag in all three places when docker/8.4/Dockerfile changes. It is deliberately
+# the tag in all four places when docker/8.4/Dockerfile changes. It is deliberately
 # not `latest`: pinned to a mutable tag, a base rebuild can silently change what the
 # suite ran against and a red build stops being attributable to a commit.
 name: CI
@@ -53,6 +53,77 @@ jobs:
 
       - name: Run the suite
         run: php artisan test --testsuite=Unit,Feature
+
+  # The suite runs on in-memory SQLite, which says nothing about whether the
+  # migrations run on the databases the app is deployed to. A MySQL-only
+  # `ALTER TABLE ... MODIFY COLUMN` passed every check here and then failed a
+  # PostgreSQL deploy. This runs the whole migration set, from empty, against
+  # each supported server.
+  migrations:
+    name: Migrations (${{ matrix.database }})
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ vars.CI_IMAGE || 'cr.calltheory.com/mission-control/ci:8.4-2' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: mysql
+            port: 3306
+          - database: pgsql
+            port: 5432
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: mission_control
+          MYSQL_USER: ci
+          MYSQL_PASSWORD: ci
+          MYSQL_ROOT_PASSWORD: ci
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uci -pci"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+      pgsql:
+        image: postgres:16
+        env:
+          POSTGRES_DB: mission_control
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        options: >-
+          --health-cmd="pg_isready -U ci -d mission_control"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DB_CONNECTION: ${{ matrix.database }}
+      DB_HOST: ${{ matrix.database }}
+      DB_PORT: ${{ matrix.port }}
+      DB_DATABASE: mission_control
+      DB_USERNAME: ci
+      DB_PASSWORD: ci
+      # Nothing else is running; keep the framework off Redis while it boots.
+      CACHE_DRIVER: array
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare the application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run every migration
+        run: php artisan migrate --force --no-interaction
 
   static:
     name: Static analysis
