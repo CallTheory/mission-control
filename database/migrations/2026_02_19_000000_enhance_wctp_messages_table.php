@@ -18,11 +18,8 @@ return new class extends Migration
             $table->timestamp('processed_at')->nullable()->after('submitted_at');
         });
 
-        // Expand the status enum to include 'queued'
-        // For MySQL/MariaDB, we need to modify the enum directly
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE wctp_messages MODIFY COLUMN status ENUM('pending', 'queued', 'sent', 'delivered', 'failed') DEFAULT 'pending'");
-        }
+        // Expand the status enum to include 'queued'.
+        $this->setStatuses(['pending', 'queued', 'sent', 'delivered', 'failed']);
     }
 
     /**
@@ -30,14 +27,37 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (DB::getDriverName() !== 'sqlite') {
-            // First update any 'queued' rows back to 'pending' before shrinking enum
-            DB::table('wctp_messages')->where('status', 'queued')->update(['status' => 'pending']);
-            DB::statement("ALTER TABLE wctp_messages MODIFY COLUMN status ENUM('pending', 'sent', 'delivered', 'failed') DEFAULT 'pending'");
-        }
+        // First update any 'queued' rows back to 'pending' before shrinking the enum.
+        DB::table('wctp_messages')->where('status', 'queued')->update(['status' => 'pending']);
+        $this->setStatuses(['pending', 'sent', 'delivered', 'failed']);
 
         Schema::table('wctp_messages', function (Blueprint $table) {
             $table->dropColumn(['error_message', 'submitted_at', 'processed_at']);
         });
+    }
+
+    /**
+     * Replace the set of values the status column accepts.
+     *
+     * Laravel's enum() is a native ENUM on MySQL/MariaDB, but on PostgreSQL it is a
+     * varchar with a CHECK constraint, which Postgres names {table}_{column}_check.
+     * MODIFY COLUMN is MySQL-only syntax and was previously sent to Postgres too,
+     * which failed the deploy. SQLite's CHECK lives inside the table definition and
+     * cannot be altered in place; it was never widened there, as before.
+     *
+     * @param  list<string>  $statuses
+     */
+    private function setStatuses(array $statuses): void
+    {
+        $list = implode(', ', array_map(fn (string $status): string => "'{$status}'", $statuses));
+
+        match (DB::getDriverName()) {
+            'mysql', 'mariadb' => DB::statement("ALTER TABLE wctp_messages MODIFY COLUMN status ENUM({$list}) DEFAULT 'pending'"),
+            'pgsql' => DB::unprepared(
+                'ALTER TABLE wctp_messages DROP CONSTRAINT IF EXISTS wctp_messages_status_check; '
+                ."ALTER TABLE wctp_messages ADD CONSTRAINT wctp_messages_status_check CHECK (status IN ({$list}))"
+            ),
+            default => null,
+        };
     }
 };
