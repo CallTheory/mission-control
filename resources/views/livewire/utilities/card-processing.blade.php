@@ -17,8 +17,10 @@
 
     @if($records)
         <div class="mt-4 flex items-center gap-2">
-            {{ $this->processAction(false) }}
-            {{ $this->processAction(true) }}
+            {{-- The named methods, not processAction(bool): Filament finds a clicked
+                 action again by calling {name}Action(), so these must resolve by name. --}}
+            {{ $this->processTestAction }}
+            {{ $this->processLiveAction }}
         </div>
     @endif
 
