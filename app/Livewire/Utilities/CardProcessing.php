@@ -19,13 +19,10 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use NumberFormatter;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentIntent;
 use Stripe\PaymentMethod;
@@ -101,48 +98,31 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
     }
 
     /**
+     * Charge the next batch of unprocessed rows.
+     *
+     * Returns false, having charged nothing, when the Stripe key for the chosen mode is
+     * not configured. The previous guard returned response()->withErrors(), which is
+     * not a method on the response factory, so a missing key surfaced as an exception.
+     *
+     * Protected: it is reached only through the processTest / processLive actions, so
+     * a live run always passes through its confirmation modal. As a public method
+     * Livewire would also accept it as a direct call from the browser.
+     *
      * @throws ApiErrorException
-     * @throws NotFoundExceptionInterface
-     * @throws ContainerExceptionInterface
      */
-    public function processCardsSmallBatch($production = false)
+    protected function processCardsSmallBatch(bool $production = false): bool
     {
         // production means CHARGE CLIENTS SO BE CAREFUL
-        if ($production === true) {
-            if (strlen((string) $this->datasource->stripe_prod_secret_key)) {
-                Stripe::setApiKey($this->datasource->stripe_prod_secret_key);
-                $stripe = new StripeClient($this->datasource->stripe_prod_secret_key);
-            } else {
-                try {
-                    $validator = Validator::make(['processing' => $this->datasource->stripe_prod_secret_key], ['processing' => 'required'], [
-                        'processing' => 'Missing production Stripe API key. Please check system data sources.',
-                    ]);
-                } catch (Exception $e) {
-                    return response()->withErrors(['processing' => 'Missing production Stripe API key. Please check system data sources.'])->withInput();
-                }
+        $secretKey = (string) ($production
+            ? $this->datasource->stripe_prod_secret_key
+            : $this->datasource->stripe_test_secret_key);
 
-                if ($validator->fails()) {
-                    return response()->withErrors($validator)->withInput();
-                }
-            }
-        } else {
-            if (strlen((string) $this->datasource->stripe_test_secret_key)) {
-                Stripe::setApiKey($this->datasource->stripe_test_secret_key);
-                $stripe = new StripeClient($this->datasource->stripe_test_secret_key);
-            } else {
-                try {
-                    $validator = Validator::make(['processing' => $this->datasource->stripe_test_secret_key], ['processing' => 'required'], [
-                        'processing' => 'Missing test Stripe API key. Please check system data sources.',
-                    ]);
-                } catch (Exception $e) {
-                    return response()->withErrors(['processing' => 'Missing test Stripe API key. Please check system data sources.'])->withInput();
-                }
-
-                if ($validator->fails()) {
-                    return response()->withErrors($validator)->withInput();
-                }
-            }
+        if ($secretKey === '') {
+            return false;
         }
+
+        Stripe::setApiKey($secretKey);
+        $stripe = new StripeClient($secretKey);
 
         $fmt = new NumberFormatter('en_US', NumberFormatter::CURRENCY);
         $curr = 'USD';
@@ -179,7 +159,11 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                                     $pi = PaymentIntent::create([
                                         // 'setup_future_usage' => 'off_session',
                                         'payment_method' => $customer->default_source,
-                                        'amount' => $fmt->parseCurrency($record[7], $curr) * 100,
+                                        // Whole cents. parseCurrency() returns a float, and
+                                        // $19.99 * 100 is 1998.9999999999998: it reaches Stripe
+                                        // as 1999 only because PHP's default precision rounds
+                                        // it when cast to a string.
+                                        'amount' => (int) round($fmt->parseCurrency($record[7], $curr) * 100),
                                         'currency' => 'usd',
                                         'customer' => $customer->id,
                                         'description' => $record[5],
@@ -208,7 +192,11 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                                     $pi = PaymentIntent::create([
                                         // 'setup_future_usage' => 'off_session',
                                         'payment_method' => $payment_method->id,
-                                        'amount' => $fmt->parseCurrency($record[7], $curr) * 100,
+                                        // Whole cents. parseCurrency() returns a float, and
+                                        // $19.99 * 100 is 1998.9999999999998: it reaches Stripe
+                                        // as 1999 only because PHP's default precision rounds
+                                        // it when cast to a string.
+                                        'amount' => (int) round($fmt->parseCurrency($record[7], $curr) * 100),
                                         'currency' => 'usd',
                                         'customer' => $customer->id,
                                         'description' => $record[5],
@@ -465,12 +453,28 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
             });
     }
 
+    public function processTestAction(): Action
+    {
+        return $this->makeProcessRun(production: false);
+    }
+
+    public function processLiveAction(): Action
+    {
+        return $this->makeProcessRun(production: true);
+    }
+
     /**
      * Charging runs. Test mode talks to Stripe with the test key; live mode charges
      * real cards, which is why it confirms in a modal that says so rather than the
      * browser's own confirm() dialog the buttons used to rely on.
+     *
+     * Render and resolve these through processTestAction() / processLiveAction(), never
+     * this method directly. Filament finds a clicked action again by its name -- it calls
+     * `{name}Action()` on the component -- so an action named processTest needs a method
+     * called processTestAction. With only a parameterised builder, the buttons
+     * rendered but every click resolved to nothing: no charge, no error, no log.
      */
-    public function processAction(bool $production): Action
+    protected function makeProcessRun(bool $production): Action
     {
         return Action::make($production ? 'processLive' : 'processTest')
             ->label($production ? 'Process LIVE' : 'Process in Test Mode')
@@ -483,13 +487,29 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
             ->modalSubmitActionLabel($production ? 'Charge cards' : 'Run test batch')
             ->disabled(fn (): bool => blank($this->records))
             ->action(function () use ($production): void {
-                $this->processCardsSmallBatch($production);
+                if (! $this->processCardsSmallBatch($production)) {
+                    Notification::make()
+                        ->title($production ? 'Missing live Stripe key' : 'Missing test Stripe key')
+                        ->body('Nothing was charged. Add the key under System → Data Sources and run the batch again.')
+                        ->danger()
+                        ->persistent()
+                        ->send();
+
+                    return;
+                }
 
                 $charges = count($this->processResults['charges'] ?? []);
                 $failures = count($this->processResults['failures'] ?? []);
 
+                // A run charges one small batch, not the whole import. Without saying
+                // how many are left, one click reads as "processing stopped partway".
+                $remaining = collect($this->records ?? [])->where('processed', 'no')->count();
+
                 Notification::make()
                     ->title("{$charges} charged, {$failures} failed")
+                    ->body($remaining > 0
+                        ? "{$remaining} rows still to process. Run the batch again to continue."
+                        : 'Every row has been processed.')
                     ->status($failures > 0 ? 'warning' : 'success')
                     ->send();
             });
@@ -546,12 +566,16 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                         return match (true) {
                             isset($this->processResults['charges'][$id]) => 'Charged',
                             isset($this->processResults['failures'][$id]) => 'Failed',
+                            // Processed with nothing to charge -- no Stripe customer id or
+                            // a zero balance. Left as "Pending" it read as never processed.
+                            ($record['processed'] ?? 'no') === 'yes' => 'Skipped',
                             default => 'Pending',
                         };
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'Charged' => 'success',
                         'Failed' => 'danger',
+                        'Skipped' => 'warning',
                         default => 'gray',
                     }),
             ])

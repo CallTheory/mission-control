@@ -8,6 +8,7 @@ use App\Livewire\Utilities\CardProcessing;
 use App\Models\DataSource;
 use App\Models\Team;
 use App\Models\User;
+use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
@@ -54,7 +55,7 @@ class CardProcessingTest extends TestCase
     public function test_the_live_run_requires_confirmation_and_says_what_it_does(): void
     {
         $component = $this->withImport();
-        $action = $component->instance()->processAction(production: true);
+        $action = $component->instance()->processLiveAction();
 
         $this->assertTrue($action->isConfirmationRequired());
         $this->assertSame('danger', $action->getColor());
@@ -64,7 +65,7 @@ class CardProcessingTest extends TestCase
     public function test_the_test_run_says_no_real_money_moves(): void
     {
         $component = $this->withImport();
-        $action = $component->instance()->processAction(production: false);
+        $action = $component->instance()->processTestAction();
 
         $this->assertTrue($action->isConfirmationRequired());
         $this->assertStringContainsString('No real money moves', $action->getModalDescription());
@@ -74,8 +75,8 @@ class CardProcessingTest extends TestCase
     {
         $instance = Livewire::actingAs($this->user)->test(CardProcessing::class)->instance();
 
-        $this->assertTrue($instance->processAction(production: false)->isDisabled());
-        $this->assertTrue($instance->processAction(production: true)->isDisabled());
+        $this->assertTrue($instance->processTestAction()->isDisabled());
+        $this->assertTrue($instance->processLiveAction()->isDisabled());
     }
 
     public function test_imported_rows_reach_the_table(): void
@@ -103,6 +104,92 @@ class CardProcessingTest extends TestCase
         $this->withImport()
             ->set('processResults', ['charges' => [], 'failures' => ['pm_def' => ['results' => 'card_declined']]])
             ->assertSee('Failed');
+    }
+
+    /**
+     * The buttons rendered and clicked into nothing. Filament re-resolves a clicked
+     * action by name -- `{name}Action()` or `{name}()` on the component -- and the two
+     * runs were built by one parameterised builder, processAction(bool), named processTest and
+     * processLive, with no method of either name. resolveAction() returned null,
+     * mountAction() unmounted quietly, and nothing ran or logged. The tests above
+     * called the builder directly, which is why they never noticed.
+     *
+     * These go through the click path. A $0.00 row takes the whole batch loop without
+     * a Stripe call (only a positive amount is charged), so no network is needed.
+     */
+    private function withZeroAmountImport(): Testable
+    {
+        return Livewire::actingAs($this->user)
+            ->test(CardProcessing::class)
+            ->set('headers', ['Client', 'Name', 'Account', 'D', 'E', 'PaymentID', 'G', 'Amount'])
+            ->set('records', [
+                1 => ['1001', 'Northside Medical', 'ACC-1', '', '', 'cus_abc', '', '$0.00', 'processed' => 'no'],
+                2 => ['1002', 'Harbour Dental', 'ACC-2', '', '', 'cus_def', '', '$0.00', 'processed' => 'no'],
+            ]);
+    }
+
+    public function test_both_runs_resolve_when_clicked(): void
+    {
+        $this->withZeroAmountImport()
+            ->assertActionExists('processTest')
+            ->assertActionExists('processLive');
+    }
+
+    public function test_clicking_the_test_run_processes_the_batch(): void
+    {
+        $component = $this->withZeroAmountImport()
+            ->callAction('processTest')
+            ->assertNotified('0 charged, 0 failed');
+
+        foreach ($component->get('records') as $record) {
+            $this->assertSame('yes', $record['processed']);
+        }
+    }
+
+    public function test_a_processed_row_with_nothing_to_charge_is_marked_skipped(): void
+    {
+        $this->withZeroAmountImport()
+            ->callAction('processTest')
+            ->assertSee('Skipped')
+            ->assertDontSee('Pending');
+    }
+
+    public function test_the_run_says_how_many_rows_are_left(): void
+    {
+        // A run charges one batch (about eleven rows), not the whole import.
+        $records = [];
+
+        foreach (range(1, 15) as $i) {
+            $records[$i] = [(string) $i, "Client {$i}", "ACC-{$i}", '', '', "cus_{$i}", '', '$0.00', 'processed' => 'no'];
+        }
+
+        $component = Livewire::actingAs($this->user)
+            ->test(CardProcessing::class)
+            ->set('records', $records)
+            ->callAction('processTest');
+
+        $remaining = collect($component->get('records'))->where('processed', 'no')->count();
+
+        $this->assertGreaterThan(0, $remaining);
+        $component->assertNotified(
+            Notification::make()
+                ->title('0 charged, 0 failed')
+                ->body("{$remaining} rows still to process. Run the batch again to continue.")
+                ->success()
+        );
+    }
+
+    public function test_clicking_the_live_run_without_a_live_key_says_so(): void
+    {
+        // setUp() configures only a test key. The old guard here returned
+        // response()->withErrors(), which is not a method on the response factory.
+        $component = $this->withZeroAmountImport()
+            ->callAction('processLive')
+            ->assertNotified('Missing live Stripe key');
+
+        foreach ($component->get('records') as $record) {
+            $this->assertSame('no', $record['processed'], 'Rows were marked processed with no key to charge them.');
+        }
     }
 
     public function test_clearing_the_import_empties_the_table(): void
