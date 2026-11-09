@@ -501,8 +501,15 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                 $charges = count($this->processResults['charges'] ?? []);
                 $failures = count($this->processResults['failures'] ?? []);
 
+                // A run charges one small batch, not the whole import. Without saying
+                // how many are left, one click reads as "processing stopped partway".
+                $remaining = collect($this->records ?? [])->where('processed', 'no')->count();
+
                 Notification::make()
                     ->title("{$charges} charged, {$failures} failed")
+                    ->body($remaining > 0
+                        ? "{$remaining} rows still to process. Run the batch again to continue."
+                        : 'Every row has been processed.')
                     ->status($failures > 0 ? 'warning' : 'success')
                     ->send();
             });
@@ -559,12 +566,16 @@ class CardProcessing extends Component implements HasActions, HasSchemas, HasTab
                         return match (true) {
                             isset($this->processResults['charges'][$id]) => 'Charged',
                             isset($this->processResults['failures'][$id]) => 'Failed',
+                            // Processed with nothing to charge -- no Stripe customer id or
+                            // a zero balance. Left as "Pending" it read as never processed.
+                            ($record['processed'] ?? 'no') === 'yes' => 'Skipped',
                             default => 'Pending',
                         };
                     })
                     ->color(fn (string $state): string => match ($state) {
                         'Charged' => 'success',
                         'Failed' => 'danger',
+                        'Skipped' => 'warning',
                         default => 'gray',
                     }),
             ])

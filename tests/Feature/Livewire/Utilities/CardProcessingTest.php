@@ -8,6 +8,7 @@ use App\Livewire\Utilities\CardProcessing;
 use App\Models\DataSource;
 use App\Models\Team;
 use App\Models\User;
+use Filament\Notifications\Notification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
@@ -143,6 +144,39 @@ class CardProcessingTest extends TestCase
         foreach ($component->get('records') as $record) {
             $this->assertSame('yes', $record['processed']);
         }
+    }
+
+    public function test_a_processed_row_with_nothing_to_charge_is_marked_skipped(): void
+    {
+        $this->withZeroAmountImport()
+            ->callAction('processTest')
+            ->assertSee('Skipped')
+            ->assertDontSee('Pending');
+    }
+
+    public function test_the_run_says_how_many_rows_are_left(): void
+    {
+        // A run charges one batch (about eleven rows), not the whole import.
+        $records = [];
+
+        foreach (range(1, 15) as $i) {
+            $records[$i] = [(string) $i, "Client {$i}", "ACC-{$i}", '', '', "cus_{$i}", '', '$0.00', 'processed' => 'no'];
+        }
+
+        $component = Livewire::actingAs($this->user)
+            ->test(CardProcessing::class)
+            ->set('records', $records)
+            ->callAction('processTest');
+
+        $remaining = collect($component->get('records'))->where('processed', 'no')->count();
+
+        $this->assertGreaterThan(0, $remaining);
+        $component->assertNotified(
+            Notification::make()
+                ->title('0 charged, 0 failed')
+                ->body("{$remaining} rows still to process. Run the batch again to continue.")
+                ->success()
+        );
     }
 
     public function test_clicking_the_live_run_without_a_live_key_says_so(): void
