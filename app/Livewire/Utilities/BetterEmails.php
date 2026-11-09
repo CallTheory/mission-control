@@ -113,7 +113,7 @@ class BetterEmails extends Component implements HasActions, HasSchemas, HasTable
             });
     }
 
-    public function editConfigurationAction(): Action
+    public function editAction(): Action
     {
         return Action::make('edit')
             ->label('Edit')
@@ -168,7 +168,7 @@ class BetterEmails extends Component implements HasActions, HasSchemas, HasTable
                 $this->createConfigurationAction(),
             ])
             ->recordActions([
-                $this->editConfigurationAction(),
+                $this->editAction(),
 
                 Action::make('delete')
                     ->label('Delete')
