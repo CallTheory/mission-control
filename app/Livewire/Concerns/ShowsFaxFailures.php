@@ -6,9 +6,11 @@ namespace App\Livewire\Concerns;
 
 use App\Models\PendingFax;
 use App\Services\Faxing\FaxRetry;
+use App\Services\Faxing\RingCentralFaxAttempts;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 use Throwable;
 
 /**
@@ -54,6 +56,8 @@ trait ShowsFaxFailures
                 'stage' => $fax->failure_stage,
                 'failed_at' => $fax->resolved_at?->toIso8601String(),
                 'retryable' => $fax->failure_stage === 'submission',
+                // RingCentral accepted it, so its call log shows each delivery attempt.
+                'inspectable' => $fax->fax_provider === 'ringcentral' && filled($fax->api_fax_id),
             ])
             ->all();
     }
@@ -100,6 +104,49 @@ trait ShowsFaxFailures
                     ->status('success')
                     ->send();
             });
+    }
+
+    /**
+     * Each call RingCentral made trying to deliver a failed fax: when, how long, and how
+     * it ended. One call-log lookup per fax, cached (see RingCentralFaxAttempts).
+     */
+    public function faxAttemptsAction(): Action
+    {
+        return Action::make('faxAttempts')
+            ->label(__('Details'))
+            ->link()
+            ->modalHeading(fn (array $arguments): string => __('Delivery attempts for :file', [
+                'file' => $this->failedFax($arguments)->fs_file_name ?? __('this fax'),
+            ]))
+            ->modalContent(function (array $arguments): View {
+                $fax = $this->failedFax($arguments);
+
+                return view('utilities.cloud-faxing.fax-attempts', [
+                    'fax' => $fax,
+                    'details' => $fax === null
+                        ? ['attempts' => [], 'hint' => null, 'error' => __('That fax is no longer listed.'), 'fetched_at' => null]
+                        : app(RingCentralFaxAttempts::class)->for($fax),
+                    'timezone' => Auth::user()->timezone ?? 'UTC',
+                ]);
+            })
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel(__('Close'));
+    }
+
+    /**
+     * A failed fax on this page, scoped like the list itself so an id from the browser
+     * cannot reach another provider's or source's faxes.
+     *
+     * @param  array<string, mixed>  $arguments
+     */
+    private function failedFax(array $arguments): ?PendingFax
+    {
+        return PendingFax::query()
+            ->whereKey($arguments['fax'] ?? null)
+            ->where('fax_provider', $this->faxProvider())
+            ->where('spool_source_key', $this->faxSource())
+            ->where('delivery_status', 'failed')
+            ->first();
     }
 
     private function failureActor(): string

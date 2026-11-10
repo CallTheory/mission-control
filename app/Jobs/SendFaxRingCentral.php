@@ -18,6 +18,7 @@ use App\Services\Faxing\RingCentralClient;
 use App\Services\Faxing\RingCentralExtension;
 use App\Services\Faxing\RingCentralRateLimit;
 use App\Services\Faxing\RingCentralRateLimitState;
+use App\Services\Faxing\RingCentralRecipient;
 use App\Services\Faxing\RingCentralRetryDelay;
 use App\Services\Faxing\RingCentralSenderPool;
 use App\Services\Faxing\RingCentralSenderSelector;
@@ -32,7 +33,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
 use Throwable;
 
@@ -553,22 +553,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     private function normalizedRecipient(): string
     {
-        if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
-            return "+1{$this->phone}";
-        }
-
-        if (Str::startsWith($this->phone, '9') && strlen($this->phone) === 11) {
-            return '+1'.Str::after($this->phone, '9');
-        }
-
-        if (Str::startsWith($this->phone, '91') && strlen($this->phone) === 12) {
-            return '+1'.Str::after($this->phone, '91');
-        }
-
-        if (! Str::startsWith($this->phone, '+')) {
-            return "+{$this->phone}";
-        }
-
-        return $this->phone;
+        return RingCentralRecipient::normalize($this->phone);
     }
 }
