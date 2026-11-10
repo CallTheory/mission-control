@@ -7,9 +7,11 @@ use App\Livewire\Concerns\ManagesFaxSpool;
 use App\Livewire\Concerns\ShowsFaxFailures;
 use App\Models\DataSource;
 use App\Models\FaxSpoolSource;
+use App\Models\PendingFax;
 use App\Services\Faxing\FaxDashboardSnapshot;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralSenderPool;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -17,6 +19,7 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -108,7 +111,7 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         try {
             // Reuses the shared access token rather than performing its own JWT login;
             // looking at a fax used to cost two token requests before it even resent.
-            $platform = $this->ringCentral()->platform();
+            $platform = $this->ringCentral((string) $messageId)->platform();
         } catch (Exception $e) {
             Log::error($e->getMessage());
 
@@ -140,7 +143,7 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
             return;
         }
 
-        $client = $this->ringCentral();
+        $client = $this->ringCentral($this->faxIdToSend);
 
         try {
             $rcsdk = $client->sdk();
@@ -234,9 +237,48 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         return $this->sourceKey;
     }
 
-    private function ringCentral(): RingCentralClient
+    /**
+     * A client authenticated as the extension that sent this fax.
+     *
+     * A fax lives in the sending extension's message store, so viewing or resending one
+     * sent through an additional extension has to authenticate as that extension. The
+     * sender is worked out here from our own records, never taken from the browser.
+     */
+    private function ringCentral(?string $messageId = null): RingCentralClient
     {
-        return new RingCentralClient($this->datasource);
+        $pool = app(RingCentralSenderPool::class);
+        $extension = $messageId !== null ? $pool->find($this->datasource, $this->senderForMessage($messageId)) : null;
+
+        return $extension !== null
+            ? RingCentralClient::forExtension($this->datasource, $extension)
+            : new RingCentralClient($this->datasource);
+    }
+
+    private function senderForMessage(string $messageId): ?string
+    {
+        try {
+            $sender = PendingFax::query()
+                ->where('fax_provider', 'ringcentral')
+                ->where('api_fax_id', $messageId)
+                ->value('ringcentral_sender');
+
+            if (filled($sender)) {
+                return (string) $sender;
+            }
+        } catch (QueryException) {
+            // Column not migrated yet: every fax was sent by the primary.
+            return null;
+        }
+
+        // Faxes sent outside Mission Control have no row; the dashboard snapshot tagged
+        // each record with the extension whose message store it came from.
+        foreach ($this->providerSnapshot()['failed_faxes'] ?? [] as $record) {
+            if (is_array($record) && (string) ($record['id'] ?? '') === $messageId) {
+                return $record['mc_sender'] ?? null;
+            }
+        }
+
+        return null;
     }
 
     protected function faxProvider(): string

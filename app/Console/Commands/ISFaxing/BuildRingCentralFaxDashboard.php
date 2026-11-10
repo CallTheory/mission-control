@@ -7,6 +7,8 @@ use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxDeliveryWebhooks;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralExtension;
+use App\Services\Faxing\RingCentralSenderPool;
 use App\Services\Faxing\RingCentralThrottle;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -72,19 +74,64 @@ class BuildRingCentralFaxDashboard extends Command
     }
 
     /**
-     * Fetch the recent fax list from RingCentral. On any failure we keep the previously
-     * cached list (so a transient API hiccup doesn't blank the table); only if there is no
+     * Fetch the recent fax list from RingCentral, from every sending extension.
+     *
+     * Each extension has its own message store, so with a sender pool the faxes sent
+     * through additional extensions are only visible by asking each one. Every record is
+     * tagged with the sender it came from (mc_sender), which is how a resend from the page
+     * knows which extension to authenticate as.
+     *
+     * On any failure we keep that extension's previously cached records (so a transient
+     * API hiccup doesn't blank the table); only if nothing was fetched and there is no
      * prior data do we return false, which the page renders as an API-error notice.
      *
      * @return array<int, mixed>|false
      */
     private function fetchFailedFaxes(DataSource $datasource): array|false
     {
-        $client = new RingCentralClient($datasource);
+        $extensions = app(RingCentralSenderPool::class)->extensions($datasource);
 
-        if (! $client->configured()) {
+        if ($extensions === [] || ! RingCentralClient::forExtension($datasource, $extensions[0])->configured()) {
             return false;
         }
+
+        $previous = $this->previousFailedFaxes();
+        $records = [];
+        $anySucceeded = false;
+
+        foreach ($extensions as $extension) {
+            $fetched = $this->fetchFor($datasource, $extension);
+
+            if ($fetched !== null) {
+                $anySucceeded = true;
+                $records = [...$records, ...$fetched];
+
+                continue;
+            }
+
+            if (is_array($previous)) {
+                $records = [...$records, ...array_values(array_filter(
+                    $previous,
+                    fn ($record) => is_array($record) && ($record['mc_sender'] ?? RingCentralExtension::PRIMARY) === $extension->key
+                ))];
+            }
+        }
+
+        if (! $anySucceeded && $records === [] && $previous === false) {
+            return false;
+        }
+
+        usort($records, fn ($a, $b) => strcmp((string) ($b['creationTime'] ?? ''), (string) ($a['creationTime'] ?? '')));
+
+        return $this->withAccounts($records);
+    }
+
+    /**
+     * @return array<int, mixed>|null null when the fetch failed
+     */
+    private function fetchFor(DataSource $datasource, RingCentralExtension $extension): ?array
+    {
+        $client = RingCentralClient::forExtension($datasource, $extension);
 
         try {
             // Shares the cached access token with the send jobs rather than performing its
@@ -95,15 +142,18 @@ class BuildRingCentralFaxDashboard extends Command
                 'perPage' => 100,
             ]);
 
-            return $this->withAccounts($resp->jsonArray()['records'] ?? []);
+            return array_map(
+                fn ($record) => is_array($record) ? $record + ['mc_sender' => $extension->key] : $record,
+                $resp->jsonArray()['records'] ?? []
+            );
         } catch (Throwable $e) {
             if (RingCentralThrottle::isUnauthorized($e)) {
                 $client->forgetToken();
             }
 
-            Log::error('BuildRingCentralFaxDashboard: failed to fetch fax list: '.$e->getMessage());
+            Log::error("BuildRingCentralFaxDashboard: failed to fetch fax list for {$extension->key}: ".$e->getMessage());
 
-            return $this->previousFailedFaxes();
+            return null;
         }
     }
 
