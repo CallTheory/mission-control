@@ -26,7 +26,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
 use Throwable;
@@ -316,8 +315,10 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             return;
         }
 
-        Mail::queue(new FaxFailAlert($faxFsDetails, $reason));
+        // The move first: it is what tells Intelligent Series the fax failed and takes the
+        // .fs out of tosend/. The alert must never be able to prevent it.
         MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::RingCentral->value, $this->sourceKey());
+        FaxFailAlert::queueSafely($faxFsDetails, $reason);
     }
 
     /**

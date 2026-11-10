@@ -15,7 +15,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class FaxWebhookController extends Controller
 {
@@ -128,7 +127,7 @@ class FaxWebhookController extends Controller
             Log::info("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.");
         } else {
             MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            Mail::queue(new FaxFailAlert($faxFsDetails, $reason ?? 'Fax delivery failed'));
+            FaxFailAlert::queueSafely($faxFsDetails, $reason ?? 'Fax delivery failed');
             Log::error("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
         }
 

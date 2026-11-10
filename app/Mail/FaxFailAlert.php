@@ -7,7 +7,10 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
+use Throwable;
 
 class FaxFailAlert extends Mailable implements ShouldQueue
 {
@@ -33,6 +36,30 @@ class FaxFailAlert extends Mailable implements ShouldQueue
 
         if (empty($this->datasource->fax_failure_notification_email)) {
             throw new InvalidArgumentException('Fax buildup notification email is not configured.');
+        }
+    }
+
+    /**
+     * Queue the alert, never letting a mail problem interrupt failure handling.
+     *
+     * The constructor throws when no notification address is configured. Every caller
+     * sits in the middle of failing a fax, and a throw there skipped what came after it:
+     * in the send jobs the alert was queued before MoveFailedFaxFiles, so the .fs stayed
+     * in tosend/ and was submitted again on the next scan; in the webhook and poller it
+     * left the pending row unresolved. The alert is the least important step, so it is
+     * the one that gives way.
+     *
+     * @param  array<string, mixed>  $fax
+     */
+    public static function queueSafely(array $fax, ?string $details = null): void
+    {
+        try {
+            Mail::queue(new self($fax, $details));
+        } catch (Throwable $e) {
+            Log::warning('Fax failure alert not sent: '.$e->getMessage(), [
+                'fsFileName' => $fax['fsFileName'] ?? null,
+                'jobID' => $fax['jobID'] ?? null,
+            ]);
         }
     }
 

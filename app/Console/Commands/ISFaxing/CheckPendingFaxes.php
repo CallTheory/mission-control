@@ -20,7 +20,6 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use RingCentral\SDK\Platform\Platform as RingCentralPlatform;
 use Symfony\Component\Console\Command\Command as CommandStatus;
 use Throwable;
@@ -271,7 +270,7 @@ class CheckPendingFaxes extends Command
             $this->info("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.");
         } else {
             MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            Mail::queue(new FaxFailAlert($faxFsDetails, $reason ?? 'Fax delivery failed'));
+            FaxFailAlert::queueSafely($faxFsDetails, $reason ?? 'Fax delivery failed');
             $this->error("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
         }
 

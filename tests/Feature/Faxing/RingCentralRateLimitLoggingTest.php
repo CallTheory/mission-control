@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Faxing;
 
+use App\Jobs\MoveFailedFaxFiles;
 use App\Jobs\SendFaxRingCentral;
 use App\Models\DataSource;
 use App\Models\FaxSpoolSource;
@@ -149,5 +150,15 @@ class RingCentralRateLimitLoggingTest extends TestCase
         $this->job()->failed(new RuntimeException('Fax payload missing: IS20.cap'));
 
         $this->assertSame('Fax payload missing: IS20.cap', PendingFax::sole()->failure_reason);
+    }
+
+    public function test_a_missing_notification_address_does_not_stop_the_fail_move(): void
+    {
+        DataSource::query()->update(['fax_failure_notification_email' => null]);
+
+        $this->job()->failed(new RuntimeException('Fax payload missing: IS20.cap'));
+
+        Queue::assertPushed(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->fsFileName === 'IS20.fs');
+        Mail::assertNothingQueued();
     }
 }
