@@ -8,6 +8,7 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxDeliveryResolver;
 use App\Services\Faxing\FaxFailureLog;
 use App\Services\Faxing\FaxLockKey;
 use App\Services\Faxing\FaxRoute;
@@ -309,11 +310,15 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
         // cannot appear in the provider history the status pages list — without a row of
         // our own the only trace is the email, which is not something anyone can retry
         // from.
-        app(FaxFailureLog::class)->recordSubmissionFailure(
+        $record = app(FaxFailureLog::class)->recordSubmissionFailure(
             $faxFsDetails,
             FaxProvider::Mfax->value,
             $this->sourceKey(),
             $exception->getMessage(),
+            // `failing` until the move below has taken the .fs out of tosend/, so the
+            // spool scan cannot submit it again in the meantime. A failover leaves it
+            // `failing` too: the fax is still in flight and must not be re-submitted.
+            FaxDeliveryResolver::FAILING,
         );
 
         // Handing the fax to the other provider means it is still in flight, so neither
@@ -324,7 +329,7 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
 
         // The move first: it is what tells Intelligent Series the fax failed and takes the
         // .fs out of tosend/. The alert must never be able to prevent it.
-        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::Mfax->value, $this->sourceKey());
+        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::Mfax->value, $this->sourceKey(), $record?->id);
         FaxFailAlert::queueSafely($faxFsDetails, $exception->getMessage());
     }
 

@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\ISFaxing;
 
-use App\Jobs\MoveFailedFaxFiles;
-use App\Jobs\MoveSuccessfulFaxFiles;
-use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
+use App\Services\Faxing\FaxDeliveryResolver;
 use App\Services\Faxing\RingCentralClient;
 use App\Services\Faxing\RingCentralExtension;
 use App\Services\Faxing\RingCentralSenderPool;
@@ -60,6 +58,7 @@ class CheckPendingFaxes extends Command
         }
 
         $this->timeOutAbandonedFaxes();
+        app(FaxDeliveryResolver::class)->retryStalledMoves();
 
         $this->pollProvider('ringcentral', $datasource);
         $this->pollProvider('mfax', $datasource);
@@ -260,7 +259,7 @@ class CheckPendingFaxes extends Command
         if (in_array($messageStatus, ['Sent', 'Delivered'])) {
             $this->resolveFax($pendingFax, 'success');
         } elseif (in_array($messageStatus, ['DeliveryFailed', 'SendingFailed'])) {
-            $this->resolveFax($pendingFax, 'failed', "RingCentral status: {$messageStatus}");
+            $this->resolveFax($pendingFax, 'failed', FaxDeliveryResolver::ringCentralReason('RingCentral status', $messageStatus, $data->to ?? null));
         }
     }
 
@@ -274,32 +273,11 @@ class CheckPendingFaxes extends Command
 
     private function resolveFax(PendingFax $pendingFax, string $outcome, ?string $reason = null): void
     {
-        $faxFsDetails = [
-            'jobID' => $pendingFax->job_id,
-            'capfile' => $pendingFax->cap_file,
-            'filename' => $pendingFax->filename,
-            'phone' => $pendingFax->phone,
-            'status' => $pendingFax->original_status,
-            'fsFileName' => $pendingFax->fs_file_name,
-            'account' => $pendingFax->accountLabel() ?? 'Unknown',
-            // Neither a provider callback nor the poller knows which Intelligent Series
-            // server produced this fax; the pending row is the only thing that does.
-            'source_key' => $pendingFax->spool_source_key,
-        ];
+        app(FaxDeliveryResolver::class)->resolve($pendingFax, $outcome, $reason);
 
-        if ($outcome === 'success') {
-            MoveSuccessfulFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            $this->info("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.");
-        } else {
-            MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            FaxFailAlert::queueSafely($faxFsDetails, $reason ?? 'Fax delivery failed');
-            $this->error("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
-        }
-
-        $pendingFax->update([
-            'delivery_status' => $outcome,
-            'resolved_at' => Carbon::now(),
-        ]);
+        $outcome === 'success'
+            ? $this->info("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.")
+            : $this->error("Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
     }
 
     private function batchSize(): int

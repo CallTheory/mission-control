@@ -115,6 +115,11 @@ return [
             // Each poll is an API call competing with actual fax sends for the same
             // quota, so the poller is deliberately capped.
             'poll_batch_size' => env('RING_CENTRAL_POLL_BATCH_SIZE', 15),
+
+            // How long a failed fax's call attempts (Details on the Failed Faxes list) are
+            // kept in Redis before RingCentral is asked again. A failed fax's call log
+            // does not change, and each lookup may draw on the same allowance as sending.
+            'call_log_cache_seconds' => env('RING_CENTRAL_CALL_LOG_CACHE_SECONDS', 1800),
         ],
 
         // Grace period before a submitted fax is polled for a delivery status at all,

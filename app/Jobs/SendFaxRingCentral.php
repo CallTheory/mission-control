@@ -8,6 +8,7 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\FaxAccountLookup;
+use App\Services\Faxing\FaxDeliveryResolver;
 use App\Services\Faxing\FaxFailureLog;
 use App\Services\Faxing\FaxLockKey;
 use App\Services\Faxing\FaxRoute;
@@ -17,6 +18,7 @@ use App\Services\Faxing\RingCentralClient;
 use App\Services\Faxing\RingCentralExtension;
 use App\Services\Faxing\RingCentralRateLimit;
 use App\Services\Faxing\RingCentralRateLimitState;
+use App\Services\Faxing\RingCentralRecipient;
 use App\Services\Faxing\RingCentralRetryDelay;
 use App\Services\Faxing\RingCentralSenderPool;
 use App\Services\Faxing\RingCentralSenderSelector;
@@ -31,7 +33,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
 use Throwable;
 
@@ -399,11 +400,15 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         // cannot appear in the provider history the status pages list — without a row of
         // our own the only trace is the email, which is not something anyone can retry
         // from.
-        app(FaxFailureLog::class)->recordSubmissionFailure(
+        $record = app(FaxFailureLog::class)->recordSubmissionFailure(
             $faxFsDetails,
             FaxProvider::RingCentral->value,
             $this->sourceKey(),
             $reason,
+            // `failing` until the move below has taken the .fs out of tosend/, so the
+            // spool scan cannot submit it again in the meantime. A failover leaves it
+            // `failing` too: the fax is still in flight and must not be re-submitted.
+            FaxDeliveryResolver::FAILING,
         );
 
         // Handing the fax to the other provider means it is still in flight, so neither
@@ -414,7 +419,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
         // The move first: it is what tells Intelligent Series the fax failed and takes the
         // .fs out of tosend/. The alert must never be able to prevent it.
-        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::RingCentral->value, $this->sourceKey());
+        MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::RingCentral->value, $this->sourceKey(), $record?->id);
         FaxFailAlert::queueSafely($faxFsDetails, $reason);
     }
 
@@ -548,22 +553,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
     private function normalizedRecipient(): string
     {
-        if (! Str::startsWith($this->phone, '+') && strlen($this->phone) === 10) {
-            return "+1{$this->phone}";
-        }
-
-        if (Str::startsWith($this->phone, '9') && strlen($this->phone) === 11) {
-            return '+1'.Str::after($this->phone, '9');
-        }
-
-        if (Str::startsWith($this->phone, '91') && strlen($this->phone) === 12) {
-            return '+1'.Str::after($this->phone, '91');
-        }
-
-        if (! Str::startsWith($this->phone, '+')) {
-            return "+{$this->phone}";
-        }
-
-        return $this->phone;
+        return RingCentralRecipient::normalize($this->phone);
     }
 }

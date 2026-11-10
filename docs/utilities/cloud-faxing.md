@@ -281,6 +281,22 @@ server's spool is shown separately. Each page shows:
 - The account each fax belongs to
 - File counts and contents for each of the four spool folders
 - When a delivery webhook was last received
+- **Failed Faxes**: every fax that did not go out, with the reason. A fax that never
+  reached the provider offers **Send Again**. A RingCentral fax that RingCentral accepted
+  but could not deliver offers **Details**, which lists each call RingCentral made to
+  deliver it (when it dialled, how long the call lasted, how it ended), with a plain
+  reading of the pattern when there is one. A busy line, a number that never answers, and
+  a number that answers but has no working fax machine on it each look different there.
+  The call log is fetched only when Details is opened and cached in Redis for
+  `RING_CENTRAL_CALL_LOG_CACHE_SECONDS` (default 1800). It is not fetched while the
+  sending extension is being held for its rate limit, because the lookup may draw on the
+  same allowance as sending. RingCentral's call log can lag a failure by a few minutes.
+
+A failed fax is briefly `failing` before it is `failed`: it stays `failing` until its
+files have been moved out of `tosend/`, and only then appears in the list. Without this
+hold, the spool scan could find the file still in `tosend/` and send the fax a second
+time. A move that has not happened after five minutes is queued again by
+`isfax:check-pending`.
 
 ## Account Attribution
 
@@ -347,6 +363,13 @@ needs. Then search the log for `RingCentral fax API response` around the failure
 `rate_limit_remaining` of 0 or an `http_status` of 429 means the extension's allowance is
 the bottleneck (add a sending extension, or ask RingCentral to raise the app's limit);
 anything else means the failure is not rate limiting.
+
+**A RingCentral fax fails with "SendingFailed (CallFailed)".** RingCentral accepted it
+and called the recipient, normally three times about six minutes apart, before giving up.
+**Details** on the Failed Faxes list shows those calls. Calls that each lasted about a
+minute mean the number answered but no fax connected: call it from a phone to check it is
+a fax line. Intelligent Series reports every failure as `261 Busy trunk line detected`
+whatever the cause, so the reason in Mission Control is the one to go by.
 
 **A file sits in `tosend/` and nothing happens.** The buildup alert names the file and its
 account. Deleting the file from the status page clears it without an SSH session.

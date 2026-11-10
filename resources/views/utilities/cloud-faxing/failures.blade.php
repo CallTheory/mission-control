@@ -49,6 +49,13 @@
                                           class="cursor-pointer font-medium text-primary hover:underline">
                                         Send Again
                                     </span>
+                                @elseif($failure['inspectable'] ?? false)
+                                    {{-- The provider has this one, so it is resent with its own Resend above;
+                                         its call log says why it did not go through. --}}
+                                    <span wire:click="mountAction('faxAttempts', { fax: {{ $failure['id'] }} })"
+                                          class="cursor-pointer font-medium text-primary hover:underline">
+                                        Details
+                                    </span>
                                 @else
                                     {{-- The provider has this one; use its own Resend above. --}}
                                     <span class="text-muted">Provider rejected</span>
