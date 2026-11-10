@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Jobs\Concerns\InteractsWithFaxSpool;
+use App\Models\PendingFax;
+use App\Services\Faxing\FaxDeliveryResolver;
 use App\Services\Faxing\FaxLockKey;
 use App\Services\Faxing\FaxSpool;
 use Illuminate\Bus\Queueable;
@@ -42,13 +44,21 @@ class MoveFailedFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     public ?string $spoolSourceKey = null;
 
     /**
+     * The delivery-failure row to mark `failed` once the files are out of tosend/ (see
+     * FaxDeliveryResolver). Null for submission failures and for payloads queued before
+     * this existed; the default keeps those unserializable.
+     */
+    public ?int $pendingFaxId = null;
+
+    /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($faxFsDetails, $fax_provider = 'mfax', ?string $spoolSourceKey = null)
+    public function __construct($faxFsDetails, $fax_provider = 'mfax', ?string $spoolSourceKey = null, ?int $pendingFaxId = null)
     {
         $this->fax_provider = $fax_provider;
+        $this->pendingFaxId = $pendingFaxId;
         // The array form is how every existing dispatch site already passes context, so
         // a caller that has the source but not the extra argument still works.
         $this->spoolSourceKey = $spoolSourceKey ?? ($faxFsDetails['source_key'] ?? null);
@@ -92,6 +102,15 @@ class MoveFailedFaxFiles implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             if (! $this->capStillReferenced($toSendDir, $this->capfile, $this->fsFileName)) {
                 unlink($capFile);
             }
+        }
+
+        // Only now may the spool scan treat this fax as finished: the .fs has left tosend/,
+        // so there is nothing left for it to submit a second time.
+        if ($this->pendingFaxId !== null) {
+            PendingFax::query()
+                ->whereKey($this->pendingFaxId)
+                ->where('delivery_status', FaxDeliveryResolver::FAILING)
+                ->update(['delivery_status' => 'failed']);
         }
     }
 

@@ -6,14 +6,11 @@ namespace App\Http\Controllers\API\Webhooks;
 
 use App\Http\Controllers\Concerns\VerifiesSharedSecret;
 use App\Http\Controllers\Controller;
-use App\Jobs\MoveFailedFaxFiles;
-use App\Jobs\MoveSuccessfulFaxFiles;
-use App\Mail\FaxFailAlert;
 use App\Models\PendingFax;
+use App\Services\Faxing\FaxDeliveryResolver;
 use App\Services\Faxing\FaxDeliveryWebhooks;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class FaxWebhookController extends Controller
@@ -101,7 +98,9 @@ class FaxWebhookController extends Controller
         if (in_array($messageStatus, ['Sent', 'Delivered'])) {
             $this->resolveFax($pendingFax, 'success');
         } elseif (in_array($messageStatus, ['DeliveryFailed', 'SendingFailed'])) {
-            $this->resolveFax($pendingFax, 'failed', "RingCentral webhook status: {$messageStatus}");
+            $to = $data['body']['to'] ?? null;
+
+            $this->resolveFax($pendingFax, 'failed', FaxDeliveryResolver::ringCentralReason('RingCentral webhook status', $messageStatus, is_array($to) ? $to : null));
         }
 
         return response()->json(['message' => 'ok']);
@@ -109,31 +108,10 @@ class FaxWebhookController extends Controller
 
     private function resolveFax(PendingFax $pendingFax, string $outcome, ?string $reason = null): void
     {
-        $faxFsDetails = [
-            'jobID' => $pendingFax->job_id,
-            'capfile' => $pendingFax->cap_file,
-            'filename' => $pendingFax->filename,
-            'phone' => $pendingFax->phone,
-            'status' => $pendingFax->original_status,
-            'fsFileName' => $pendingFax->fs_file_name,
-            'account' => $pendingFax->accountLabel() ?? 'Unknown',
-            // Neither a provider callback nor the poller knows which Intelligent Series
-            // server produced this fax; the pending row is the only thing that does.
-            'source_key' => $pendingFax->spool_source_key,
-        ];
+        app(FaxDeliveryResolver::class)->resolve($pendingFax, $outcome, $reason);
 
-        if ($outcome === 'success') {
-            MoveSuccessfulFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            Log::info("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.");
-        } else {
-            MoveFailedFaxFiles::dispatch($faxFsDetails, $pendingFax->fax_provider, $pendingFax->spool_source_key);
-            FaxFailAlert::queueSafely($faxFsDetails, $reason ?? 'Fax delivery failed');
-            Log::error("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
-        }
-
-        $pendingFax->update([
-            'delivery_status' => $outcome,
-            'resolved_at' => Carbon::now(),
-        ]);
+        $outcome === 'success'
+            ? Log::info("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) delivered successfully.")
+            : Log::error("Webhook: Fax #{$pendingFax->id} (job {$pendingFax->job_id}) failed: {$reason}");
     }
 }

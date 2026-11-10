@@ -170,11 +170,13 @@ class CheckPendingFaxesTest extends TestCase
 
         $this->artisan('isfax:check-pending')->assertExitCode(0);
 
+        // `failing` until the move has taken the .fs out of tosend/ (faked here).
         $pendingFax->refresh();
-        $this->assertSame('failed', $pendingFax->delivery_status);
+        $this->assertSame('failing', $pendingFax->delivery_status);
         $this->assertNotNull($pendingFax->resolved_at);
+        $this->assertStringStartsWith('Timed out after', (string) $pendingFax->failure_reason);
 
-        Bus::assertDispatched(MoveFailedFaxFiles::class);
+        Bus::assertDispatched(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->pendingFaxId === $pendingFax->id);
         Mail::assertQueued(FaxFailAlert::class);
     }
 
@@ -208,7 +210,7 @@ class CheckPendingFaxesTest extends TestCase
 
         $this->artisan('isfax:check-pending')->assertExitCode(0);
 
-        $this->assertSame('failed', $pendingFax->refresh()->delivery_status);
+        $this->assertSame('failing', $pendingFax->refresh()->delivery_status);
     }
 
     private function makePendingFaxAttrs(array $overrides = []): array

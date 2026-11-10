@@ -13,7 +13,6 @@ use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FaxWebhookControllerTest extends TestCase
@@ -124,8 +123,10 @@ class FaxWebhookControllerTest extends TestCase
 
         $response->assertOk();
         $pendingFax->refresh();
-        $this->assertEquals('failed', $pendingFax->delivery_status);
-        Queue::assertPushed(MoveFailedFaxFiles::class);
+        // `failing` until the (faked) move has taken the .fs out of tosend/.
+        $this->assertEquals('failing', $pendingFax->delivery_status);
+        $this->assertSame('MFax webhook status: failed', $pendingFax->failure_reason);
+        Queue::assertPushed(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->pendingFaxId === $pendingFax->id);
         Mail::assertQueued(FaxFailAlert::class);
     }
 
@@ -204,13 +205,18 @@ class FaxWebhookControllerTest extends TestCase
             'body' => [
                 'id' => 11111,
                 'messageStatus' => 'SendingFailed',
+                'to' => [
+                    ['phoneNumber' => '+13042639659', 'messageStatus' => 'SendingFailed', 'faxErrorCode' => 'CallFailed'],
+                ],
             ],
         ]);
 
         $response->assertOk();
         $pendingFax->refresh();
-        $this->assertEquals('failed', $pendingFax->delivery_status);
-        Queue::assertPushed(MoveFailedFaxFiles::class);
+        $this->assertEquals('failing', $pendingFax->delivery_status);
+        $this->assertSame('delivery', $pendingFax->failure_stage);
+        $this->assertSame('RingCentral webhook status: SendingFailed (CallFailed)', $pendingFax->failure_reason);
+        Queue::assertPushed(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->pendingFaxId === $pendingFax->id);
         Mail::assertQueued(FaxFailAlert::class);
     }
 
