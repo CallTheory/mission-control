@@ -55,6 +55,21 @@ class RingCentralThrottle
         return max(1, min($seconds, self::MAX_RETRY_AFTER));
     }
 
+    /**
+     * The exception message with the HTTP status in front, for failure records and alerts.
+     *
+     * The SDK's message is just RingCentral's error text, so a 429, a 503 and a rejected
+     * document all read alike once they reach pending_faxes.failure_reason — and the .fs
+     * handed back to Intelligent Series says 261 whatever happened. This is the one place
+     * the real status survives.
+     */
+    public static function describe(Throwable $e): string
+    {
+        $status = $e instanceof ApiException ? self::statusCode($e) : null;
+
+        return $status !== null ? "HTTP {$status}: {$e->getMessage()}" : $e->getMessage();
+    }
+
     public static function statusCode(Throwable $e): ?int
     {
         if ($e instanceof ApiException) {

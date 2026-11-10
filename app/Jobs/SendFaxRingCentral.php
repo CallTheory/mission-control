@@ -14,6 +14,7 @@ use App\Services\Faxing\FaxRoute;
 use App\Services\Faxing\FaxRouter;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralRateLimit;
 use App\Services\Faxing\RingCentralThrottle;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -216,6 +217,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 ->request('/restapi/v1.0/account/~/extension/~/fax');
 
             $resp = $rcsdk->platform()->sendRequest($bodyParams);
+
+            $this->logRateLimit(RingCentralRateLimit::fromResponse($resp->response()), $client, $faxFsDetails, $account);
+
             $respData = $resp->json();
             $apiMessageId = (string) ($respData->id ?? '');
 
@@ -238,6 +242,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails + ['account' => $account['number'] ?? null]);
         } catch (ApiException $e) {
+            $this->logRateLimit(RingCentralRateLimit::fromThrowable($e), $client, $faxFsDetails, $account);
+
             // Being throttled is not a failed fax. Wait out the window the API asked for
             // and try again without touching the exception budget.
             if (RingCentralThrottle::isRateLimited($e)) {
@@ -262,7 +268,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 return;
             }
 
-            Log::error($e->getMessage(), ['ringCentralApiResponse' => $e->apiResponse()]);
+            // The ApiResponse object itself used to be logged here, but its fields are
+            // protected so it serialized as an empty object — status and headers lost.
+            Log::error('SendFaxRingCentral: '.RingCentralThrottle::describe($e), $faxFsDetails);
 
             throw $e;
         } catch (Exception $e) {
@@ -287,7 +295,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             'account' => $this->accountLabel(),
         ];
 
-        Log::error("SendFaxRingCentral failed: {$exception->getMessage()}", $faxFsDetails);
+        $reason = RingCentralThrottle::describe($exception);
+
+        Log::error("SendFaxRingCentral failed: {$reason}", $faxFsDetails);
 
         // Record it before anything else. This fax never reached the provider, so it
         // cannot appear in the provider history the status pages list — without a row of
@@ -297,7 +307,7 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             $faxFsDetails,
             FaxProvider::RingCentral->value,
             $this->sourceKey(),
-            $exception->getMessage(),
+            $reason,
         );
 
         // Handing the fax to the other provider means it is still in flight, so neither
@@ -306,8 +316,35 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             return;
         }
 
-        Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
+        Mail::queue(new FaxFailAlert($faxFsDetails, $reason));
         MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::RingCentral->value, $this->sourceKey());
+    }
+
+    /**
+     * One line per RingCentral response, success or failure, carrying its rate-limit
+     * headers. This is the evidence for (or against) rate limiting: which extension sent,
+     * how many requests it had left, and what limit RingCentral is actually applying to
+     * this app — which may differ from the published defaults.
+     *
+     * @param  array<string, mixed>  $faxFsDetails
+     * @param  array{number: string, name: string}|null  $account
+     */
+    private function logRateLimit(RingCentralRateLimit $rateLimit, RingCentralClient $client, array $faxFsDetails, ?array $account): void
+    {
+        $context = $rateLimit->toLogContext() + [
+            'extension_id' => $client->extensionId(),
+            'jobID' => $faxFsDetails['jobID'],
+            'fsFileName' => $faxFsDetails['fsFileName'],
+            'source_key' => $faxFsDetails['source_key'],
+            'account' => $account['number'] ?? null,
+            'attempt' => $this->attempts(),
+        ];
+
+        $ok = $rateLimit->status !== null && $rateLimit->status < 400;
+
+        $ok
+            ? Log::info('RingCentral fax API response', $context)
+            : Log::warning('RingCentral fax API response', $context);
     }
 
     private function currentProvider(): FaxProvider
