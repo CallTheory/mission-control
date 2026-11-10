@@ -15,6 +15,7 @@ use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use GuzzleHttp\Client as Guzzle;
@@ -46,7 +47,7 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
 
     public DataSource $datasource;
 
-    public ?string $faxIdToSend;
+    public ?string $faxIdToSend = null;
 
     protected $listeners = ['faxResent'];
 
@@ -63,9 +64,10 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
     }
 
     /**
-     * @throws GuzzleException
-     * @throws Exception
+     * Test hook: when bound, the mFax HTTP client used by the resend dialog.
      */
+    public const GUZZLE_BINDING = 'faxing.mfax.guzzle';
+
     public function resendFaxAction(): Action
     {
         return Action::make('resendFax')
@@ -73,81 +75,82 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
             ->color('danger')
             ->modalHeading(__('Resend Fax'))
             ->modalSubmitActionLabel(__('Resend'))
-            // Prefilling calls the provider for the fax's current recipient, which is
-            // what openSendFaxDialog() did when the old dialog was toggled open.
+            // Prefilled with the number the fax went to.
             ->fillForm(function (array $arguments): array {
-                $this->openSendFaxDialog($arguments['messageId'] ?? null);
+                $messageId = (string) ($arguments['messageId'] ?? '');
+                $this->faxIdToSend = $messageId !== '' ? $messageId : null;
 
-                return ['faxNumber' => $this->state['faxInfo']['faxNumber'] ?? ''];
+                return ['faxNumber' => $this->faxIdToSend === null ? '' : ($this->originalRecipient($this->faxIdToSend) ?? '')];
             })
             ->schema([
                 TextInput::make('faxNumber')
                     ->label(__('Recipient Fax Number'))
+                    ->helperText(__('Change it to send the fax somewhere else.'))
                     ->required(),
             ])
             ->action(function (array $data): void {
-                $this->state['faxInfo']['faxNumber'] = $data['faxNumber'];
-                $this->resendFax();
+                $this->resendFax((string) ($data['faxNumber'] ?? ''));
             });
     }
 
-    public function openSendFaxDialog($messageId): void
+    /**
+     * The number a fax was sent to.
+     *
+     * Taken from the rows the page is already showing, so the dialog opens without
+     * waiting on mFax; only a fax not on the page is looked up. The row only supplies the
+     * field's starting value, which the person can change anyway.
+     */
+    private function originalRecipient(string $messageId): ?string
     {
-
-        $this->guzzle = new Guzzle([
-            // null when tracing is off, so Guzzle uses its default handler.
-            'handler' => GuzzleTracing::handlerStack(),
-            'base_uri' => 'https://api.documo.com/',
-            'timeout' => 30.0,
-            'headers' => [
-                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
-            ],
-        ]);
+        foreach (is_array($this->state['mfax_failed_faxes'] ?? null) ? $this->state['mfax_failed_faxes'] : [] as $row) {
+            if (is_array($row) && (string) ($row['messageId'] ?? '') === $messageId && filled($row['faxNumber'] ?? null)) {
+                return (string) $row['faxNumber'];
+            }
+        }
 
         try {
-            $faxInfo = $this->guzzle->get("/v1/fax/{$messageId}/info");
-            $this->state['faxInfo'] = json_decode($faxInfo->getBody(), true, JSON_THROW_ON_ERROR);
+            $info = json_decode((string) $this->mfax()->get("/v1/fax/{$messageId}/info")->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (Exception $e) {
             Log::error('Documo api error'.$e->getMessage());
-            throw $e;
+
+            return null;
         }
 
-        $this->faxIdToSend = $messageId;
+        $number = is_array($info) ? ($info['faxNumber'] ?? null) : null;
 
+        return filled($number) ? (string) $number : null;
     }
 
-    public function resendFax(): void
+    public function resendFax(string $faxNumber = ''): void
     {
-        if ($this->faxIdToSend === null) {
+        if ($this->faxIdToSend === null || $this->datasource->mfax_api_key === null) {
             $this->faxIdToSend = null;
 
             return;
         }
 
-        if ($this->datasource->mfax_api_key === null) {
-            $this->faxIdToSend = null;
-
-            return;
-        }
-
-        $this->guzzle = new Guzzle([
-            // null when tracing is off, so Guzzle uses its default handler.
-            'handler' => GuzzleTracing::handlerStack(),
-            'base_uri' => 'https://api.documo.com/',
-            'timeout' => 30.0,
-            'headers' => [
-                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
-            ],
-        ]);
+        $messageId = $this->faxIdToSend;
+        $this->guzzle = $this->mfax();
 
         try {
             $resend = $this->guzzle->post('/v1/fax/resend', [
                 'form_params' => [
-                    'messageId' => $this->faxIdToSend,
-                    'recipientFax' => $this->state['faxInfo']['faxNumber'] ?? '',
+                    'messageId' => $messageId,
+                    'recipientFax' => trim($faxNumber),
                 ],
             ]);
         } catch (Exception $e) {
+            Log::error('CloudFaxing: resend failed: '.$e->getMessage(), ['message_id' => $messageId]);
+
+            // This used to fail with no message at all.
+            $this->resendFailed($e->getMessage());
+
+            return;
+        }
+
+        if ($resend->getStatusCode() !== 200) {
+            $this->resendFailed(__('mFax answered HTTP :status.', ['status' => $resend->getStatusCode()]));
+
             return;
         }
 
@@ -166,22 +169,49 @@ class CloudFaxing extends Component implements HasActions, HasSchemas
 
         if (count($tagParams) !== 0) {
             try {
-                $resend = $this->guzzle->post("/v1/fax/{$this->faxIdToSend}/tag", [
+                $this->guzzle->post("/v1/fax/{$messageId}/tag", [
                     'form_params' => $tagParams,
                 ]);
             } catch (Exception $e) {
             }
         }
 
-        if ($resend->getStatusCode() !== 200) {
-            $this->faxIdToSend = null;
+        Notification::make()
+            ->title(__('Fax resent to :number', ['number' => trim($faxNumber)]))
+            ->success()
+            ->send();
 
-            return;
-        }
-
-        $this->dispatch('resendFax', $this->faxIdToSend);
+        $this->dispatch('resendFax', $messageId);
         $this->faxIdToSend = null;
         $this->redirect('/utilities/cloud-faxing');
+    }
+
+    private function resendFailed(string $reason): void
+    {
+        Notification::make()
+            ->title(__('mFax did not resend the fax'))
+            ->body($reason)
+            ->danger()
+            ->send();
+
+        $this->faxIdToSend = null;
+    }
+
+    private function mfax(): Guzzle
+    {
+        if (app()->bound(self::GUZZLE_BINDING)) {
+            return app(self::GUZZLE_BINDING);
+        }
+
+        return new Guzzle([
+            // null when tracing is off, so Guzzle uses its default handler.
+            'handler' => GuzzleTracing::handlerStack(),
+            'base_uri' => 'https://api.documo.com/',
+            'timeout' => 30.0,
+            'headers' => [
+                'Authorization' => 'Basic '.$this->datasource->mfax_api_key,
+            ],
+        ]);
     }
 
     /**
