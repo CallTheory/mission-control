@@ -7,8 +7,6 @@ use App\Extensions\SafeSaml2Provider;
 use App\Services\FeatureFlags;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
-use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -36,13 +34,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerFilamentColors();
-
-        // Client-side throttle on outbound RingCentral fax submissions. Configurable
-        // because the ceiling depends on the RingCentral account's API tier, and a wrong
-        // guess shows up as 429s rather than as a clean queue wait.
-        RateLimiter::for('ringcentral', function (object $job) {
-            return Limit::perMinute(max(1, (int) config('services.fax.ringcentral.sends_per_minute', 10)));
-        });
 
         // Override the default SAML2 provider with our PHP 8.4 compatible version
         // This fixes the strict type issue where getFirstAssertion() can return null

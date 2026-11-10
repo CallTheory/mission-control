@@ -51,11 +51,25 @@ class RingCentralClient
 
     private ?RingCentralSDK $sdk = null;
 
-    public function __construct(private readonly DataSource $datasource) {}
+    /**
+     * @param  string|null  $jwt  authenticate as this JWT's user instead of the data
+     *                            source's — how faxes are sent through additional
+     *                            extensions. The app credentials stay the data source's.
+     */
+    public function __construct(private readonly DataSource $datasource, private readonly ?string $jwt = null) {}
 
     public static function forDataSource(?DataSource $datasource = null): self
     {
         return new self($datasource ?? DataSource::firstOrFail());
+    }
+
+    /**
+     * A client authenticated as one particular sending extension. Each extension gets its
+     * own cached token, because the token cache key includes the JWT.
+     */
+    public static function forExtension(DataSource $datasource, RingCentralExtension $extension): self
+    {
+        return new self($datasource, $extension->jwt);
     }
 
     /**
@@ -65,7 +79,7 @@ class RingCentralClient
     {
         return filled($this->datasource->ringcentral_client_id)
             && filled($this->datasource->ringcentral_client_secret)
-            && filled($this->datasource->ringcentral_jwt_token)
+            && filled($this->jwt())
             && filled($this->datasource->ringcentral_api_endpoint);
     }
 
@@ -206,7 +220,7 @@ class RingCentralClient
             }
         }
 
-        $platform->login(['jwt' => $this->datasource->ringcentral_jwt_token]);
+        $platform->login(['jwt' => $this->jwt()]);
 
         $this->writeCache($platform);
     }
@@ -266,12 +280,26 @@ class RingCentralClient
      */
     private function cacheKey(): string
     {
-        $fingerprint = substr(hash('sha256', implode('|', [
+        return self::tokenCacheKey(
             (string) $this->datasource->ringcentral_client_id,
-            (string) $this->datasource->ringcentral_jwt_token,
+            (string) $this->jwt(),
             (string) $this->datasource->ringcentral_api_endpoint,
-        ])), 0, 16);
+        );
+    }
+
+    /**
+     * Unchanged for the primary extension, so the token already cached in production keeps
+     * being used across the deploy.
+     */
+    public static function tokenCacheKey(string $clientId, string $jwt, string $endpoint): string
+    {
+        $fingerprint = substr(hash('sha256', implode('|', [$clientId, $jwt, $endpoint])), 0, 16);
 
         return "cloud-faxing:ringcentral:auth:{$fingerprint}";
+    }
+
+    private function jwt(): ?string
+    {
+        return $this->jwt ?? $this->datasource->ringcentral_jwt_token;
     }
 }
