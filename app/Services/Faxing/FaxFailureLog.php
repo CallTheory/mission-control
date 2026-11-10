@@ -28,35 +28,48 @@ class FaxFailureLog
     public const STAGE_DELIVERY = 'delivery';
 
     /**
+     * Callers that queue MoveFailedFaxFiles afterwards pass FaxDeliveryResolver::FAILING and
+     * hand the returned row's id to the move, which marks it `failed` once the .fs has left
+     * tosend/. Marking it `failed` straight away let the spool scan, which ignores `failed`
+     * rows, submit the same fax again before the move had run. The scan's own
+     * payload-missing path moves the file itself and keeps the default.
+     *
      * @param  array<string, mixed>  $fax  the parsed .fs details the send job was holding
      */
-    public function recordSubmissionFailure(array $fax, string $provider, string $sourceKey, string $reason): ?PendingFax
+    public function recordSubmissionFailure(array $fax, string $provider, string $sourceKey, string $reason, string $status = 'failed'): ?PendingFax
     {
         try {
-            // The send job retries, and each attempt that exhausts its tries lands here.
-            // Update rather than insert so one fax is one row however many attempts it
-            // took, and so a retry of an already-recorded failure does not stack up.
-            return PendingFax::updateOrCreate(
-                [
+            // The send job retries, and each attempt that exhausts its tries lands here,
+            // as does the other provider's attempt after a failover. Update rather than
+            // insert so one fax is one row however many attempts it took.
+            $row = PendingFax::query()
+                ->where('fs_file_name', (string) ($fax['fsFileName'] ?? ''))
+                ->where('spool_source_key', $sourceKey)
+                ->whereIn('delivery_status', ['failed', FaxDeliveryResolver::FAILING])
+                ->where('failure_stage', self::STAGE_SUBMISSION)
+                ->whereNull('retried_at')
+                ->latest('id')
+                ->first() ?? new PendingFax([
                     'fs_file_name' => (string) ($fax['fsFileName'] ?? ''),
                     'spool_source_key' => $sourceKey,
-                    'delivery_status' => 'failed',
                     'failure_stage' => self::STAGE_SUBMISSION,
-                    'retried_at' => null,
-                ],
-                [
-                    'api_fax_id' => null,
-                    'fax_provider' => $provider,
-                    'job_id' => (int) ($fax['jobID'] ?? 0),
-                    'cap_file' => (string) ($fax['capfile'] ?? ''),
-                    'filename' => (string) ($fax['filename'] ?? ''),
-                    'phone' => (string) ($fax['phone'] ?? ''),
-                    'original_status' => (string) ($fax['status'] ?? ''),
-                    'routing_reason' => $fax['routing_reason'] ?? null,
-                    'failure_reason' => Str::limit($reason, 2000),
-                    'resolved_at' => now(),
-                ]
-            );
+                ]);
+
+            $row->fill([
+                'delivery_status' => $status,
+                'api_fax_id' => null,
+                'fax_provider' => $provider,
+                'job_id' => (int) ($fax['jobID'] ?? 0),
+                'cap_file' => (string) ($fax['capfile'] ?? ''),
+                'filename' => (string) ($fax['filename'] ?? ''),
+                'phone' => (string) ($fax['phone'] ?? ''),
+                'original_status' => (string) ($fax['status'] ?? ''),
+                'routing_reason' => $fax['routing_reason'] ?? null,
+                'failure_reason' => Str::limit($reason, 2000),
+                'resolved_at' => now(),
+            ])->save();
+
+            return $row;
         } catch (Throwable $e) {
             // Never let bookkeeping turn a failed fax into a failed *handler*: the email
             // and the fail/ move still have to happen.

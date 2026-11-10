@@ -7,6 +7,7 @@ namespace Tests\Feature\Faxing;
 use App\Jobs\MoveFailedFaxFiles;
 use App\Jobs\ScanFaxSpoolLane;
 use App\Jobs\SendFaxJob;
+use App\Jobs\SendFaxRingCentral;
 use App\Mail\FaxFailAlert;
 use App\Models\DataSource;
 use App\Models\FaxSpoolSource;
@@ -16,10 +17,12 @@ use App\Services\Faxing\FaxRouter;
 use App\Services\Faxing\FaxSourceHealth;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\FsFileParser;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Redis;
 use Tests\TestCase;
 use Tests\Traits\InteractsWithFeatureFlags;
 
@@ -164,8 +167,10 @@ class FaxDeliveryFailureResendTest extends TestCase
     public function test_a_stalled_move_is_dispatched_again(): void
     {
         Bus::fake();
-        $stalled = $this->pendingFax(['delivery_status' => 'failing', 'resolved_at' => now()->subMinutes(10)]);
-        $this->pendingFax(['delivery_status' => 'failing', 'resolved_at' => now()->subSeconds(30), 'fs_file_name' => 'IS21.fs']);
+        $stalled = $this->pendingFax(['delivery_status' => 'failing', 'failure_stage' => 'delivery', 'resolved_at' => now()->subMinutes(10)]);
+        $this->pendingFax(['delivery_status' => 'failing', 'failure_stage' => 'delivery', 'resolved_at' => now()->subSeconds(30), 'fs_file_name' => 'IS21.fs']);
+        // Possibly failing over to the other provider, so its files must stay put.
+        $this->pendingFax(['delivery_status' => 'failing', 'failure_stage' => 'submission', 'api_fax_id' => null, 'resolved_at' => now()->subMinutes(10), 'fs_file_name' => 'IS22.fs']);
 
         $this->assertSame(1, app(FaxDeliveryResolver::class)->retryStalledMoves(300));
 
@@ -187,6 +192,81 @@ class FaxDeliveryFailureResendTest extends TestCase
         $this->assertSame('delivery', $fax->failure_stage);
         $this->assertSame('RingCentral status: SendingFailed (CallFailed)', $fax->failure_reason);
         $this->assertNotNull($fax->resolved_at);
+    }
+
+    public function test_a_submission_failure_is_not_submitted_again_before_its_files_move(): void
+    {
+        Bus::fake();
+        Mail::fake();
+        $this->cacheAccount();
+
+        (new SendFaxRingCentral($this->isfax()))->failed(new Exception('HTTP 503: Service Unavailable'));
+
+        $row = PendingFax::sole();
+        $this->assertSame('failing', $row->delivery_status);
+        $this->assertSame('submission', $row->failure_stage);
+        Bus::assertDispatched(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->pendingFaxId === $row->id);
+
+        $this->scan();
+
+        Bus::assertNotDispatched(SendFaxJob::class);
+        Bus::assertNotDispatched(SendFaxRingCentral::class);
+    }
+
+    public function test_the_mfax_sender_hands_its_failure_row_to_the_move_too(): void
+    {
+        Bus::fake();
+        Mail::fake();
+        $this->cacheAccount();
+
+        (new SendFaxJob($this->isfax()))->failed(new Exception('mFax said no'));
+
+        $row = PendingFax::sole();
+        $this->assertSame('failing', $row->delivery_status);
+        Bus::assertDispatched(MoveFailedFaxFiles::class, fn (MoveFailedFaxFiles $job) => $job->pendingFaxId === $row->id);
+    }
+
+    public function test_a_later_attempt_updates_the_same_failure_row(): void
+    {
+        Bus::fake();
+        Mail::fake();
+        $this->cacheAccount();
+
+        (new SendFaxRingCentral($this->isfax()))->failed(new Exception('first'));
+        PendingFax::sole()->update(['delivery_status' => 'failed']);
+        (new SendFaxRingCentral($this->isfax()))->failed(new Exception('second'));
+
+        $row = PendingFax::sole();
+        $this->assertSame('failing', $row->delivery_status);
+        $this->assertSame('second', $row->failure_reason);
+    }
+
+    /**
+     * The send jobs label the alert with the Intelligent Series account. That lookup is
+     * cached in Redis, which the sandbox lacks, and a miss would wait on the IS database.
+     */
+    private function cacheAccount(): void
+    {
+        Redis::shouldReceive('get')->andReturn(json_encode(['number' => '1509', 'name' => 'Test Client']));
+        Redis::shouldReceive('setex', 'set', 'del')->andReturn(true);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function isfax(): array
+    {
+        return [
+            'jobID' => 4242,
+            'capfile' => 'IS20.cap',
+            'filename' => 'IS20.cap',
+            'phone' => '9139069098',
+            'status' => '2',
+            'fsFileName' => 'IS20.fs',
+            'source_key' => 'isa',
+            'routing_reason' => 'spool source',
+            'allow_failover' => false,
+        ];
     }
 
     public function test_the_ringcentral_reason_carries_each_recipients_error_code(): void

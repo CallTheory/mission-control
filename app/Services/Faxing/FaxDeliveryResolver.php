@@ -76,11 +76,16 @@ class FaxDeliveryResolver
      * is still held, or its worker can die mid-move. Either way the row would stay
      * `failing` and never reach the failures page. The move's unique lock makes this
      * harmless while the original is still queued.
+     *
+     * Delivery failures only. A submission failure is also `failing` while it fails over
+     * to the other provider, and moving its files then would pull the fax out from under
+     * a send still in progress.
      */
     public function retryStalledMoves(int $olderThanSeconds = 300): int
     {
         $stalled = PendingFax::query()
             ->where('delivery_status', self::FAILING)
+            ->where('failure_stage', FaxFailureLog::STAGE_DELIVERY)
             ->where('resolved_at', '<', Carbon::now()->subSeconds($olderThanSeconds))
             ->limit(50)
             ->get();
