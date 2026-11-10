@@ -30,11 +30,25 @@ trait FakesRingCentral
     /** @var array<int, array{request: RequestInterface}> */
     protected array $ringCentralRequests = [];
 
+    /** @var array<string, string> */
+    protected array $redisWrites = [];
+
     /**
-     * @param  array<string, string>  $tokenOwners  JWT => extension id the token belongs to
+     * @param  array<string, string>  $tokenOwners  JWT => extension id its token belongs to;
+     *                                              any other JWT gets $defaultOwner
      */
-    protected function fakeRingCentral(array $tokenOwners = [], ?string $defaultOwner = '101'): void
-    {
+    protected function fakeRingCentral(
+        array $tokenOwners = [],
+        ?string $defaultOwner = '101',
+        string $clientId = 'client-id',
+        string $endpoint = 'https://platform.devtest.ringcentral.com',
+    ): void {
+        $owners = [];
+
+        foreach ($tokenOwners as $jwt => $owner) {
+            $owners[RingCentralClient::tokenCacheKey($clientId, (string) $jwt, $endpoint)] = $owner;
+        }
+
         $this->ringCentralHttp = new MockHandler;
         $this->ringCentralRequests = [];
 
@@ -43,9 +57,13 @@ trait FakesRingCentral
 
         $this->app->instance(RingCentralClient::GUZZLE_BINDING, new GuzzleClient(['handler' => $stack]));
 
-        Redis::shouldReceive('get')->andReturnUsing(function (string $key) use ($defaultOwner) {
+        Redis::shouldReceive('get')->andReturnUsing(function (string $key) use ($defaultOwner, $owners) {
+            if (array_key_exists($key, $this->redisWrites)) {
+                return $this->redisWrites[$key];
+            }
+
             if (str_starts_with($key, 'cloud-faxing:ringcentral:auth:')) {
-                return Crypt::encryptString(json_encode($this->ringCentralToken($defaultOwner)));
+                return Crypt::encryptString(json_encode($this->ringCentralToken($owners[$key] ?? $defaultOwner)));
             }
 
             if (str_starts_with($key, 'cloud-faxing:account:')) {
@@ -54,8 +72,20 @@ trait FakesRingCentral
 
             return null;
         });
-        Redis::shouldReceive('setEx')->andReturn(true);
-        Redis::shouldReceive('del')->andReturn(1);
+        // Writes are remembered so a test can read back what was stored — except tokens,
+        // which keep coming from the owner map above.
+        Redis::shouldReceive('setEx')->andReturnUsing(function (string $key, int $ttl, string $value) {
+            if (! str_starts_with($key, 'cloud-faxing:ringcentral:auth:')) {
+                $this->redisWrites[$key] = $value;
+            }
+
+            return true;
+        });
+        Redis::shouldReceive('del')->andReturnUsing(function (string $key) {
+            unset($this->redisWrites[$key]);
+
+            return 1;
+        });
     }
 
     /**
@@ -93,7 +123,7 @@ trait FakesRingCentral
     {
         return [
             'token_type' => 'bearer',
-            'access_token' => 'test-access-token',
+            'access_token' => 'access-'.($owner ?? 'none'),
             'expires_in' => 3600,
             'expire_time' => time() + 3600,
             'refresh_token' => 'test-refresh-token',

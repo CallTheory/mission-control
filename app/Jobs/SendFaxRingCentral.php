@@ -14,7 +14,12 @@ use App\Services\Faxing\FaxRoute;
 use App\Services\Faxing\FaxRouter;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralExtension;
 use App\Services\Faxing\RingCentralRateLimit;
+use App\Services\Faxing\RingCentralRateLimitState;
+use App\Services\Faxing\RingCentralRetryDelay;
+use App\Services\Faxing\RingCentralSenderPool;
+use App\Services\Faxing\RingCentralSenderSelector;
 use App\Services\Faxing\RingCentralThrottle;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -23,9 +28,9 @@ use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RingCentral\SDK\Http\ApiException;
 use Throwable;
@@ -35,10 +40,10 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Real send failures are capped by maxExceptions. Neither a release from the
-     * RateLimited middleware nor a 429 from RingCentral is an exception, so being
-     * throttled no longer burns the retry budget — retryUntil bounds how long we keep
-     * re-queueing.
+     * Real send failures are capped by maxExceptions. Neither holding a fax because every
+     * extension is out of requests nor a 429 from RingCentral is an exception, so being
+     * throttled does not burn this budget: 429s have their own cap
+     * (rate_limit_max_retries) and retryUntil bounds how long we keep re-queueing.
      */
     public int $maxExceptions = 3;
 
@@ -109,11 +114,6 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
         $this->onQueue('ringcentral');
     }
 
-    public function middleware(): array
-    {
-        return [new RateLimited('ringcentral')];
-    }
-
     /**
      * How long to keep re-queueing a fax that keeps getting throttled.
      *
@@ -168,9 +168,9 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
             return;
         }
 
-        $client = new RingCentralClient($datasource);
+        $extensions = app(RingCentralSenderPool::class)->extensions($datasource);
 
-        if (! $client->configured()) {
+        if ($extensions === [] || ! RingCentralClient::forExtension($datasource, $extensions[0])->configured()) {
             $this->fail(new Exception('Empty ringcentral client details'));
 
             return;
@@ -190,7 +190,8 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
         // Resolve the Intelligent Series account before sending, so the record we write
         // is identifiable even if the IS database becomes unreachable later. A failure
-        // here never blocks the fax — it just goes out unlabelled.
+        // here never blocks the fax — it just goes out unlabelled. Done before taking a
+        // send lock, so a slow IS database never holds up another worker's send.
         $account = FaxAccountLookup::make($datasource)->forJobId($this->jobID);
 
         $payloadPath = $this->capFilePath();
@@ -200,6 +201,26 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             return;
         }
+
+        $selector = app(RingCentralSenderSelector::class);
+        $lease = $selector->acquire($extensions);
+
+        // Every extension is locked out or known to be out of requests. Hold the fax
+        // rather than send it into a 429 — a rejected request restarts RingCentral's
+        // penalty clock. This is not a failure and does not count toward the cap.
+        if (is_int($lease)) {
+            $delay = app(RingCentralRetryDelay::class)->withJitter($lease);
+
+            Log::info("SendFaxRingCentral: every RingCentral extension is out of requests; holding for {$delay}s", $faxFsDetails);
+
+            $this->release($delay);
+
+            return;
+        }
+
+        $extension = $lease->extension;
+        $client = RingCentralClient::forExtension($datasource, $extension);
+        $state = app(RingCentralRateLimitState::class);
 
         try {
             $rcsdk = $client->sdk();
@@ -217,7 +238,11 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             $resp = $rcsdk->platform()->sendRequest($bodyParams);
 
-            $this->logRateLimit(RingCentralRateLimit::fromResponse($resp->response()), $client, $faxFsDetails, $account);
+            $rateLimit = RingCentralRateLimit::fromResponse($resp->response());
+            $state->record($extension->key, $rateLimit);
+            $lease->release();
+
+            $this->logRateLimit($rateLimit, $client, $extension, $faxFsDetails, $account);
 
             $respData = $resp->json();
             $apiMessageId = (string) ($respData->id ?? '');
@@ -237,30 +262,34 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
                 'original_status' => $this->status,
                 'delivery_status' => 'pending',
                 'submitted_at' => now(),
+            ] + $this->senderColumns($extension, $client));
+
+            $state->forgetRateLimitedAttempts($this->uniqueId());
+
+            Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails + [
+                'account' => $account['number'] ?? null,
+                'ringcentral_sender' => $extension->key,
+                'extension_id' => $client->extensionId() ?? $extension->extensionId,
             ]);
-
-            Log::info('ringCentralSuccess '.$toNumber, $faxFsDetails + ['account' => $account['number'] ?? null]);
         } catch (ApiException $e) {
-            $this->logRateLimit(RingCentralRateLimit::fromThrowable($e), $client, $faxFsDetails, $account);
+            $rateLimit = RingCentralRateLimit::fromThrowable($e);
+            $state->record($extension->key, $rateLimit);
+            $lease->release();
 
-            // Being throttled is not a failed fax. Wait out the window the API asked for
-            // and try again without touching the exception budget.
+            $this->logRateLimit($rateLimit, $client, $extension, $faxFsDetails, $account);
+
             if (RingCentralThrottle::isRateLimited($e)) {
-                $retryAfter = RingCentralThrottle::retryAfter($e);
-
-                Log::warning("SendFaxRingCentral throttled by RingCentral; retrying in {$retryAfter}s", $faxFsDetails);
-
-                $this->release($retryAfter);
+                $this->handleRateLimited($e, $extensions, $faxFsDetails, $extension);
 
                 return;
             }
 
-            // A rejected token means the shared one is stale — drop it so the next
+            // A rejected token means the cached one is stale — drop it so the next
             // attempt authenticates cleanly rather than replaying a dead token.
             if (RingCentralThrottle::isUnauthorized($e)) {
                 $client->forgetToken();
 
-                Log::warning('SendFaxRingCentral: RingCentral rejected the cached token; re-authenticating.', $faxFsDetails);
+                Log::warning('SendFaxRingCentral: RingCentral rejected the cached token; re-authenticating.', $faxFsDetails + ['ringcentral_sender' => $extension->key]);
 
                 $this->release(10);
 
@@ -269,14 +298,82 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
 
             // The ApiResponse object itself used to be logged here, but its fields are
             // protected so it serialized as an empty object — status and headers lost.
-            Log::error('SendFaxRingCentral: '.RingCentralThrottle::describe($e), $faxFsDetails);
+            Log::error('SendFaxRingCentral: '.RingCentralThrottle::describe($e), $faxFsDetails + ['ringcentral_sender' => $extension->key]);
 
             throw $e;
         } catch (Exception $e) {
             Log::error($e->getMessage());
 
             throw $e;
+        } finally {
+            $lease->release();
         }
+    }
+
+    /**
+     * RingCentral rejected the send with a 429.
+     *
+     * The extension is already marked locked out (the state recorded the response). The
+     * fax goes back on the queue for as long as it takes the *first* extension in the pool
+     * to become available — which is immediately if another extension still has requests —
+     * plus jitter. After rate_limit_max_retries rejections it fails through the ordinary
+     * failure handling: history entry, alert email, fail/ back to Intelligent Series.
+     *
+     * @param  list<RingCentralExtension>  $extensions
+     * @param  array<string, mixed>  $faxFsDetails
+     */
+    private function handleRateLimited(ApiException $e, array $extensions, array $faxFsDetails, RingCentralExtension $extension): void
+    {
+        $state = app(RingCentralRateLimitState::class);
+        $attempts = $state->countRateLimitedAttempt($this->uniqueId(), $this->retryWindowSeconds());
+        $max = max(1, (int) config('services.fax.ringcentral.rate_limit_max_retries', 10));
+
+        if ($attempts > $max) {
+            $state->forgetRateLimitedAttempts($this->uniqueId());
+
+            Log::error("SendFaxRingCentral: rate-limited {$attempts} times; giving up", $faxFsDetails + ['ringcentral_sender' => $extension->key]);
+
+            $this->fail(new Exception(
+                "RingCentral rate limit: still rejected after {$max} retries (".RingCentralThrottle::describe($e).')'
+            ));
+
+            return;
+        }
+
+        $delay = app(RingCentralRetryDelay::class)->withJitter(
+            app(RingCentralSenderSelector::class)->secondsUntilAvailable($extensions)
+        );
+
+        Log::warning("SendFaxRingCentral throttled by RingCentral; retry {$attempts} of {$max} in {$delay}s", $faxFsDetails + ['ringcentral_sender' => $extension->key]);
+
+        $this->release($delay);
+    }
+
+    /**
+     * Which extension sent the fax, for polling and resending it later — both have to
+     * authenticate as the extension whose message store holds it.
+     *
+     * Written only once the columns exist. The migration ships in an earlier deploy, but
+     * this row is written *after* RingCentral has accepted the fax: if it threw, the job
+     * would retry and the recipient would get the fax twice.
+     *
+     * @return array<string, string|null>
+     */
+    private function senderColumns(RingCentralExtension $extension, RingCentralClient $client): array
+    {
+        static $supported = null;
+
+        $supported ??= Schema::hasColumn('pending_faxes', 'ringcentral_sender');
+
+        if (! $supported) {
+            return [];
+        }
+
+        return [
+            // Null for the primary, matching every row written before senders existed.
+            'ringcentral_sender' => $extension->isPrimary() ? null : $extension->key,
+            'ringcentral_extension_id' => $client->extensionId() ?? $extension->extensionId,
+        ];
     }
 
     public function failed(Throwable $exception): void
@@ -330,10 +427,11 @@ class SendFaxRingCentral implements ShouldBeEncrypted, ShouldBeUnique, ShouldQue
      * @param  array<string, mixed>  $faxFsDetails
      * @param  array{number: string, name: string}|null  $account
      */
-    private function logRateLimit(RingCentralRateLimit $rateLimit, RingCentralClient $client, array $faxFsDetails, ?array $account): void
+    private function logRateLimit(RingCentralRateLimit $rateLimit, RingCentralClient $client, RingCentralExtension $extension, array $faxFsDetails, ?array $account): void
     {
         $context = $rateLimit->toLogContext() + [
-            'extension_id' => $client->extensionId(),
+            'ringcentral_sender' => $extension->key,
+            'extension_id' => $client->extensionId() ?? $extension->extensionId,
             'jobID' => $faxFsDetails['jobID'],
             'fsFileName' => $faxFsDetails['fsFileName'],
             'source_key' => $faxFsDetails['source_key'],

@@ -11,6 +11,8 @@ use App\Models\DataSource;
 use App\Models\PendingFax;
 use App\Models\Stats\Helpers;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralExtension;
+use App\Services\Faxing\RingCentralSenderPool;
 use App\Services\Faxing\RingCentralThrottle;
 use App\Services\Observability\GuzzleTracing;
 use Exception;
@@ -134,8 +136,29 @@ class CheckPendingFaxes extends Command
      */
     private function pollRingCentral(Collection $faxes, DataSource $datasource): void
     {
-        $client = new RingCentralClient($datasource);
+        $pool = app(RingCentralSenderPool::class);
 
+        // A sent fax lives in the message store of the extension that sent it, so each
+        // one is polled as that extension. Rows from before sender pools have no sender
+        // and belong to the primary.
+        foreach ($faxes->groupBy(fn (PendingFax $fax) => $fax->ringcentral_sender ?: RingCentralExtension::PRIMARY) as $senderKey => $group) {
+            $extension = $pool->find($datasource, (string) $senderKey);
+
+            if ($extension === null) {
+                Log::warning("CheckPendingFaxes: RingCentral sender {$senderKey} no longer exists; cannot poll ".$group->count().' fax(es).');
+
+                continue;
+            }
+
+            $this->pollRingCentralAs($group, RingCentralClient::forExtension($datasource, $extension), (string) $senderKey);
+        }
+    }
+
+    /**
+     * @param  Collection<int, PendingFax>  $faxes
+     */
+    private function pollRingCentralAs(Collection $faxes, RingCentralClient $client, string $senderKey): void
+    {
         if (! $client->configured()) {
             return;
         }
@@ -143,7 +166,7 @@ class CheckPendingFaxes extends Command
         try {
             $platform = $client->platform();
         } catch (Throwable $e) {
-            Log::error("CheckPendingFaxes: RingCentral auth failed: {$e->getMessage()}");
+            Log::error("CheckPendingFaxes: RingCentral auth failed for {$senderKey}: {$e->getMessage()}");
 
             return;
         }
@@ -154,18 +177,17 @@ class CheckPendingFaxes extends Command
             try {
                 $this->checkRingCentral($pendingFax, $platform);
             } catch (Throwable $e) {
-                // Being throttled means every remaining call this run would be throttled
-                // too, and each one steals quota from actual fax sending. Stop here and
-                // pick up where we left off next run.
+                // Being throttled means every remaining call this run *for this extension*
+                // would be throttled too. Other extensions have their own allowance.
                 if (RingCentralThrottle::isRateLimited($e)) {
-                    Log::warning('CheckPendingFaxes: throttled by RingCentral; abandoning the rest of this run.');
+                    Log::warning("CheckPendingFaxes: throttled by RingCentral on {$senderKey}; abandoning the rest of its faxes this run.");
 
                     return;
                 }
 
                 if (RingCentralThrottle::isUnauthorized($e)) {
                     $client->forgetToken();
-                    Log::warning('CheckPendingFaxes: RingCentral rejected the cached token; will re-authenticate next run.');
+                    Log::warning("CheckPendingFaxes: RingCentral rejected the cached token for {$senderKey}; will re-authenticate next run.");
 
                     return;
                 }

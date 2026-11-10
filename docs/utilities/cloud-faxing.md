@@ -197,6 +197,60 @@ sudo mount -t cifs //server.domain.local/mfax /home/forge/mission-control/storag
 sudo mount -t cifs //server.domain.local/people-praise /home/forge/mission-control/storage/app/people-praise -o username=domainuser,password=redacted,domain=domain.local,uid=1001,gid=1001
 ```
 
+### RingCentral rate limits and sending extensions
+
+RingCentral limits how many fax API requests each **extension** (user) may make per
+window, per app. The published default for faxing is 10 requests per 60 seconds with a
+60-second lockout once exceeded, but the limit can be raised per app by RingCentral
+developer support, so Mission Control never assumes a number. Every fax response carries
+`X-Rate-Limit-Limit`, `-Remaining` and `-Window` headers (and usually `Retry-After` on a
+429), and sending is paced entirely from those:
+
+- **Every response is logged** as `RingCentral fax API response`, with the HTTP status,
+  the rate-limit headers, the sending extension, the IS job id, the `.fs` name and the
+  account. Search the log for that line to see what limit RingCentral is actually applying.
+- **An extension that reports `Remaining: 0` is held** for its window. Faxes wait in the
+  queue rather than being sent into a 429, because a request rejected during a lockout
+  restarts RingCentral's lockout clock.
+- **A 429 is retried after `Retry-After`**, or after the window when there is no
+  `Retry-After`, or after 30 seconds when there are no headers at all. A few seconds of
+  random jitter keep held faxes from all coming back at once. Faxes come back in the order
+  they were due.
+- **After `RING_CENTRAL_RATE_LIMIT_MAX_RETRIES` rejections (default 10)** the fax fails
+  through the normal path: a failure record, the alert email, and `fail/` back to IS.
+  Holds taken before sending do not count toward this.
+- **Other failures are unchanged**: three attempts with 30s/60s backoff, then failure.
+
+Every failure Mission Control reports back to Intelligent Series is written into the `.fs`
+as status **261**, which IS displays as *"Busy trunk line detected"* whatever actually
+went wrong. The real reason, including the HTTP status, is in the failure record on the
+fax status page, the alert email and the log.
+
+**Sending extensions.** Because the limit is per extension, adding extensions adds
+capacity. Under System → Cloud Faxing → **RingCentral Sending Extensions**, add one row
+per additional extension:
+
+1. The extension must be a licensed RingCentral **user** that can send faxes.
+2. That user creates a **JWT credential** for the same app as the primary. A token for the
+   primary user cannot send "as" another extension in a way that uses that extension's
+   allowance — the limit follows the authenticated user.
+3. Paste the JWT. Mission Control signs in with it before saving, records which
+   extension it belongs to, and refuses a JWT for an extension already in the pool.
+4. Create a **delivery webhook subscription for the new extension**, pointing at the same
+   URL as the primary's (below). Each extension's message store sends its own events.
+5. Check the extension's **outbound fax caller ID** in the RingCentral admin portal. The
+   fax API has no "from" field: recipients see the number set on whichever extension
+   sent the fax. Set every sending extension to the same number if clients expect one.
+
+Faxes rotate round-robin across the primary and every enabled extension that has
+requests left. When all of them are out, faxes wait for the first one to come free. With
+no extensions added, everything goes out through the primary exactly as before. Disable
+an extension rather than deleting it while it still has faxes in flight: polling and
+resending a fax have to sign in as the extension that sent it.
+
+`RING_CENTRAL_SENDS_PER_MINUTE` is now an optional ceiling **per extension**, off by
+default. Set it only to stay deliberately below what RingCentral allows.
+
 ## Delivery Webhooks
 
 Delivery webhooks are how a fax gets confirmed. Mission Control can also poll the provider
@@ -289,7 +343,10 @@ are active.
 
 **Faxes fail in bursts during busy periods.** Check the webhook line on the status page
 first — if no webhook has ever arrived, polling is consuming the API quota that sending
-needs.
+needs. Then search the log for `RingCentral fax API response` around the failures: a
+`rate_limit_remaining` of 0 or an `http_status` of 429 means the extension's allowance is
+the bottleneck (add a sending extension, or ask RingCentral to raise the app's limit);
+anything else means the failure is not rate limiting.
 
 **A file sits in `tosend/` and nothing happens.** The buildup alert names the file and its
 account. Deleting the file from the status page clears it without an SSH session.

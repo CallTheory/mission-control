@@ -83,11 +83,21 @@ return [
             'jwt_token' => env('RING_CENTRAL_JWT_TOKEN'),
             'api_endpoint' => env('RING_CENTRAL_API_ENDPOINT', 'https://platform.ringcentral.com'),
 
-            // Outbound fax submissions allowed per minute. RingCentral throttles the fax
-            // endpoint as a "heavy" API group; this is the client-side limiter that keeps
-            // us under it. Raising it past what the account actually allows just trades
-            // queue waits for 429s.
-            'sends_per_minute' => env('RING_CENTRAL_SENDS_PER_MINUTE', 10),
+            // Optional ceiling on fax submissions per minute, per sending extension. Off by
+            // default: sending is paced by the X-Rate-Limit-* headers RingCentral returns,
+            // so a limit RingCentral raises takes effect without a code or config change.
+            // Set this only to deliberately stay below what RingCentral allows.
+            'sends_per_minute' => env('RING_CENTRAL_SENDS_PER_MINUTE'),
+
+            // How many times one fax may be rate-limited (HTTP 429) before it is treated as
+            // failed — history entry, failure email, fail/ back to Intelligent Series. Holds
+            // taken *before* sending, because an extension was known to be out of requests,
+            // do not count: only requests RingCentral actually rejected do.
+            'rate_limit_max_retries' => env('RING_CENTRAL_RATE_LIMIT_MAX_RETRIES', 10),
+
+            // Up to this many random seconds added to every rate-limit wait, so held faxes
+            // do not all come back in the same instant.
+            'rate_limit_jitter_seconds' => env('RING_CENTRAL_RATE_LIMIT_JITTER_SECONDS', 5),
 
             // How long a throttled fax keeps waiting its turn before it is treated as
             // failed. This is deliberately long: a rate limit should delay a fax, not

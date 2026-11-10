@@ -45,6 +45,21 @@ use Illuminate\Support\Facades\Auth;
                 </div>
             </div>
             <hr class="my-4 border border-border">
+            @can('system.integrations')
+            <div class="overflow-hidden sm:rounded-lg">
+                <div class="bg-surface my-3 rounded-sm border border-border shadow p-4 w-full">
+                    <h3 class="text-lg leading-6 font-medium text-surface-fg mb-1">RingCentral Sending Extensions</h3>
+                    <p class="text-sm text-muted mb-4">
+                        RingCentral limits how many faxes each extension may send per minute. Faxes rotate across the
+                        primary extension and any extensions added here, so each one adds its own allowance. Each needs
+                        its own licensed RingCentral user and a JWT for that user, and its own delivery webhook
+                        subscription.
+                    </p>
+                    <livewire:system.ringcentral-sending-extensions></livewire:system.ringcentral-sending-extensions>
+                </div>
+            </div>
+            <hr class="my-4 border border-border">
+            @endcan
             <div class="overflow-hidden  sm:rounded-lg  flex">
 
                 <div class="text-center bg-surface my-3 rounded-sm border border-border shadow py-4 w-full">
