@@ -44,6 +44,11 @@ class RingCentralClient
      */
     private const MAX_CACHE_SECONDS = 604800;
 
+    /**
+     * Container key a test can bind a Guzzle client to, so the SDK talks to a mock.
+     */
+    public const GUZZLE_BINDING = 'faxing.ringcentral.guzzle';
+
     private ?RingCentralSDK $sdk = null;
 
     public function __construct(private readonly DataSource $datasource) {}
@@ -85,6 +90,20 @@ class RingCentralClient
     }
 
     /**
+     * The RingCentral extension this client is authenticated as — the token's owner_id.
+     *
+     * Rate limits are counted per authenticated user (extension), so this is the identity
+     * that matters when reading X-Rate-Limit-* headers. Free to call: it comes from the
+     * token we already hold, not from an API request. Null before authentication.
+     */
+    public function extensionId(): ?string
+    {
+        $owner = $this->sdk?->platform()->auth()->data()['owner_id'] ?? null;
+
+        return $owner === null || $owner === '' ? null : (string) $owner;
+    }
+
+    /**
      * Drop the shared token. Call this after a 401 so the next caller re-authenticates
      * instead of replaying a token the API has already rejected.
      */
@@ -110,7 +129,12 @@ class RingCentralClient
         $this->sdk ??= new RingCentralSDK(
             $this->datasource->ringcentral_client_id,
             $this->datasource->ringcentral_client_secret,
-            $this->datasource->ringcentral_api_endpoint
+            $this->datasource->ringcentral_api_endpoint,
+            '',
+            '',
+            // Tests bind a Guzzle client backed by a MockHandler here; in production
+            // nothing is bound and the SDK builds its own.
+            app()->bound(self::GUZZLE_BINDING) ? app(self::GUZZLE_BINDING) : null,
         );
 
         $platform = $this->sdk->platform();

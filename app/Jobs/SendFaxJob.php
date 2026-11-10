@@ -25,7 +25,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -323,8 +322,10 @@ class SendFaxJob implements ShouldBeEncrypted, ShouldBeUnique, ShouldQueue
             return;
         }
 
-        Mail::queue(new FaxFailAlert($faxFsDetails, $exception->getMessage()));
+        // The move first: it is what tells Intelligent Series the fax failed and takes the
+        // .fs out of tosend/. The alert must never be able to prevent it.
         MoveFailedFaxFiles::dispatch($faxFsDetails, FaxProvider::Mfax->value, $this->sourceKey());
+        FaxFailAlert::queueSafely($faxFsDetails, $exception->getMessage());
     }
 
     private function currentProvider(): FaxProvider
