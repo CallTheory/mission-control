@@ -212,6 +212,10 @@ class RingCentralFaxAttemptsTest extends TestCase
 
         Livewire::test(CloudFaxingRingCentral::class)
             ->assertSee('Details')
+            // The link shows it is working until the modal arrives: the call-log lookup
+            // can take several seconds on a first open.
+            ->assertSeeHtml('$wire.mountAction(')
+            ->assertSeeHtml('x-bind:disabled="loading"')
             ->mountAction('faxAttempts', ['fax' => $fax->id])
             ->assertActionMounted('faxAttempts')
             ->assertMountedActionModalSee([

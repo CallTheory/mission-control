@@ -174,11 +174,6 @@ parameters:
 			count: 1
 			path: app/Livewire/Utilities/CloudFaxing.php
 
-		-
-			message: '#^Constant JSON_THROW_ON_ERROR is not allowed for parameter \#3 \$depth of function json_decode\.$#'
-			identifier: argument.invalidConstant
-			count: 1
-			path: app/Livewire/Utilities/CloudFaxing.php
 
 		-
 			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\PendingFax\>\:\:map\(\) contains unresolvable type\.$#'

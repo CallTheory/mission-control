@@ -11,12 +11,15 @@ use App\Models\PendingFax;
 use App\Services\Faxing\FaxDashboardSnapshot;
 use App\Services\Faxing\FaxSpool;
 use App\Services\Faxing\RingCentralClient;
+use App\Services\Faxing\RingCentralRecipient;
 use App\Services\Faxing\RingCentralSenderPool;
+use App\Services\Faxing\RingCentralThrottle;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Database\QueryException;
@@ -26,7 +29,6 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\View\View;
 use JsonException;
 use Livewire\Component;
-use RingCentral\SDK\Http\ApiException;
 
 class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
 {
@@ -47,7 +49,7 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
 
     public mixed $datasource;
 
-    public ?string $faxIdToSend;
+    public ?string $faxIdToSend = null;
 
     protected $listeners = ['faxResent'];
 
@@ -78,9 +80,6 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
         $this->updateFaxData();
     }
 
-    /**
-     * @throws ApiException
-     */
     public function resendFaxAction(): Action
     {
         return Action::make('resendFax')
@@ -88,91 +87,130 @@ class CloudFaxingRingCentral extends Component implements HasActions, HasSchemas
             ->color('danger')
             ->modalHeading(__('Resend Fax'))
             ->modalSubmitActionLabel(__('Resend'))
-            // Prefilling calls the provider for the fax's current recipient, which is
-            // what openSendFaxDialog() did when the old dialog was toggled open.
+            // Prefilled with the number the fax went to. The Filament port made this field
+            // required but never filled it: it read faxInfo.faxNumber, a key RingCentral's
+            // message record does not have.
             ->fillForm(function (array $arguments): array {
-                $this->openSendFaxDialog($arguments['messageId'] ?? null);
+                $messageId = (string) ($arguments['messageId'] ?? '');
+                $this->faxIdToSend = $messageId !== '' ? $messageId : null;
 
-                return ['faxNumber' => $this->state['faxInfo']['faxNumber'] ?? ''];
+                return ['faxNumber' => $this->faxIdToSend === null ? '' : ($this->originalRecipient($this->faxIdToSend) ?? '')];
             })
             ->schema([
                 TextInput::make('faxNumber')
                     ->label(__('Recipient Fax Number'))
+                    ->helperText(__('Change it to send the fax somewhere else. U.S. and Canadian numbers may be entered as 10 digits.'))
                     ->required(),
             ])
             ->action(function (array $data): void {
-                $this->state['faxInfo']['faxNumber'] = $data['faxNumber'];
-                $this->resendFax();
+                $this->resendFax((string) ($data['faxNumber'] ?? ''));
             });
     }
 
-    public function openSendFaxDialog($messageId): void
+    /**
+     * The number a fax was sent to.
+     *
+     * Taken from the dashboard snapshot the page already renders from, so opening the
+     * dialog costs no RingCentral request; only a fax missing from the snapshot is
+     * looked up. Read on the server, never from the browser.
+     */
+    private function originalRecipient(string $messageId): ?string
     {
-        try {
-            // Reuses the shared access token rather than performing its own JWT login;
-            // looking at a fax used to cost two token requests before it even resent.
-            $platform = $this->ringCentral((string) $messageId)->platform();
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
+        foreach ($this->providerSnapshot()['failed_faxes'] ?? [] as $record) {
+            if (is_array($record) && (string) ($record['id'] ?? '') === $messageId) {
+                $number = $record['to'][0]['phoneNumber'] ?? null;
 
-            return;
+                return is_string($number) && $number !== '' ? $number : null;
+            }
         }
 
         try {
-            $endpoint = '/restapi/v1.0/account/~/extension/~/message-store/'.$messageId;
-            $resp = $platform->get($endpoint);
-            $this->state['faxInfo'] = $resp->jsonArray();
-
+            $record = $this->ringCentral($messageId)->platform()
+                ->get('/restapi/v1.0/account/~/extension/~/message-store/'.$messageId)
+                ->jsonArray();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            throw $e;
+            Log::error('CloudFaxingRingCentral: could not look up fax '.$messageId.': '.$e->getMessage());
+
+            return null;
         }
 
-        $this->faxIdToSend = $messageId;
+        $number = $record['to'][0]['phoneNumber'] ?? null;
 
+        return is_string($number) && $number !== '' ? $number : null;
     }
 
     /**
-     * @throws ApiException
+     * Ask RingCentral to send a fax it already holds again.
+     *
+     * Unchanged, this is a plain resend to the original recipient. A changed number used
+     * to be silently ignored, because the request only ever carried originalMessageId;
+     * it now goes out as the recipient.
      */
-    public function resendFax(): void
+    public function resendFax(string $faxNumber = ''): void
     {
         if ($this->faxIdToSend === null) {
+            return;
+        }
+
+        $messageId = $this->faxIdToSend;
+        $original = $this->originalRecipient($messageId);
+        $requested = $this->e164($faxNumber);
+        $body = ['originalMessageId' => $messageId];
+
+        if ($requested !== null && $requested !== $this->e164((string) $original)) {
+            $body['to'] = [['phoneNumber' => $requested]];
+        }
+
+        $client = $this->ringCentral($messageId);
+
+        try {
+            $rcsdk = $client->sdk();
+            // Already authenticated by sdk(); calling $client->platform() would repeat it.
+            $rcsdk->platform()->sendRequest(
+                $rcsdk->createMultipartBuilder()
+                    ->setBody($body)
+                    ->request('/restapi/v1.0/account/~/extension/~/fax')
+            );
+        } catch (Exception $e) {
+            if (App::environment('local')) {
+                throw $e;
+            }
+
+            Log::error('CloudFaxingRingCentral: resend failed: '.RingCentralThrottle::describe($e), ['message_id' => $messageId]);
+
+            // This used to be logged and then reported as a success.
+            Notification::make()
+                ->title(__('RingCentral did not resend the fax'))
+                ->body(RingCentralThrottle::describe($e))
+                ->danger()
+                ->send();
+
             $this->faxIdToSend = null;
 
             return;
         }
 
-        $client = $this->ringCentral($this->faxIdToSend);
+        Log::info('CloudFaxingRingCentral: fax resent', [
+            'message_id' => $messageId,
+            'to' => $body['to'][0]['phoneNumber'] ?? $original,
+            'changed_recipient' => isset($body['to']),
+        ]);
 
-        try {
-            $rcsdk = $client->sdk();
-            // Already authenticated by sdk(); calling $client->platform() would repeat it.
-            $platform = $rcsdk->platform();
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
+        Notification::make()
+            ->title(__('Fax resent to :number', ['number' => $body['to'][0]['phoneNumber'] ?? $original ?? __('its original recipient')]))
+            ->success()
+            ->send();
 
-            return;
-        }
-        try {
-            $bodyParams = $rcsdk->createMultipartBuilder()
-                ->setBody([
-                    'originalMessageId' => $this->faxIdToSend,
-                ])
-                ->request('/restapi/v1.0/account/~/extension/~/fax');
-
-            $resp = $platform->sendRequest($bodyParams);
-
-        } catch (Exception $e) {
-            if (App::environment('local')) {
-                throw $e;
-            }
-            Log::error($e->getMessage());
-        }
-
-        $this->dispatch('resendFax', $this->faxIdToSend);
+        $this->dispatch('resendFax', $messageId);
         $this->faxIdToSend = null;
         $this->redirect('/utilities/cloud-faxing/ringcentral');
+    }
+
+    private function e164(string $number): ?string
+    {
+        $number = preg_replace('/[^\d+]/', '', trim($number)) ?? '';
+
+        return $number === '' ? null : RingCentralRecipient::normalize($number);
     }
 
     /**
