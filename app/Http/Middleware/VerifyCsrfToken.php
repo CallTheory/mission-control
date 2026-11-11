@@ -15,5 +15,10 @@ class VerifyCsrfToken extends Middleware
         '/webhooks/*',
         '/api/*',
         '/sso/*',
+        // The WCTP gateway: Enterprise Hosts post to /wctp and carriers post their
+        // webhooks under /wctp/... -- none of them can carry a CSRF token. Both entries
+        // are needed: 'wctp/*' does not match the bare /wctp endpoint.
+        '/wctp',
+        '/wctp/*',
     ];
 }
