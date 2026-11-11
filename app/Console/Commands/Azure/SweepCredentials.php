@@ -31,10 +31,19 @@ class SweepCredentials extends Command
     {
         $credentials = GraphCredentials::fromDataSource();
 
+        // Most installs never use Entra, and the scheduler runs this daily regardless, so
+        // an unconfigured tenant is "nothing to do" rather than a failure. Only an
+        // explicit --force, which asks for a sweep, fails without credentials.
         if (! $credentials->configured()) {
-            $this->error('Entra ID is not configured. Add the credentials on System -> Integrations.');
+            if ($this->option('force')) {
+                $this->error('Entra ID is not configured. Add the credentials on System -> Integrations.');
 
-            return CommandStatus::FAILURE;
+                return CommandStatus::FAILURE;
+            }
+
+            $this->warn('Entra ID is not configured, so there is nothing to sweep.');
+
+            return CommandStatus::SUCCESS;
         }
 
         if (! $credentials->enabled && ! $this->option('force')) {
