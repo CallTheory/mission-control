@@ -55,7 +55,7 @@ use Illuminate\Support\Facades\Auth;
                         its own licensed RingCentral user and a JWT for that user, and its own delivery webhook
                         subscription.
                     </p>
-                    <livewire:system.ringcentral-sending-extensions></livewire:system.ringcentral-sending-extensions>
+                    <livewire:system.ring-central-sending-extensions></livewire:system.ring-central-sending-extensions>
                 </div>
             </div>
             <hr class="my-4 border border-border">

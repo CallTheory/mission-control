@@ -48,6 +48,15 @@ class RingCentralSendingExtensionsScreenTest extends TestCase
         $this->actingAs($this->createUserWithRole($this->createSeededTeam(), 'admin'));
     }
 
+    public function test_the_cloud_faxing_settings_page_renders_the_extensions_table(): void
+    {
+        // Livewire::test() resolves by class, so only rendering the real page proves the
+        // tag's component name resolves (RingCentral kebab-cases to ring-central).
+        $this->get(route('system.cloud-faxing'))
+            ->assertOk()
+            ->assertSeeLivewire(RingCentralSendingExtensions::class);
+    }
+
     public function test_adding_an_extension_verifies_the_jwt_and_records_whose_it_is(): void
     {
         Livewire::test(RingCentralSendingExtensions::class)
