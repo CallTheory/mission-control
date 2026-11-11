@@ -7,7 +7,9 @@ namespace Tests\Feature\Api;
 use App\Enums\SmsProvider;
 use App\Http\Middleware\ValidateSmsProviderWebhook;
 use App\Http\Middleware\ValidateTwilioRequest;
+use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route as RoutingRoute;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -49,6 +51,41 @@ class WctpRouteRegistrationTest extends TestCase
         $this->assertNotNull($route, "Route [{$name}] was not registered.");
 
         return $route;
+    }
+
+    /**
+     * Laravel skips CSRF verification entirely under unit tests, so every WCTP test
+     * passes while production answers an Enterprise Host or carrier with a 419. Check
+     * each POST route against the middleware's own except-list matching instead.
+     */
+    public function test_every_wctp_post_route_is_exempt_from_csrf(): void
+    {
+        $csrf = new class(app(), app('encrypter')) extends VerifyCsrfToken
+        {
+            public function exempts(Request $request): bool
+            {
+                return $this->inExceptArray($request);
+            }
+        };
+
+        $wctpPostRoutes = collect(Route::getRoutes()->getRoutes())
+            ->filter(fn (RoutingRoute $route): bool => in_array('POST', $route->methods(), true)
+                && ($route->uri() === 'wctp' || str_starts_with($route->uri(), 'wctp/')));
+
+        // Enterprise Host, two Twilio, two per-carrier.
+        $this->assertGreaterThanOrEqual(5, $wctpPostRoutes->count());
+
+        foreach ($wctpPostRoutes as $route) {
+            $path = '/'.preg_replace(['/\{[^}]+\?\}/', '/\{[^}]+\}/'], ['', 'twilio'], $route->uri());
+
+            $this->assertTrue(
+                $csrf->exempts(Request::create(rtrim($path, '/'), 'POST')),
+                "POST {$route->uri()} is not exempt from CSRF verification and will answer 419.",
+            );
+        }
+
+        // The check is not vacuous: an ordinary session-backed POST stays protected.
+        $this->assertFalse($csrf->exempts(Request::create('/user/sso/link', 'POST')));
     }
 
     public function test_the_twilio_routes_keep_their_original_paths(): void
