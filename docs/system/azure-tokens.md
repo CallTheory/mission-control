@@ -117,6 +117,9 @@ overdue — no threshold is consumed while alerting is off.
 
 `azure:sweep-credentials` runs daily at 06:15 from the scheduler.
 
+On an install without Entra credentials it prints a warning and exits successfully, so
+the scheduler does not log a failure every morning. With `--force` it fails instead.
+
 ```bash
 # Sweep now, alert, and print the ten soonest expiries
 php artisan azure:sweep-credentials
