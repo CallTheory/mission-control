@@ -76,9 +76,20 @@ class SweepCommandTest extends TestCase
         $this->assertSame(1, AzureCredential::count());
     }
 
-    public function test_it_refuses_to_run_without_credentials(): void
+    public function test_it_skips_quietly_without_credentials(): void
     {
+        // Scheduled daily on every install, most of which never configure Entra; a
+        // failure exit here logs a production error every morning.
         $this->artisan('azure:sweep-credentials')
+            ->expectsOutputToContain('Entra ID is not configured')
+            ->assertSuccessful();
+
+        $this->assertSame(0, AzureCredentialSweep::count());
+    }
+
+    public function test_forcing_a_sweep_without_credentials_fails(): void
+    {
+        $this->artisan('azure:sweep-credentials', ['--force' => true])
             ->expectsOutputToContain('Entra ID is not configured')
             ->assertFailed();
 
